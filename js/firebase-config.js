@@ -46,7 +46,7 @@ const auth = getAuth(app);
 //  ⚠️ 把下面的邮箱改成你的真实邮箱！
 // ============================================================
 const TEACHER_EMAILS = [
-  'teacher@chunxiao.com',   // ← 替换成老师的真实邮箱
+  '756924037@qq.com',   // ← 老师账号
   // 如果有多个老师，复制上面一行并改邮箱：
   // 'another-teacher@example.com',
 ];
