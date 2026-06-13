@@ -340,4 +340,52 @@ body.dark-mode .logout-btn {
   .stat-cards {
     flex-direction: column;
   }
+
+  /* 顶栏手机优化 */
+  .dash-header {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .dash-header h1 {
+    font-size: 1.2em;
+    letter-spacing: 2px;
+  }
+
+  .badge {
+    font-size: 0.7em;
+    padding: 3px 8px;
+  }
+
+  .dash-header-right {
+    gap: 6px;
+  }
+
+  .user-name {
+    font-size: 0.8em;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .logout-btn {
+    font-size: 0.75em;
+    padding: 4px 10px;
+  }
+
+  .dark-mode-toggle {
+    font-size: 1em !important;
+    padding: 4px 8px !important;
+  }
+
+  /* 内容区缩小间距 */
+  .dash-content {
+    padding: 15px;
+  }
+
+  .dash-content h2 {
+    font-size: 1.3em;
+  }
 }
