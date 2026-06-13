@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 春晓画室</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+  <!-- ========== 页头（简化版） ========== -->
+  <header>
+    <h1>🌸 春晓画室</h1>
+    <p class="subtitle">家长端 · 老师端</p>
+    <nav>
+      <a href="index.html">🏠 返回首页</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ========== 登录卡片 ========== -->
+    <div class="login-container">
+
+      <!-- 角色选择标签 -->
+      <div class="login-tabs">
+        <button class="login-tab active" data-role="parent">👨‍👩‍👧 家长登录</button>
+        <button class="login-tab" data-role="teacher">👩‍🏫 老师登录</button>
+      </div>
+
+      <!-- 登录表单 -->
+      <form id="login-form" class="login-form">
+        <label for="email">📧 邮箱地址</label>
+        <input type="email" id="email" placeholder="请输入邮箱" required>
+
+        <label for="password">🔒 密码</label>
+        <input type="password" id="password" placeholder="请输入密码" required minlength="6">
+
+        <button type="submit" class="login-btn">登 录</button>
+
+        <!-- 错误提示 -->
+        <p id="login-error" class="login-error"></p>
+      </form>
+
+      <!-- 注册链接（仅家长端显示） -->
+      <div id="register-hint" class="register-hint">
+        <p>还没有账号？<a href="#" id="show-register">点击注册</a></p>
+      </div>
+
+      <!-- 注册表单（默认隐藏） -->
+      <form id="register-form" class="login-form" style="display:none;">
+        <h3 style="text-align:center; color:#5d4037;">📝 家长注册</h3>
+        <label for="reg-name">👤 家长姓名</label>
+        <input type="text" id="reg-name" placeholder="请输入您的姓名" required>
+
+        <label for="reg-email">📧 邮箱地址</label>
+        <input type="email" id="reg-email" placeholder="请输入邮箱" required>
+
+        <label for="reg-password">🔒 密码（至少6位）</label>
+        <input type="password" id="reg-password" placeholder="请设置密码" required minlength="6">
+
+        <label for="reg-child">👶 孩子姓名</label>
+        <input type="text" id="reg-child" placeholder="请输入孩子姓名" required>
+
+        <button type="submit" class="login-btn">注 册</button>
+
+        <p id="register-error" class="login-error"></p>
+        <p style="text-align:center;"><a href="#" id="back-to-login">← 返回登录</a></p>
+      </form>
+
+      <!-- 提示信息 -->
+      <div class="login-info">
+        <p>🔐 <strong>老师账号</strong>由画室管理员创建，如需开通请联系负责人。</p>
+        <p>👨‍👩‍👧 <strong>家长账号</strong>可自行注册，审核通过后即可查看孩子的作品和通知。</p>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 春晓画室 | 让艺术陪伴孩子成长</p>
+  </footer>
+
+  <!-- Firebase SDK（从谷歌 CDN 加载） -->
+  <script type="module" src="js/firebase-config.js"></script>
+
+</body>
+</html>

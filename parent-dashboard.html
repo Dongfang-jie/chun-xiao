@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>家长端 - 春晓画室</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <!-- ========== 顶栏 ========== -->
+  <header class="dash-header">
+    <div class="dash-header-left">
+      <h1>🌸 春晓画室</h1>
+      <span class="badge badge-parent">家长端</span>
+    </div>
+    <div class="dash-header-right">
+      <span id="parent-name" class="user-name">👨‍👩‍👧 家长</span>
+      <button id="logout-btn" class="logout-btn">🚪 退出登录</button>
+    </div>
+  </header>
+
+  <!-- ========== 主体 ========== -->
+  <div class="dash-layout">
+
+    <!-- 侧边栏 -->
+    <aside class="dash-sidebar">
+      <nav>
+        <a href="#" class="sidebar-link active" data-page="overview">📊 总览</a>
+        <a href="#" class="sidebar-link" data-page="child-works">🖼️ 孩子作品</a>
+        <a href="#" class="sidebar-link" data-page="notices">📢 画室通知</a>
+        <a href="#" class="sidebar-link" data-page="schedule">📅 课程表</a>
+        <a href="#" class="sidebar-link" data-page="settings">⚙️ 个人信息</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="index.html">🏠 回到首页</a>
+      </div>
+    </aside>
+
+    <!-- 内容区 -->
+    <main class="dash-content">
+
+      <!-- 总览 -->
+      <section id="page-overview" class="dash-page active">
+        <h2>📊 学习总览</h2>
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">已完成作品</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">本月课时</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">新通知</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">下次上课</div>
+          </div>
+        </div>
+
+        <h3>🌟 最近作品</h3>
+        <div class="card-container">
+          <div class="card">
+            <img src="https://placehold.co/400x250/f8e8d0/5d4037?text=暂无作品" alt="暂无" class="card-img">
+            <div class="card-body">
+              <h4>还没有作品</h4>
+              <p>孩子的作品将在这里展示</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 孩子作品 -->
+      <section id="page-child-works" class="dash-page">
+        <h2>🖼️ 孩子作品</h2>
+        <p style="color:#888;">此处展示您孩子的课堂作品（连接后端后显示真实数据）</p>
+        <div class="card-container">
+          <!-- 作品卡片将通过 JS 动态加载 -->
+        </div>
+      </section>
+
+      <!-- 画室通知 -->
+      <section id="page-notices" class="dash-page">
+        <h2>📢 画室通知</h2>
+        <div style="background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <div style="padding:20px; border-bottom:1px solid #e8d4c8;">
+            <h4 style="color:#5d4037;">📌 欢迎使用春晓画室家长端</h4>
+            <p style="color:#999; font-size:0.9em;">2026-06-13</p>
+            <p>您可以在这里查看孩子的作品、课程安排和画室通知。</p>
+          </div>
+          <div style="padding:20px; border-bottom:1px solid #e8d4c8;">
+            <h4 style="color:#5d4037;">📌 功能持续更新中</h4>
+            <p style="color:#999; font-size:0.9em;">2026-06-13</p>
+            <p>更多功能正在开发中，敬请期待！如有建议请联系老师。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 课程表 -->
+      <section id="page-schedule" class="dash-page">
+        <h2>📅 课程表</h2>
+        <table>
+          <thead>
+            <tr><th>时间</th><th>课程</th><th>教室</th><th>老师</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" style="text-align:center; color:#999;">请等待老师排课后查看</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 个人信息 -->
+      <section id="page-settings" class="dash-page">
+        <h2>⚙️ 个人信息</h2>
+        <div id="parent-info" style="background:#fff; padding:25px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <p style="color:#999;">加载中...</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module" src="js/dashboard.js"></script>
+
+</body>
+</html>

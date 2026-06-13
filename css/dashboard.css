@@ -1,0 +1,343 @@
+/*
+  春晓画室 - 仪表盘样式
+  阶段 5: 登录系统（老师端 + 家长端共用）
+*/
+
+/* ========== 顶栏 ========== */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  background: #fff;
+  border-bottom: 2px solid #e8d4c8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  /* 覆盖全局 header 的样式 */
+  text-align: left;
+}
+
+.dash-header h1 {
+  font-size: 1.5em;
+  margin: 0;
+  letter-spacing: 4px;
+}
+
+.dash-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-name {
+  color: #5d4037;
+  font-weight: bold;
+}
+
+/* 角色标签 */
+.badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+
+.badge-teacher {
+  background: #e8d4c8;
+  color: #5d4037;
+}
+
+.badge-parent {
+  background: #d7e8c8;
+  color: #4a5d37;
+}
+
+/* 退出按钮 */
+.logout-btn {
+  background: none;
+  border: 2px solid #c9a87c;
+  color: #8d6e63;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.3s;
+}
+
+.logout-btn:hover {
+  background: #c9a87c;
+  color: #fff;
+}
+
+/* ========== 布局：侧边栏 + 内容 ========== */
+.dash-layout {
+  display: flex;
+  min-height: calc(100vh - 75px);  /* 减去顶栏高度 */
+}
+
+/* ========== 侧边栏 ========== */
+.dash-sidebar {
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #e8d4c8;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 14px 24px;
+  color: #5d4037;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-link:hover {
+  background: #fdfaf5;
+  border-left-color: #d7a86e;
+}
+
+.sidebar-link.active {
+  background: #fdfaf5;
+  border-left-color: #5d4037;
+  color: #5d4037;
+}
+
+.sidebar-footer {
+  padding: 14px 24px;
+  border-top: 1px solid #e8d4c8;
+}
+
+.sidebar-footer a {
+  color: #999;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.sidebar-footer a:hover {
+  color: #5d4037;
+}
+
+/* ========== 内容区 ========== */
+.dash-content {
+  flex: 1;
+  padding: 30px;
+  background: #fdfaf5;
+  overflow-y: auto;
+}
+
+.dash-content h2 {
+  color: #5d4037;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e8d4c8;
+  font-size: 1.6em;
+}
+
+.dash-content h3 {
+  color: #5d4037;
+  margin: 30px 0 15px;
+}
+
+/* 页面切换 */
+.dash-page {
+  display: none;
+}
+
+.dash-page.active {
+  display: block;
+}
+
+/* ========== 统计卡片 ========== */
+.stat-cards {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  flex: 1 1 180px;
+  min-width: 150px;
+  background: #fff;
+  padding: 25px 20px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.stat-number {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: #5d4037;
+}
+
+.stat-label {
+  color: #999;
+  margin-top: 8px;
+  font-size: 0.95em;
+}
+
+/* ========== 仪表盘表格 ========== */
+.dash-content table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.dash-content table thead tr {
+  background: #f0e6d8;
+}
+
+.dash-content table th {
+  padding: 12px 16px;
+  text-align: left;
+  color: #5d4037;
+  font-weight: bold;
+}
+
+.dash-content table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0e6d8;
+}
+
+.dash-content table tbody tr:hover {
+  background: #fdfaf5;
+}
+
+.dash-content table a {
+  color: #d7a86e;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* ========== 深色模式 ========== */
+body.dark-mode .dash-header {
+  background: #2a2a2a;
+  border-bottom-color: #444;
+}
+
+body.dark-mode .dash-sidebar {
+  background: #222;
+  border-right-color: #444;
+}
+
+body.dark-mode .sidebar-link {
+  color: #ccc;
+}
+
+body.dark-mode .sidebar-link:hover,
+body.dark-mode .sidebar-link.active {
+  background: #2a2a2a;
+  color: #d7a86e;
+}
+
+body.dark-mode .sidebar-footer {
+  border-top-color: #444;
+}
+
+body.dark-mode .dash-content {
+  background: #1a1a1a;
+}
+
+body.dark-mode .dash-content h2,
+body.dark-mode .dash-content h3 {
+  color: #d7a86e;
+  border-bottom-color: #444;
+}
+
+body.dark-mode .stat-card {
+  background: #2a2a2a;
+}
+
+body.dark-mode .stat-number {
+  color: #d7a86e;
+}
+
+body.dark-mode .dash-content table {
+  background: #2a2a2a;
+}
+
+body.dark-mode .dash-content table thead tr {
+  background: #333;
+}
+
+body.dark-mode .dash-content table th {
+  color: #d7a86e;
+}
+
+body.dark-mode .dash-content table td {
+  border-bottom-color: #444;
+  color: #ccc;
+}
+
+body.dark-mode .dash-content table tbody tr:hover {
+  background: #333;
+}
+
+body.dark-mode .badge-teacher {
+  background: #3a3020;
+  color: #d7a86e;
+}
+
+body.dark-mode .badge-parent {
+  background: #2a3a20;
+  color: #a0c080;
+}
+
+body.dark-mode .logout-btn {
+  border-color: #c9a87c;
+  color: #d7a86e;
+}
+
+/* ========== 响应式：手机横排变竖排 ========== */
+@media (max-width: 768px) {
+  .dash-layout {
+    flex-direction: column;
+  }
+
+  .dash-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 10px;
+    border-right: none;
+    border-bottom: 1px solid #e8d4c8;
+  }
+
+  .dash-sidebar nav {
+    display: flex;
+  }
+
+  .sidebar-link {
+    padding: 10px 16px;
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+  }
+
+  .sidebar-link.active {
+    border-left: none;
+    border-bottom-color: #5d4037;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .stat-cards {
+    flex-direction: column;
+  }
+}

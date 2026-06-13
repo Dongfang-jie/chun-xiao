@@ -1,0 +1,189 @@
+/*
+  春晓画室 - 登录页样式
+  阶段 5: 登录系统
+*/
+
+/* ========== 登录卡片容器 ========== */
+.login-container {
+  max-width: 440px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* ========== 角色选择标签 ========== */
+.login-tabs {
+  display: flex;
+}
+
+.login-tab {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  background: #f0e6d8;
+  color: #8d6e63;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.login-tab.active {
+  background: #fff;
+  color: #5d4037;
+  border-bottom: 3px solid #d7a86e;
+}
+
+.login-tab:hover {
+  background: #faf5ed;
+}
+
+/* ========== 表单区域 ========== */
+.login-form {
+  padding: 30px 35px;
+}
+
+.login-form label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  color: #5d4037;
+  font-weight: bold;
+  font-size: 0.95em;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: #d7a86e;
+  box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.15);
+}
+
+/* ========== 登录按钮 ========== */
+.login-btn {
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px;
+  background: #5d4037;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.1s;
+}
+
+.login-btn:hover {
+  background: #795548;
+}
+
+.login-btn:active {
+  transform: scale(0.98);   /* 点击时微微缩小 */
+}
+
+/* ========== 错误提示 ========== */
+.login-error {
+  color: #e53935;
+  text-align: center;
+  margin-top: 14px;
+  font-size: 0.9em;
+  min-height: 1.2em;       /* 即使没错误也占位，避免抖动 */
+}
+
+/* ========== 注册提示区域 ========== */
+.register-hint {
+  text-align: center;
+  padding: 0 35px 25px;
+}
+
+.register-hint a,
+#register-form a {
+  color: #d7a86e;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.register-hint a:hover,
+#register-form a:hover {
+  text-decoration: underline;
+}
+
+/* ========== 登录信息卡片 ========== */
+.login-info {
+  padding: 20px 35px;
+  background: #fdfaf5;
+  border-top: 1px solid #e8d4c8;
+  font-size: 0.85em;
+  color: #888;
+  line-height: 1.8;
+}
+
+.login-info strong {
+  color: #5d4037;
+}
+
+/* ========== 深色模式适配 ========== */
+body.dark-mode .login-container {
+  background: #2a2a2a;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+body.dark-mode .login-tab {
+  background: #1e1e1e;
+  color: #999;
+}
+
+body.dark-mode .login-tab.active {
+  background: #2a2a2a;
+  color: #d7a86e;
+  border-bottom-color: #d7a86e;
+}
+
+body.dark-mode .login-form label {
+  color: #d7a86e;
+}
+
+body.dark-mode .login-form input {
+  background: #1e1e1e;
+  border-color: #444;
+  color: #ccc;
+}
+
+body.dark-mode .login-form input:focus {
+  border-color: #d7a86e;
+}
+
+body.dark-mode .login-btn {
+  background: #d7a86e;
+  color: #1a1a1a;
+}
+
+body.dark-mode .login-btn:hover {
+  background: #c9a87c;
+}
+
+body.dark-mode .login-info {
+  background: #222;
+  border-top-color: #444;
+  color: #999;
+}
+
+body.dark-mode .login-info strong {
+  color: #d7a86e;
+}
+
+body.dark-mode .login-error {
+  color: #ef5350;
+}

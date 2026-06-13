@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>老师管理端 - 春晓画室</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+
+  <!-- ========== 顶栏 ========== -->
+  <header class="dash-header">
+    <div class="dash-header-left">
+      <h1>🌸 春晓画室</h1>
+      <span class="badge badge-teacher">老师端</span>
+    </div>
+    <div class="dash-header-right">
+      <span id="teacher-name" class="user-name">👩‍🏫 老师</span>
+      <button id="logout-btn" class="logout-btn">🚪 退出登录</button>
+    </div>
+  </header>
+
+  <!-- ========== 主体：侧边栏 + 内容 ========== -->
+  <div class="dash-layout">
+
+    <!-- 侧边栏 -->
+    <aside class="dash-sidebar">
+      <nav>
+        <a href="#" class="sidebar-link active" data-page="overview">📊 总览</a>
+        <a href="#" class="sidebar-link" data-page="students">👨‍🎓 学生管理</a>
+        <a href="#" class="sidebar-link" data-page="artworks">🖼️ 作品管理</a>
+        <a href="#" class="sidebar-link" data-page="announcements">📢 发布通知</a>
+        <a href="#" class="sidebar-link" data-page="courses">📚 课程管理</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="index.html">🏠 回到首页</a>
+      </div>
+    </aside>
+
+    <!-- 内容区 -->
+    <main class="dash-content">
+
+      <!-- 总览 -->
+      <section id="page-overview" class="dash-page active">
+        <h2>📊 画室总览</h2>
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">在读学生</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">本周课程</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">作品总数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">--</div>
+            <div class="stat-label">未读消息</div>
+          </div>
+        </div>
+
+        <h3>📅 今日课程</h3>
+        <table>
+          <thead>
+            <tr><th>时间</th><th>课程</th><th>学生</th><th>教室</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="4" style="text-align:center; color:#999;">暂无今日课程数据</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 学生管理 -->
+      <section id="page-students" class="dash-page">
+        <h2>👨‍🎓 学生管理</h2>
+        <p style="color:#888;">学生名单将在此处管理（功能开发中）</p>
+        <table>
+          <thead>
+            <tr><th>姓名</th><th>年龄</th><th>课程</th><th>家长</th><th>状态</th></tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="5" style="text-align:center; color:#999;">连接后端后将显示真实数据</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 作品管理 -->
+      <section id="page-artworks" class="dash-page">
+        <h2>🖼️ 作品管理</h2>
+        <p style="color:#888;">上传和管理学生作品（功能开发中）</p>
+        <button class="login-btn" style="width:auto; padding:10px 24px;">+ 上传新作品</button>
+      </section>
+
+      <!-- 发布通知 -->
+      <section id="page-announcements" class="dash-page">
+        <h2>📢 发布通知</h2>
+        <p style="color:#888;">向家长发布课程通知、活动公告（功能开发中）</p>
+        <form style="max-width:500px;">
+          <label>通知标题</label>
+          <input type="text" placeholder="如：本周六课程调整通知" style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; margin-bottom:12px;">
+          <label>通知内容</label>
+          <textarea rows="5" placeholder="请输入通知内容..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; resize:vertical;"></textarea>
+          <button type="button" class="login-btn" style="width:auto; padding:10px 24px; margin-top:12px;">📤 发布通知</button>
+        </form>
+      </section>
+
+      <!-- 课程管理 -->
+      <section id="page-courses" class="dash-page">
+        <h2>📚 课程管理</h2>
+        <p style="color:#888;">管理课程安排和时间表（功能开发中）</p>
+        <table>
+          <thead>
+            <tr><th>课程名称</th><th>年龄段</th><th>时长</th><th>时段</th><th>名额</th><th>操作</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>儿童创意画</td><td>4-7岁</td><td>90分钟</td><td>周六 9:00</td><td>3/8</td><td><a href="#">编辑</a></td></tr>
+            <tr><td>素描基础</td><td>8-12岁</td><td>120分钟</td><td>周六 14:00</td><td>5/8</td><td><a href="#">编辑</a></td></tr>
+            <tr><td>硬笔书法</td><td>6+岁</td><td>90分钟</td><td>周日 9:00</td><td>6/8</td><td><a href="#">编辑</a></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 引入 Firebase 认证模块 + 仪表盘逻辑 -->
+  <script type="module" src="js/dashboard.js"></script>
+
+</body>
+</html>
