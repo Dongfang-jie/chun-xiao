@@ -417,3 +417,88 @@ body.dark-mode .back-to-top {
 body.dark-mode .back-to-top:hover {
   background: #c9a87c;
 }
+
+/* ========== 手机端适配 ========== */
+@media (max-width: 640px) {
+
+  /* 导航栏：flex 布局，整齐换行 */
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  nav a {
+    padding: 8px 16px;
+    font-size: 0.9em;
+    margin: 0;
+  }
+
+  /* 页头缩小间距 */
+  header {
+    padding: 30px 15px 25px;
+  }
+
+  header h1 {
+    font-size: 2em;
+    letter-spacing: 4px;
+  }
+
+  header .subtitle {
+    font-size: 1em;
+  }
+
+  /* 标题字体缩小 */
+  section h2 {
+    font-size: 1.5em;
+  }
+
+  /* 卡片全宽 */
+  .card {
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  /* 关于区竖向排列 */
+  .about-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .about-image {
+    height: 200px;
+    font-size: 3em;
+  }
+
+  /* 联系方式竖向 */
+  .contact-info {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* 内容区间距缩小 */
+  section {
+    margin-bottom: 40px;
+  }
+
+  main {
+    padding: 20px 15px;
+  }
+
+  /* 灯箱关闭按钮好点 */
+  .lightbox-close {
+    top: 10px;
+    right: 20px;
+    font-size: 32px;
+  }
+
+  /* 回到顶部按钮缩小 */
+  .back-to-top {
+    width: 40px;
+    height: 40px;
+    bottom: 20px;
+    right: 20px;
+    font-size: 1.1em;
+  }
+}
