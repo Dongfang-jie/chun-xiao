@@ -1,29 +1,29 @@
 /*
-  春晓画室 - 仪表盘逻辑（LeanCloud 版）
+  春晓画室 - 仪表盘逻辑（Auth 模块版）
+  依赖 auth.js
 */
 
 // ============================================================
-//  一、页面加载时检查登录状态
+//  一、页面加载
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
 
   var isTeacher = window.location.pathname.includes('teacher');
 
-  // 检查是否已登录
-  var user = AV.User.current();
+  // 检查登录状态
+  var user = Auth.currentUser();
   if (!user) {
     window.location.href = 'login.html';
     return;
   }
 
-  console.log('✅ 已登录：' + user.get('email'));
+  console.log('✅ 已登录：' + user.email);
 
-  // 显示用户名在顶栏
+  // 显示用户名
   var userNameEl = document.getElementById(isTeacher ? 'teacher-name' : 'parent-name');
   if (userNameEl) {
-    var displayName = user.get('name') || user.get('email') || '用户';
     var icon = isTeacher ? '👩‍🏫 ' : '👨‍👩‍👧 ';
-    userNameEl.textContent = icon + displayName;
+    userNameEl.textContent = icon + (user.name || user.email);
   }
 
   // 家长端：加载个人信息
@@ -32,13 +32,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ==========================================================
-  //  二、侧边栏导航切换
+  //  侧边栏导航切换
   // ==========================================================
   var sidebarLinks = document.querySelectorAll('.sidebar-link');
   sidebarLinks.forEach(function (link) {
     link.addEventListener('click', function (e) {
       e.preventDefault();
-
       sidebarLinks.forEach(function (l) { l.classList.remove('active'); });
       link.classList.add('active');
 
@@ -54,43 +53,37 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ==========================================================
-  //  三、退出登录
+  //  退出登录
   // ==========================================================
   var logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
       if (confirm('确定要退出登录吗？')) {
-        AV.User.logOut().then(function () {
-          window.location.href = 'login.html';
-        });
+        Auth.logout();
+        window.location.href = 'login.html';
       }
     });
   }
 
   // ==========================================================
-  //  四、深色模式
+  //  深色模式
   // ==========================================================
   initDashboardDarkMode();
 
 });
 
 // ============================================================
-//  家长端：加载个人信息
+//  家长个人信息
 // ============================================================
 function loadParentInfo(user) {
   var infoEl = document.getElementById('parent-info');
   if (!infoEl) return;
 
-  var name = user.get('name') || '--';
-  var email = user.get('email') || '--';
-  var childName = user.get('childName') || '--';
-  var createdAt = user.get('createdAt');
-
   infoEl.innerHTML = ''
-    + '<p><strong>👤 家长姓名：</strong>' + name + '</p>'
-    + '<p><strong>📧 邮箱：</strong>' + email + '</p>'
-    + '<p><strong>👶 孩子姓名：</strong>' + childName + '</p>'
-    + '<p><strong>📅 注册时间：</strong>' + (createdAt ? new Date(createdAt).toLocaleDateString('zh-CN') : '--') + '</p>';
+    + '<p><strong>👤 家长姓名：</strong>' + (user.name || '--') + '</p>'
+    + '<p><strong>📧 邮箱：</strong>' + (user.email || '--') + '</p>'
+    + '<p><strong>👶 孩子姓名：</strong>' + (user.childName || '--') + '</p>'
+    + '<p><strong>📅 登录时间：</strong>' + (user.loginTime ? new Date(user.loginTime).toLocaleString('zh-CN') : '--') + '</p>';
 }
 
 // ============================================================
@@ -118,6 +111,8 @@ function initDashboardDarkMode() {
     });
 
     var logoutBtn = document.getElementById('logout-btn');
-    headerRight.insertBefore(toggleBtn, logoutBtn);
+    if (logoutBtn) {
+      headerRight.insertBefore(toggleBtn, logoutBtn);
+    }
   }
 }
