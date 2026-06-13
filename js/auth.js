@@ -8,9 +8,12 @@
 //  配置区（⚠️ 改老师密码在这里！）
 // ============================================================
 var AUTH_CONFIG = {
-  teacherEmail: '756924037@qq.com',
-  teacherPassword: 'Changeme123',  // ⚠️ 改成你自己的密码！
-  teacherName: '老师',
+  // 老师列表（添加老师：复制下面三行，改邮箱、密码、名字）
+  teachers: [
+    { email: '756924037@qq.com', password: '756924', name: '张校长' },
+    { email: '953034984@qq.com', password: '454657', name: '郑校长' },
+    // { email: 'teacher3@qq.com', password: '123456', name: '王老师' },
+  ],
   storageKey: 'chunxiao_users',    // localStorage 的键名
   sessionKey: 'chunxiao_session',  // 当前登录会话
 };
@@ -25,10 +28,13 @@ var Auth = {
     var users = this._getUsers();
 
     // 先检查是否是老师
-    if (email === AUTH_CONFIG.teacherEmail && password === AUTH_CONFIG.teacherPassword) {
+    var teacher = AUTH_CONFIG.teachers.find(function (t) {
+      return t.email === email && t.password === password;
+    });
+    if (teacher) {
       var teacherUser = {
-        email: email,
-        name: AUTH_CONFIG.teacherName,
+        email: teacher.email,
+        name: teacher.name,
         role: 'teacher',
         loginTime: new Date().toISOString(),
       };
@@ -60,8 +66,11 @@ var Auth = {
   register: function (name, email, password, childName) {
     var users = this._getUsers();
 
-    // 检查邮箱是否已注册
-    if (email === AUTH_CONFIG.teacherEmail) {
+    // 检查是否撞了老师邮箱
+    var isTeacher = AUTH_CONFIG.teachers.find(function (t) {
+      return t.email === email;
+    });
+    if (isTeacher) {
       throw new Error('该邮箱无法注册');
     }
     var exists = users.find(function (u) { return u.email === email; });
