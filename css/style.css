@@ -29,9 +29,12 @@ header {
 }
 
 .header-logo {
-  height: 80px;
-  margin-bottom: 10px;
-  border-radius: 8px;
+  height: 1em;
+  vertical-align: middle;
+  border-radius: 4px;
+  margin-right: 4px;
+  position: relative;
+  top: -2px;
 }
 
 header h1 {
@@ -740,10 +743,6 @@ body.dark-mode .form-success h3 {
   /* 页头缩小间距 */
   header {
     padding: 30px 15px 25px;
-  }
-
-  .header-logo {
-    height: 55px;
   }
 
   header h1 {
