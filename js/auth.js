@@ -17,11 +17,11 @@ var AUTH_CONFIG = {
   storageKey: 'chunxiao_users',    // localStorage 的键名
   sessionKey: 'chunxiao_session',  // 当前登录会话
 
-  // 手机通知（PushPlus）：去 https://www.pushplus.plus 注册获取 token
-  // 支持多个老师，每个老师一个 token，有人填预约表单时全部都能收到微信通知
-  notifyTokens: [
-    '8a9d4a11fed14506a36dcae8f8d42f5a',  // 张校长
-    '11ed293d91604801a30659f8185fa4e3',  // 郑校长
+  // 手机通知（Server酱）：去 https://sct.ftqq.com 微信扫码登录，获取 SendKey
+  // 支持多个老师，每个老师一个 SendKey，有人填表时全部都能收到微信通知
+  notifyKeys: [
+    '',  // 张校长：去 sct.ftqq.com 扫码获取 SendKey 填这里
+    '',  // 郑校长：同上
   ],
 };
 
