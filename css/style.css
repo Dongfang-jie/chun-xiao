@@ -382,6 +382,27 @@ body.dark-mode section a[href="contact.html"] {
   color: #1a1a1a !important;
 }
 
+/* 二维码卡片 */
+.qr-card {
+  display: inline-block;
+  padding: 15px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+}
+
+.qr-img {
+  width: 200px;
+  height: 200px;
+  border-radius: 8px;
+  display: block;
+}
+
+body.dark-mode .qr-card {
+  background: #2a2a2a;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+}
+
 /* ========== 回到顶部按钮 ========== */
 .back-to-top {
   position: fixed;
