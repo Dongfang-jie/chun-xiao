@@ -28,6 +28,12 @@ header {
   padding: 60px 20px 40px;  /* 上下60px，左右20px 的内边距 */
 }
 
+.header-logo {
+  height: 80px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
 header h1 {
   font-size: 3em;          /* 字体大小：3倍于默认 */
   color: #5d4037;          /* 棕色 */
@@ -734,6 +740,10 @@ body.dark-mode .form-success h3 {
   /* 页头缩小间距 */
   header {
     padding: 30px 15px 25px;
+  }
+
+  .header-logo {
+    height: 55px;
   }
 
   header h1 {
