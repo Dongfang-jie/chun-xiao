@@ -10,3 +10,6 @@ Desktop.ini
 # 临时文件
 *.tmp
 *.log
+
+# 通知配置（含 SendKey 密钥，不提交）
+js/notify-config.js
