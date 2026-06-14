@@ -79,8 +79,8 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         var user = Auth.login(email, password);
 
-        // 检查角色是否匹配
-        if (currentRole === 'teacher' && user.role !== 'teacher') {
+        // 检查角色是否匹配（admin 也是老师端）
+        if (currentRole === 'teacher' && user.role === 'parent') {
           Auth.logout();
           loginError.textContent = '该账号不是老师，请使用家长端登录';
           return;
