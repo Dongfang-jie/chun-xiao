@@ -35,7 +35,12 @@ document.addEventListener('DOMContentLoaded', function () {
   // 老师端：加载所有管理功能
   if (isTeacher) {
     loadInquiries();
+    initStudentSubTabs();
     loadStudents();
+    loadClasses();
+    loadSchedule();
+    loadAttendance();
+    loadRecords();
     loadArtworks();
     loadAnnouncements();
     loadCourses();
@@ -243,6 +248,408 @@ function updateInquiryBadge() {
   } else {
     badge.style.display = 'none';
   }
+}
+
+// ============================================================
+//  子标签切换
+// ============================================================
+function initStudentSubTabs() {
+  document.querySelectorAll('.sub-tab').forEach(function(tab) {
+    tab.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.querySelectorAll('.sub-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      var sub = tab.dataset.sub;
+      document.querySelectorAll('.sub-page').forEach(function(p) { p.classList.remove('active'); });
+      document.getElementById('sub-' + sub).classList.add('active');
+
+      // 切换到课表/点名时刷新数据
+      if (sub === 'schedule') renderSchedule();
+      if (sub === 'attendance') { refreshAttendanceSelects(); renderAttendanceHistory(); }
+      if (sub === 'records') { refreshRecordSelects(); renderRecordsList(); }
+      if (sub === 'classes') { refreshClassStudentCheckboxes(); }
+    });
+  });
+}
+
+// ============================================================
+//  班级管理
+// ============================================================
+function getClasses() {
+  return JSON.parse(localStorage.getItem('chunxiao-classes') || '[]');
+}
+function saveClasses(list) {
+  localStorage.setItem('chunxiao-classes', JSON.stringify(list));
+}
+
+function loadClasses() {
+  renderClasses();
+  var addBtn = document.getElementById('add-class-btn');
+  if (addBtn) addBtn.onclick = function() { showClassForm(); };
+  var cancelBtn = document.getElementById('class-cancel-btn');
+  if (cancelBtn) cancelBtn.onclick = function() { document.getElementById('class-form-wrap').style.display = 'none'; };
+  var saveBtn = document.getElementById('class-save-btn');
+  if (saveBtn) saveBtn.onclick = function() { saveClass(); };
+}
+
+function showClassForm(editData) {
+  document.getElementById('class-form-wrap').style.display = 'block';
+  document.getElementById('c-edit-id').value = editData ? editData.id : '';
+  document.getElementById('class-form-title').textContent = editData ? '编辑班级' : '创建班级';
+  document.getElementById('c-name').value = editData ? editData.name : '';
+  document.getElementById('c-course').value = editData ? editData.course : '';
+  document.getElementById('c-day').value = editData ? editData.day : '';
+  document.getElementById('c-time').value = editData ? editData.timeSlot : '';
+  document.getElementById('c-room').value = editData ? editData.room : '';
+  refreshClassStudentCheckboxes(editData ? editData.studentIds : []);
+}
+
+function refreshClassStudentCheckboxes(selectedIds) {
+  var container = document.getElementById('class-student-checkboxes');
+  if (!container) return;
+  selectedIds = selectedIds || [];
+  var students = getStudents();
+  if (students.length === 0) {
+    container.innerHTML = '<span style="color:#999;">暂无学员，请先在「学员」中添加</span>';
+    return;
+  }
+  container.innerHTML = students.map(function(s) {
+    var checked = selectedIds.indexOf(s.id) !== -1 ? ' checked' : '';
+    return '<label style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:#fdfaf5; border-radius:14px; cursor:pointer; font-size:0.9em;">'
+      + '<input type="checkbox" value="' + s.id + '"' + checked + '> ' + s.name + '</label>';
+  }).join('');
+}
+
+function saveClass() {
+  var name = document.getElementById('c-name').value.trim();
+  if (!name) { alert('请输入班级名称'); return; }
+  var editId = document.getElementById('c-edit-id').value;
+  var checks = document.querySelectorAll('#class-student-checkboxes input:checked');
+  var studentIds = Array.prototype.map.call(checks, function(cb) { return parseInt(cb.value); });
+
+  var cls = {
+    id: editId ? parseInt(editId) : Date.now(),
+    name: name,
+    course: document.getElementById('c-course').value,
+    day: document.getElementById('c-day').value,
+    timeSlot: document.getElementById('c-time').value.trim(),
+    room: document.getElementById('c-room').value.trim(),
+    studentIds: studentIds
+  };
+  var list = getClasses();
+  if (editId) { list = list.map(function(c) { return c.id == editId ? cls : c; }); }
+  else { list.unshift(cls); }
+  saveClasses(list);
+  document.getElementById('class-form-wrap').style.display = 'none';
+  renderClasses();
+}
+
+function renderClasses() {
+  var container = document.getElementById('classes-list');
+  var countEl = document.getElementById('class-count');
+  if (!container) return;
+  var list = getClasses();
+  if (countEl) countEl.textContent = list.length;
+  if (list.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">暂无班级，点击"+ 创建班级"开始</p>';
+    return;
+  }
+  var students = getStudents();
+  var html = '<div style="display:flex; flex-wrap:wrap; gap:16px;">';
+  list.forEach(function(c) {
+    var studentNames = c.studentIds.map(function(sid) {
+      var s = students.find(function(x) { return x.id == sid; });
+      return s ? s.name : '';
+    }).filter(Boolean).join('、');
+    html += [
+      '<div style="flex:1 1 340px; min-width:280px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06);">',
+      '<h4 style="color:#5d4037; margin:0 0 8px;">📦 ' + c.name + '</h4>',
+      '<p style="margin:4px 0; color:#666;"><strong>课程：</strong>' + (c.course || '--') + '</p>',
+      '<p style="margin:4px 0; color:#666;"><strong>时间：</strong>' + (c.day || '--') + ' ' + (c.timeSlot || '') + '</p>',
+      '<p style="margin:4px 0; color:#666;"><strong>教室：</strong>' + (c.room || '--') + '</p>',
+      '<p style="margin:4px 0; color:#666;"><strong>学员：</strong>' + (studentNames || '（未分配）') + '</p>',
+      '<div style="margin-top:8px;">',
+      '<a href="#" class="edit-class" data-id="' + c.id + '">✏️ 编辑</a> ',
+      '<a href="#" class="del-class" data-id="' + c.id + '" style="color:#e88;">🗑️ 删除</a>',
+      '</div></div>'
+    ].join('');
+  });
+  html += '</div>';
+  container.innerHTML = html;
+
+  container.querySelectorAll('.edit-class').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var id = parseInt(btn.dataset.id);
+      var c = getClasses().find(function(x) { return x.id == id; });
+      if (c) showClassForm(c);
+    });
+  });
+  container.querySelectorAll('.del-class').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (!confirm('确定删除该班级吗？')) return;
+      var id = parseInt(btn.dataset.id);
+      saveClasses(getClasses().filter(function(c) { return c.id != id; }));
+      renderClasses();
+    });
+  });
+}
+
+// ============================================================
+//  课表
+// ============================================================
+function loadSchedule() { /* 初次不渲染，切换时渲染 */ }
+
+function renderSchedule() {
+  var grid = document.getElementById('schedule-grid');
+  if (!grid) return;
+  var classes = getClasses();
+  var days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  var hasData = classes.some(function(c) { return c.day; });
+
+  if (!hasData) {
+    grid.innerHTML = '<p style="text-align:center; color:#999; padding:40px;">暂无班级数据，请先在「班级」中创建班级并设置上课日</p>';
+    return;
+  }
+
+  var html = '<div style="display:flex; flex-wrap:wrap; gap:10px;">';
+  days.forEach(function(day) {
+    var dayClasses = classes.filter(function(c) { return c.day === day; });
+    html += '<div style="flex:1 1 150px; min-width:130px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.05);">';
+    html += '<div style="background:#5d4037; color:#fff; text-align:center; padding:8px; font-weight:bold;">' + day + '</div>';
+    if (dayClasses.length === 0) {
+      html += '<div style="padding:16px; text-align:center; color:#ccc;">—</div>';
+    } else {
+      dayClasses.forEach(function(c) {
+        html += '<div style="padding:10px 12px; border-bottom:1px solid #f0e6d8; font-size:0.85em;">';
+        html += '<strong>' + c.name + '</strong><br>';
+        html += '<span style="color:#888;">' + (c.timeSlot || '') + '</span>';
+        if (c.room) html += ' <span style="color:#999;">| ' + c.room + '</span>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  grid.innerHTML = html;
+}
+
+// ============================================================
+//  点名
+// ============================================================
+function getAttendance() {
+  return JSON.parse(localStorage.getItem('chunxiao-attendance') || '[]');
+}
+function saveAttendance(list) {
+  localStorage.setItem('chunxiao-attendance', JSON.stringify(list));
+}
+
+function loadAttendance() {
+  refreshAttendanceSelects();
+  renderAttendanceHistory();
+  var loadBtn = document.getElementById('att-load-btn');
+  if (loadBtn) loadBtn.addEventListener('click', startAttendance);
+  document.getElementById('att-date').value = new Date().toISOString().split('T')[0];
+}
+
+function refreshAttendanceSelects() {
+  var sel = document.getElementById('att-class-select');
+  if (!sel) return;
+  var classes = getClasses();
+  sel.innerHTML = '<option value="">-- 请选择 --</option>' +
+    classes.map(function(c) { return '<option value="' + c.id + '">' + c.name + '（' + c.day + '）</option>'; }).join('');
+}
+
+function startAttendance() {
+  var area = document.getElementById('attendance-area');
+  var classId = parseInt(document.getElementById('att-class-select').value);
+  var date = document.getElementById('att-date').value;
+  if (!classId || !date) { area.innerHTML = '<p style="color:#e88; text-align:center;">⚠️ 请选择班级和日期</p>'; return; }
+
+  var cls = getClasses().find(function(c) { return c.id == classId; });
+  if (!cls) { area.innerHTML = '<p style="color:#e88;">班级不存在</p>'; return; }
+
+  var students = getStudents().filter(function(s) { return cls.studentIds.indexOf(s.id) !== -1; });
+  if (students.length === 0) { area.innerHTML = '<p style="color:#e88; text-align:center;">该班级没有学员，请先在「班级」中分配学员</p>'; return; }
+
+  // 检查是否已点过名
+  var existing = getAttendance().find(function(a) { return a.classId == classId && a.date == date; });
+  var existingRecords = existing ? existing.records : [];
+
+  var html = '<div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06);">';
+  html += '<h4 style="color:#5d4037; margin-bottom:12px;">📋 ' + cls.name + ' — ' + date + '</h4>';
+  html += '<button id="att-all-present" class="login-btn" style="width:auto; padding:6px 16px; margin-bottom:12px; font-size:0.85em;">✅ 全部出勤</button>';
+  html += '<table><thead><tr><th>学员</th><th>出勤</th><th>请假</th><th>缺勤</th></tr></thead><tbody>';
+
+  students.forEach(function(s) {
+    var rec = existingRecords.find(function(r) { return r.studentId == s.id; });
+    var status = rec ? rec.status : 'present';
+    html += '<tr>';
+    html += '<td><strong>' + s.name + '</strong></td>';
+    html += '<td><button class="att-btn att-present' + (status === 'present' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="present">✅</button></td>';
+    html += '<td><button class="att-btn att-leave' + (status === 'leave' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="leave">⭕</button></td>';
+    html += '<td><button class="att-btn att-absent' + (status === 'absent' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="absent">❌</button></td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  html += '<button id="att-save-btn" class="login-btn" style="width:auto; padding:10px 24px; margin-top:12px;">💾 保存点名</button>';
+  html += '<span id="att-msg" style="margin-left:12px; font-size:0.9em;"></span>';
+  html += '</div>';
+  area.innerHTML = html;
+
+  // 全部出勤按钮
+  document.getElementById('att-all-present').addEventListener('click', function() {
+    area.querySelectorAll('.att-btn').forEach(function(b) {
+      if (b.dataset.st === 'present') { b.classList.add('active'); }
+      else { b.classList.remove('active'); }
+    });
+  });
+
+  // 状态按钮切换
+  area.querySelectorAll('.att-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var row = btn.parentElement.parentElement;
+      row.querySelectorAll('.att-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+    });
+  });
+
+  // 保存
+  document.getElementById('att-save-btn').addEventListener('click', function() {
+    var records = [];
+    area.querySelectorAll('tbody tr').forEach(function(row) {
+      var sid = parseInt(row.querySelector('.att-btn').dataset.sid);
+      var activeBtn = row.querySelector('.att-btn.active');
+      records.push({ studentId: sid, status: activeBtn ? activeBtn.dataset.st : 'present' });
+    });
+
+    var all = getAttendance().filter(function(a) { return !(a.classId == classId && a.date == date); });
+    all.push({ id: Date.now(), classId: classId, date: date, records: records });
+    saveAttendance(all);
+    document.getElementById('att-msg').textContent = '✅ 点名已保存';
+    document.getElementById('att-msg').style.color = '#5a9';
+    renderAttendanceHistory();
+  });
+}
+
+function renderAttendanceHistory() {
+  var container = document.getElementById('attendance-history');
+  if (!container) return;
+  var list = getAttendance();
+  if (list.length === 0) { container.innerHTML = '<p style="color:#999;">暂无记录</p>'; return; }
+
+  var classes = getClasses();
+  var students = getStudents();
+  list.sort(function(a, b) { return b.id - a.id; });
+
+  var html = '';
+  list.slice(0, 10).forEach(function(a) {
+    var cls = classes.find(function(c) { return c.id == a.classId; });
+    var presentCount = a.records.filter(function(r) { return r.status === 'present'; }).length;
+    html += '<div style="background:#fff; border-radius:8px; padding:12px 16px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">';
+    html += '<strong>' + (cls ? cls.name : '(已删)') + '</strong> · ' + a.date;
+    html += ' · ✅' + presentCount + '/' + a.records.length;
+    html += ' <a href="#" class="del-att" data-id="' + a.id + '" style="color:#e88; font-size:0.8em;">删除</a>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll('.del-att').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (!confirm('删除该次点名记录？')) return;
+      var id = parseInt(btn.dataset.id);
+      saveAttendance(getAttendance().filter(function(a) { return a.id != id; }));
+      renderAttendanceHistory();
+    });
+  });
+}
+
+// ============================================================
+//  上课记录
+// ============================================================
+function getRecords() {
+  return JSON.parse(localStorage.getItem('chunxiao-records') || '[]');
+}
+function saveRecords(list) {
+  localStorage.setItem('chunxiao-records', JSON.stringify(list));
+}
+
+function loadRecords() {
+  refreshRecordSelects();
+  renderRecordsList();
+  var saveBtn = document.getElementById('record-save-btn');
+  if (saveBtn) saveBtn.addEventListener('click', saveRecord);
+  document.getElementById('rec-date').value = new Date().toISOString().split('T')[0];
+}
+
+function refreshRecordSelects() {
+  var sel = document.getElementById('rec-class-select');
+  if (!sel) return;
+  var classes = getClasses();
+  sel.innerHTML = '<option value="">-- 请选择 --</option>' +
+    classes.map(function(c) { return '<option value="' + c.id + '">' + c.name + '</option>'; }).join('');
+}
+
+function saveRecord() {
+  var classId = parseInt(document.getElementById('rec-class-select').value);
+  var date = document.getElementById('rec-date').value;
+  var content = document.getElementById('rec-content').value.trim();
+  var notes = document.getElementById('rec-notes').value.trim();
+  var msgEl = document.getElementById('rec-msg');
+  if (!classId || !date || !content) {
+    msgEl.textContent = '⚠️ 请填写班级、日期和教学内容';
+    msgEl.style.color = '#e88'; return;
+  }
+  var list = getRecords();
+  list.unshift({
+    id: Date.now(), classId: classId, date: date,
+    content: content, notes: notes,
+    teacherName: (Auth.currentUser() || {}).name || '老师',
+    time: new Date().toLocaleString('zh-CN')
+  });
+  saveRecords(list);
+  document.getElementById('rec-content').value = '';
+  document.getElementById('rec-notes').value = '';
+  msgEl.textContent = '✅ 记录已保存';
+  msgEl.style.color = '#5a9';
+  renderRecordsList();
+}
+
+function renderRecordsList() {
+  var container = document.getElementById('records-list');
+  if (!container) return;
+  var list = getRecords();
+  if (list.length === 0) { container.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">暂无记录</p>'; return; }
+
+  var classes = getClasses();
+  var html = '';
+  list.forEach(function(r) {
+    var cls = classes.find(function(c) { return c.id == r.classId; });
+    html += [
+      '<div style="background:#fff; border-radius:10px; padding:16px 20px; margin-bottom:10px; box-shadow:0 1px 6px rgba(0,0,0,0.05); border-left:3px solid #5d4037;">',
+      '<div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">',
+      '<strong style="color:#5d4037;">' + (cls ? cls.name : '(已删)') + ' · ' + r.date + '</strong>',
+      '<span style="color:#999; font-size:0.8em;">' + r.time + ' · ' + r.teacherName + '</span>',
+      '</div>',
+      '<p style="margin-top:8px; color:#444;">📖 ' + r.content + '</p>',
+      (r.notes ? '<p style="color:#888; font-size:0.9em;">📌 ' + r.notes + '</p>' : ''),
+      '<a href="#" class="del-rec" data-id="' + r.id + '" style="color:#e88; font-size:0.8em;">🗑️ 删除</a>',
+      '</div>'
+    ].join('');
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll('.del-rec').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (!confirm('删除该上课记录？')) return;
+      var id = parseInt(btn.dataset.id);
+      saveRecords(getRecords().filter(function(r) { return r.id != id; }));
+      renderRecordsList();
+    });
+  });
 }
 
 // ============================================================

@@ -77,38 +77,149 @@
         </table>
       </section>
 
-      <!-- 学生管理 -->
+      <!-- 学生管理（子标签页） -->
       <section id="page-students" class="dash-page">
         <h2>👨‍🎓 学生管理</h2>
-        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
-          <button id="add-student-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 添加学生</button>
-          <span style="color:#888; font-size:0.9em;">共 <strong id="student-count">0</strong> 名学生</span>
+        <!-- 子标签导航 -->
+        <div class="sub-tabs">
+          <a href="#" class="sub-tab active" data-sub="roster">👨‍🎓 学员</a>
+          <a href="#" class="sub-tab" data-sub="classes">📦 班级</a>
+          <a href="#" class="sub-tab" data-sub="schedule">📅 课表</a>
+          <a href="#" class="sub-tab" data-sub="attendance">📋 点名</a>
+          <a href="#" class="sub-tab" data-sub="records">📝 上课记录</a>
         </div>
-        <!-- 添加/编辑学生表单（默认隐藏） -->
-        <div id="student-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-          <h4 id="student-form-title">添加学生</h4>
-          <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <input type="text" id="s-name" placeholder="学生姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-            <input type="text" id="s-age" placeholder="年龄" style="flex:1; min-width:80px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-            <select id="s-course" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <option value="">选择课程</option>
-              <option>儿童创意画</option><option>素描基础</option><option>水彩入门</option>
-              <option>动漫插画</option><option>硬笔书法</option><option>软笔书法</option>
-            </select>
-            <input type="text" id="s-parent" placeholder="家长姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-            <input type="text" id="s-phone" placeholder="家长电话" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-            <select id="s-status" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <option value="在读">在读</option><option value="休学">休学</option><option value="结课">结课</option>
-            </select>
+
+        <!-- ====== 学员 ====== -->
+        <div class="sub-page active" id="sub-roster">
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+            <button id="add-student-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 添加学生</button>
+            <span style="color:#888; font-size:0.9em;">共 <strong id="student-count">0</strong> 名学生</span>
           </div>
-          <div style="margin-top:12px; display:flex; gap:8px;">
-            <button id="student-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
-            <button id="student-cancel-btn" class="logout-btn">取消</button>
-            <input type="hidden" id="s-edit-id" value="">
+          <div id="student-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <h4 id="student-form-title">添加学生</h4>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <input type="text" id="s-name" placeholder="学生姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <input type="text" id="s-age" placeholder="年龄" style="flex:1; min-width:80px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <select id="s-course" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+                <option value="">选择课程</option>
+                <option>儿童创意画</option><option>素描基础</option><option>水彩入门</option>
+                <option>动漫插画</option><option>硬笔书法</option><option>软笔书法</option>
+              </select>
+              <input type="text" id="s-parent" placeholder="家长姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <input type="text" id="s-phone" placeholder="家长电话" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <select id="s-status" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+                <option value="在读">在读</option><option value="休学">休学</option><option value="结课">结课</option>
+              </select>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px;">
+              <button id="student-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+              <button id="student-cancel-btn" class="logout-btn">取消</button>
+              <input type="hidden" id="s-edit-id" value="">
+            </div>
+          </div>
+          <div id="students-list">
+            <p style="text-align:center; color:#999; padding:40px;">暂无学生，点击"+ 添加学生"开始</p>
           </div>
         </div>
-        <div id="students-list">
-          <p style="text-align:center; color:#999; padding:40px;">暂无学生，点击"+ 添加学生"开始</p>
+
+        <!-- ====== 班级 ====== -->
+        <div class="sub-page" id="sub-classes">
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+            <button id="add-class-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 创建班级</button>
+            <span style="color:#888; font-size:0.9em;">共 <strong id="class-count">0</strong> 个班级</span>
+          </div>
+          <div id="class-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <h4 id="class-form-title">创建班级</h4>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <input type="text" id="c-name" placeholder="班级名称，如：创意画A班" style="flex:2; min-width:150px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <select id="c-course" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+                <option value="">关联课程</option>
+                <option>儿童创意画</option><option>素描基础</option><option>水彩入门</option>
+                <option>动漫插画</option><option>硬笔书法</option><option>软笔书法</option>
+              </select>
+              <select id="c-day" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+                <option value="">上课日</option>
+                <option>周一</option><option>周二</option><option>周三</option><option>周四</option>
+                <option>周五</option><option>周六</option><option>周日</option>
+              </select>
+              <input type="text" id="c-time" placeholder="时段，如：9:00-10:30" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <input type="text" id="c-room" placeholder="教室" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            </div>
+            <div style="margin-top:12px;">
+              <label style="font-weight:bold; color:#5d4037;">👨‍🎓 选择学员：</label>
+              <div id="class-student-checkboxes" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px;">
+              <button id="class-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+              <button id="class-cancel-btn" class="logout-btn">取消</button>
+              <input type="hidden" id="c-edit-id" value="">
+            </div>
+          </div>
+          <div id="classes-list">
+            <p style="text-align:center; color:#999; padding:40px;">暂无班级，点击"+ 创建班级"开始</p>
+          </div>
+        </div>
+
+        <!-- ====== 课表 ====== -->
+        <div class="sub-page" id="sub-schedule">
+          <p style="color:#888; margin-bottom:15px;">周视图课表，根据班级数据自动生成</p>
+          <div id="schedule-grid"></div>
+        </div>
+
+        <!-- ====== 点名 ====== -->
+        <div class="sub-page" id="sub-attendance">
+          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-bottom:20px;">
+            <div>
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">📦 选择班级</label>
+              <select id="att-class-select" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:160px;">
+                <option value="">-- 请选择 --</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">📅 日期</label>
+              <input type="date" id="att-date" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px;">
+            </div>
+            <button id="att-load-btn" class="login-btn" style="width:auto; padding:10px 20px;">📋 开始点名</button>
+          </div>
+          <div id="attendance-area">
+            <p style="text-align:center; color:#999; padding:30px;">选择班级和日期后开始点名</p>
+          </div>
+          <hr style="margin:30px 0; border-color:#e8d4c8;">
+          <h3>📜 最近点名记录</h3>
+          <div id="attendance-history"></div>
+        </div>
+
+        <!-- ====== 上课记录 ====== -->
+        <div class="sub-page" id="sub-records">
+          <div id="record-form-wrap" style="background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <h4>📝 添加上课记录</h4>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">班级</label>
+                <select id="rec-class-select" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:160px;">
+                  <option value="">-- 请选择 --</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">日期</label>
+                <input type="date" id="rec-date" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px;">
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">📖 教学内容</label>
+              <textarea id="rec-content" rows="3" placeholder="本节课教授的内容..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; resize:vertical;"></textarea>
+            </div>
+            <div style="margin-top:12px;">
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">📌 备注</label>
+              <input type="text" id="rec-notes" placeholder="学生表现、作业等..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px;">
+            </div>
+            <button id="record-save-btn" class="login-btn" style="width:auto; padding:10px 24px; margin-top:12px;">💾 保存记录</button>
+            <span id="rec-msg" style="margin-left:12px; font-size:0.9em;"></span>
+          </div>
+          <h3>📜 上课记录列表</h3>
+          <div id="records-list">
+            <p style="text-align:center; color:#999; padding:30px;">暂无记录</p>
+          </div>
         </div>
       </section>
 
