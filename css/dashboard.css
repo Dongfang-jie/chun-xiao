@@ -344,6 +344,29 @@ body.dark-mode .inquiry-badge {
   background: #c06070;
 }
 
+/* ========== 可编辑单元格 ========== */
+.editable {
+  cursor: text;
+  transition: background 0.3s;
+  border-radius: 4px;
+  outline: none;
+}
+.editable:focus {
+  background: #fff8e0;
+  box-shadow: inset 0 0 0 1px #d7a86e;
+}
+
+body.dark-mode .editable:focus {
+  background: #3a3020;
+  box-shadow: inset 0 0 0 1px #d7a86e;
+}
+
+body.dark-mode #student-form-wrap,
+body.dark-mode #artwork-form-wrap,
+body.dark-mode #announce-form-wrap {
+  background: #2a2a2a !important;
+}
+
 /* ========== 响应式：手机横排变竖排 ========== */
 @media (max-width: 768px) {
   .dash-layout {

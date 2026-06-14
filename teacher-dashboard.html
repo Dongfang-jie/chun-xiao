@@ -80,29 +80,70 @@
       <!-- 学生管理 -->
       <section id="page-students" class="dash-page">
         <h2>👨‍🎓 学生管理</h2>
-        <p style="color:#888;">学生名单将在此处管理（功能开发中）</p>
-        <table>
-          <thead>
-            <tr><th>姓名</th><th>年龄</th><th>课程</th><th>家长</th><th>状态</th></tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="5" style="text-align:center; color:#999;">连接后端后将显示真实数据</td></tr>
-          </tbody>
-        </table>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+          <button id="add-student-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 添加学生</button>
+          <span style="color:#888; font-size:0.9em;">共 <strong id="student-count">0</strong> 名学生</span>
+        </div>
+        <!-- 添加/编辑学生表单（默认隐藏） -->
+        <div id="student-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <h4 id="student-form-title">添加学生</h4>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <input type="text" id="s-name" placeholder="学生姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <input type="text" id="s-age" placeholder="年龄" style="flex:1; min-width:80px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <select id="s-course" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <option value="">选择课程</option>
+              <option>儿童创意画</option><option>素描基础</option><option>水彩入门</option>
+              <option>动漫插画</option><option>硬笔书法</option><option>软笔书法</option>
+            </select>
+            <input type="text" id="s-parent" placeholder="家长姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <input type="text" id="s-phone" placeholder="家长电话" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <select id="s-status" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <option value="在读">在读</option><option value="休学">休学</option><option value="结课">结课</option>
+            </select>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button id="student-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+            <button id="student-cancel-btn" class="logout-btn">取消</button>
+            <input type="hidden" id="s-edit-id" value="">
+          </div>
+        </div>
+        <div id="students-list">
+          <p style="text-align:center; color:#999; padding:40px;">暂无学生，点击"+ 添加学生"开始</p>
+        </div>
       </section>
 
       <!-- 作品管理 -->
       <section id="page-artworks" class="dash-page">
         <h2>🖼️ 作品管理</h2>
-        <p style="color:#888;">上传和管理学生作品（功能开发中）</p>
-        <button class="login-btn" style="width:auto; padding:10px 24px;">+ 上传新作品</button>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+          <button id="add-artwork-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 添加作品</button>
+          <span style="color:#888; font-size:0.9em;">共 <strong id="artwork-count">0</strong> 件作品</span>
+        </div>
+        <div id="artwork-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <h4>添加作品</h4>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <input type="text" id="a-title" placeholder="作品名称" style="flex:2; min-width:150px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <input type="text" id="a-student" placeholder="学生姓名" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <select id="a-type" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <option value="美术">美术</option><option value="书法">书法</option>
+            </select>
+            <input type="url" id="a-image" placeholder="图片链接（可先用占位图）" style="flex:3; min-width:200px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+          </div>
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button id="artwork-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+            <button id="artwork-cancel-btn" class="logout-btn">取消</button>
+          </div>
+        </div>
+        <div id="artworks-list" class="card-container" style="justify-content:flex-start;">
+          <p style="text-align:center; color:#999; padding:40px; width:100%;">暂无作品，点击"+ 添加作品"开始</p>
+        </div>
       </section>
 
       <!-- 预约查询 -->
       <section id="page-inquiries" class="dash-page">
         <h2>📩 预约查询</h2>
         <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
-          <span style="color:#888;">家长填写的免费试听预约，点击行标记已读</span>
+          <span style="color:#888;">家长填写的免费试听预约，点击卡片标记已读</span>
           <button id="clear-inquiries" class="logout-btn" style="margin-left:auto;">🗑️ 清空全部</button>
         </div>
         <div id="inquiries-list">
@@ -113,29 +154,29 @@
       <!-- 发布通知 -->
       <section id="page-announcements" class="dash-page">
         <h2>📢 发布通知</h2>
-        <p style="color:#888;">向家长发布课程通知、活动公告（功能开发中）</p>
-        <form style="max-width:500px;">
-          <label>通知标题</label>
-          <input type="text" placeholder="如：本周六课程调整通知" style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; margin-bottom:12px;">
-          <label>通知内容</label>
-          <textarea rows="5" placeholder="请输入通知内容..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; resize:vertical;"></textarea>
-          <button type="button" class="login-btn" style="width:auto; padding:10px 24px; margin-top:12px;">📤 发布通知</button>
-        </form>
+        <div id="announce-form-wrap" style="background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <input type="text" id="ann-title" placeholder="通知标题，如：本周六课程调整通知" style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; margin-bottom:12px; font-size:1em;">
+          <textarea id="ann-content" rows="4" placeholder="请输入通知内容..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; resize:vertical; font-size:1em;"></textarea>
+          <button id="publish-ann-btn" class="login-btn" style="width:auto; padding:10px 24px; margin-top:12px;">📤 发布通知</button>
+          <span id="ann-msg" style="margin-left:12px; font-size:0.9em;"></span>
+        </div>
+        <h3>📋 已发布通知</h3>
+        <div id="announcements-list">
+          <p style="text-align:center; color:#999; padding:30px;">暂无通知</p>
+        </div>
       </section>
 
       <!-- 课程管理 -->
       <section id="page-courses" class="dash-page">
         <h2>📚 课程管理</h2>
-        <p style="color:#888;">管理课程安排和时间表（功能开发中）</p>
-        <table>
+        <p style="color:#888; margin-bottom:15px;">点击"编辑"修改课程信息，修改后自动保存</p>
+        <table id="courses-table">
           <thead>
             <tr><th>课程名称</th><th>年龄段</th><th>时长</th><th>时段</th><th>名额</th><th>操作</th></tr>
           </thead>
-          <tbody>
-            <tr><td>儿童创意画</td><td>4-7岁</td><td>90分钟</td><td>周六 9:00</td><td>3/8</td><td><a href="#">编辑</a></td></tr>
-            <tr><td>素描基础</td><td>8-12岁</td><td>120分钟</td><td>周六 14:00</td><td>5/8</td><td><a href="#">编辑</a></td></tr>
-            <tr><td>硬笔书法</td><td>6+岁</td><td>90分钟</td><td>周日 9:00</td><td>6/8</td><td><a href="#">编辑</a></td></tr>
-          </tbody>
+          <tbody></tbody>
+        </table>
+      </section>
         </table>
       </section>
 
