@@ -70,27 +70,36 @@
   box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.15);
 }
 
-/* ========== 登录按钮 ========== */
+/* ========== 登录按钮 / 主操作按钮 ========== */
 .login-btn {
   width: 100%;
   margin-top: 24px;
-  padding: 14px;
+  padding: 14px 24px;
   background: #5d4037;
   color: #fff;
   border: none;
+  border-bottom: 3px solid #3e2723;
   border-radius: 8px;
   font-size: 1.1em;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.3s, transform 0.1s;
+  user-select: none;
+  box-shadow: 0 3px 10px rgba(93, 64, 55, 0.25);
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s, border-color 0.15s;
 }
 
 .login-btn:hover {
-  background: #795548;
+  background: #6d4c41;
+  border-bottom-color: #4e342e;
+  box-shadow: 0 5px 16px rgba(93, 64, 55, 0.35);
+  transform: translateY(-1px);
 }
 
 .login-btn:active {
-  transform: scale(0.98);   /* 点击时微微缩小 */
+  background: #4e342e;
+  border-bottom-color: transparent;
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px rgba(93, 64, 55, 0.2);
 }
 
 /* ========== 错误提示 ========== */
@@ -168,10 +177,20 @@ body.dark-mode .login-form input:focus {
 body.dark-mode .login-btn {
   background: #d7a86e;
   color: #1a1a1a;
+  border-bottom-color: #b8955a;
+  box-shadow: 0 3px 10px rgba(215, 168, 110, 0.3);
 }
 
 body.dark-mode .login-btn:hover {
-  background: #c9a87c;
+  background: #e0b878;
+  border-bottom-color: #c9a060;
+  box-shadow: 0 5px 16px rgba(215, 168, 110, 0.4);
+}
+
+body.dark-mode .login-btn:active {
+  background: #c99750;
+  border-bottom-color: transparent;
+  box-shadow: 0 1px 4px rgba(215, 168, 110, 0.2);
 }
 
 body.dark-mode .login-info {

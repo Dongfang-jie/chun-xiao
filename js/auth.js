@@ -10,8 +10,8 @@
 var AUTH_CONFIG = {
   // 老师列表（添加老师：复制下面三行，改邮箱、密码、名字）
   teachers: [
-    { email: '756924037@qq.com', password: '756924', name: '张校长' },
-    { email: '953034984@qq.com', password: '454657', name: '郑校长' },
+    { email: '756924037@qq.com', password: '756924', name: '张校长', role: 'admin' },
+    { email: '953034984@qq.com', password: '454657', name: '郑校长', role: 'teacher' },
     // { email: 'teacher3@qq.com', password: '123456', name: '王老师' },
   ],
   storageKey: 'chunxiao_users',    // localStorage 的键名
@@ -44,7 +44,7 @@ var Auth = {
       var teacherUser = {
         email: teacher.email,
         name: teacher.name,
-        role: 'teacher',
+        role: teacher.role || 'teacher',
         loginTime: new Date().toISOString(),
       };
       this._setSession(teacherUser);
@@ -114,6 +114,12 @@ var Auth = {
   // ---------- 登出 ----------
   logout: function () {
     localStorage.removeItem(AUTH_CONFIG.sessionKey);
+  },
+
+  // ---------- 是否管理员 ----------
+  isAdmin: function () {
+    var user = this.currentUser();
+    return user && user.role === 'admin';
   },
 
   // ---------- 获取当前用户 ----------
