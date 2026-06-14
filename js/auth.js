@@ -17,9 +17,12 @@ var AUTH_CONFIG = {
   storageKey: 'chunxiao_users',    // localStorage 的键名
   sessionKey: 'chunxiao_session',  // 当前登录会话
 
-  // 手机通知（PushPlus）：去 https://www.pushplus.plus 注册获取 token，填在这里
-  // 填好之后，有人填预约表单时微信就会收到通知。不填则只在老师后台显示。
-  notifyToken: '8a9d4a11fed14506a36dcae8f8d42f5a',
+  // 手机通知（PushPlus）：去 https://www.pushplus.plus 注册获取 token
+  // 支持多个老师，每个老师一个 token，有人填预约表单时全部都能收到微信通知
+  notifyTokens: [
+    '8a9d4a11fed14506a36dcae8f8d42f5a',  // 张校长
+    '11ed293d91604801a30659f8185fa4e3',  // 郑校长
+  ],
 };
 
 // ============================================================

@@ -275,33 +275,35 @@
         });
       }
 
-      // 发送手机通知
+      // 发送手机通知（给所有配置了 token 的老师）
       function sendPhoneNotify(data) {
-        // PushPlus 推送令牌（在 auth.js 中配置）
-        var token = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.notifyToken) ? AUTH_CONFIG.notifyToken : '';
-        if (!token) return; // 未配置则不发送
+        var tokens = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.notifyTokens) ? AUTH_CONFIG.notifyTokens : [];
+        if (!tokens.length) return;
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://www.pushplus.plus/send', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.onerror = function() { console.log('通知发送失败（网络问题）'); };
-        xhr.send(JSON.stringify({
-          token: token,
-          title: '🌸 新预约提醒 - 春晓画室',
-          content: [
-            '<h3>有人预约了免费试听课！</h3>',
-            '<table>',
-            '<tr><td><b>家长：</b></td><td>' + data.parentName + '</td></tr>',
-            '<tr><td><b>电话：</b></td><td>' + data.phone + '</td></tr>',
-            '<tr><td><b>孩子：</b></td><td>' + data.childName + '（' + data.childAge + '）</td></tr>',
-            '<tr><td><b>课程：</b></td><td>' + data.courses + '</td></tr>',
-            '<tr><td><b>留言：</b></td><td>' + data.message + '</td></tr>',
-            '<tr><td><b>时间：</b></td><td>' + data.time + '</td></tr>',
-            '</table>',
-            '<br><p>请尽快联系家长确认试听时间哦～</p>'
-          ].join(''),
-          template: 'html'
-        }));
+        // 逐个发送
+        tokens.forEach(function(token) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', 'https://www.pushplus.plus/send', true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.onerror = function() { console.log('通知发送失败（网络问题）'); };
+          xhr.send(JSON.stringify({
+            token: token,
+            title: '🌸 新预约提醒 - 春晓画室',
+            content: [
+              '<h3>有人预约了免费试听课！</h3>',
+              '<table>',
+              '<tr><td><b>家长：</b></td><td>' + data.parentName + '</td></tr>',
+              '<tr><td><b>电话：</b></td><td>' + data.phone + '</td></tr>',
+              '<tr><td><b>孩子：</b></td><td>' + data.childName + '（' + data.childAge + '）</td></tr>',
+              '<tr><td><b>课程：</b></td><td>' + data.courses + '</td></tr>',
+              '<tr><td><b>留言：</b></td><td>' + data.message + '</td></tr>',
+              '<tr><td><b>时间：</b></td><td>' + data.time + '</td></tr>',
+              '</table>',
+              '<br><p>请尽快联系家长确认试听时间哦～</p>'
+            ].join(''),
+            template: 'html'
+          }));
+        });
       }
     })();
   </script>
