@@ -85,6 +85,11 @@ document.addEventListener('DOMContentLoaded', function () {
           loginError.textContent = '该账号不是老师，请使用家长端登录';
           return;
         }
+        if (currentRole === 'parent' && user.role !== 'parent') {
+          Auth.logout();
+          loginError.textContent = '该账号不是家长，请使用老师端登录';
+          return;
+        }
 
         // 跳转
         if (currentRole === 'teacher') {
