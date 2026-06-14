@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>联系我们 - 春晓画室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ========== 页头 ========== -->
+  <header>
+    <h1>🌸 春晓画室</h1>
+    <p class="subtitle">用画笔描绘春天，用墨香浸润童年</p>
+
+    <nav>
+      <a href="index.html">🏠 首页</a>
+      <a href="gallery.html">🖼️ 作品展示</a>
+      <a href="courses.html">📚 课程介绍</a>
+      <a href="contact.html">📞 联系我们</a>
+      <a href="login.html" style="border: 2px solid #5d4037;">🔐 登录</a>
+    </nav>
+  </header>
+
+  <!-- ========== 主内容 ========== -->
+  <main>
+
+    <!-- ---- 页面标题 ---- -->
+    <section>
+      <h2>📞 联系我们</h2>
+      <p style="text-align:center; color:#888; max-width:650px; margin:0 auto;">
+        欢迎预约<strong>免费试听课</strong>！留下您的联系方式，我们会在 24 小时内与您取得联系。
+      </p>
+    </section>
+
+    <!-- ---- 联系信息卡片 ---- -->
+    <section>
+      <h2>📍 画室信息</h2>
+      <div class="contact-info">
+        <div class="contact-item">
+          <span class="icon">📍</span>
+          <strong>画室地址</strong>
+          <p>__________________</p>
+          <p style="font-size:0.85em; color:#999;">（请填写详细地址）</p>
+        </div>
+        <div class="contact-item">
+          <span class="icon">📱</span>
+          <strong>联系电话</strong>
+          <p>__________________</p>
+          <p style="font-size:0.85em; color:#999;">（张校长 / 郑校长）</p>
+        </div>
+        <div class="contact-item">
+          <span class="icon">💬</span>
+          <strong>微信咨询</strong>
+          <p>__________________</p>
+          <p style="font-size:0.85em; color:#999;">（搜索手机号或微信号添加）</p>
+        </div>
+        <div class="contact-item">
+          <span class="icon">🕐</span>
+          <strong>开放时间</strong>
+          <p>__________________</p>
+          <p style="font-size:0.85em; color:#999;">（请填写上课/咨询时间段）</p>
+        </div>
+      </div>
+
+      <!-- 微信二维码占位 -->
+      <div style="text-align:center; margin-top:30px;">
+        <div style="display:inline-flex; width:180px; height:180px; background:linear-gradient(135deg, #f8e8d0, #e8d4c8); border-radius:12px; align-items:center; justify-content:center; font-size:4em; color:#c9a87c;" title="微信二维码占位">
+          📱
+        </div>
+        <p style="color:#999; margin-top:10px; font-size:0.9em;">扫一扫添加微信<br>（此处可替换为微信二维码图片）</p>
+      </div>
+    </section>
+
+    <!-- ---- 免费试听预约表单 ---- -->
+    <section>
+      <h2>✍️ 预约免费试听课</h2>
+      <p style="text-align:center; color:#888; margin-bottom:30px;">
+        填写以下信息，我们会尽快与您联系安排试听时间 🎨
+      </p>
+
+      <form id="contact-form" class="contact-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="parent-name">👤 家长姓名 <span style="color:#e88;">*</span></label>
+            <input type="text" id="parent-name" placeholder="请输入您的姓名" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">📱 联系电话 <span style="color:#e88;">*</span></label>
+            <input type="tel" id="phone" placeholder="请输入手机号码" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="child-name">👶 孩子姓名</label>
+            <input type="text" id="child-name" placeholder="请输入孩子姓名">
+          </div>
+          <div class="form-group">
+            <label for="child-age">🎂 孩子年龄</label>
+            <select id="child-age">
+              <option value="">请选择</option>
+              <option value="3-4">3-4岁</option>
+              <option value="4-5">4-5岁</option>
+              <option value="5-6">5-6岁</option>
+              <option value="6-7">6-7岁</option>
+              <option value="7-8">7-8岁</option>
+              <option value="8-10">8-10岁</option>
+              <option value="10-12">10-12岁</option>
+              <option value="12+">12岁以上</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>🎯 感兴趣的课程（可多选）</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="course" value="儿童创意画"> 儿童创意画
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="course" value="素描基础"> 素描基础
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="course" value="水彩入门"> 水彩入门
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="course" value="动漫插画"> 动漫插画
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="course" value="硬笔书法"> 硬笔书法
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" name="course" value="软笔书法"> 软笔书法
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="message">💬 留言（可选）</label>
+          <textarea id="message" rows="4" placeholder="有什么想告诉我们的？比如孩子是否有绘画/书法基础、希望的上课时间等..."></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">📩 提交预约</button>
+
+        <p id="form-msg" class="form-message"></p>
+      </form>
+
+      <!-- 提交成功后的提示（默认隐藏） -->
+      <div id="form-success" class="form-success" style="display:none;">
+        <div style="font-size:4em; margin-bottom:15px;">✅</div>
+        <h3 style="color:#5d4037;">预约信息已收到！</h3>
+        <p style="color:#888; margin:15px 0;">
+          感谢您的关注！我们会尽快通过电话或微信与您联系，
+          <br>为您安排<strong>免费试听课</strong>。
+        </p>
+        <p style="color:#999; font-size:0.9em;">
+          如有急事，请直接拨打：<strong style="color:#5d4037;">__________________</strong>
+        </p>
+        <button class="submit-btn" style="margin-top:20px; max-width:200px;" onclick="location.reload();">
+          📝 重新填写
+        </button>
+      </div>
+    </section>
+
+    <!-- ---- 交通指引 ---- -->
+    <section>
+      <h2>🗺️ 交通指引</h2>
+      <div class="about-content" style="padding:25px; background:#fff; border-radius:12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <div class="about-text">
+          <p><strong>🚇 地铁：</strong>__________________</p>
+          <p><strong>🚌 公交：</strong>__________________</p>
+          <p><strong>🚗 自驾：</strong>__________________</p>
+          <p style="color:#999; font-size:0.9em; margin-top:10px;">
+            （请根据画室实际位置填写交通信息）
+          </p>
+        </div>
+        <div class="about-image" style="min-width:200px; height:220px; font-size:3em;">
+          🗺️
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== 页脚 ========== -->
+  <footer>
+    <p>&copy; 2026 春晓画室 | 让艺术陪伴孩子成长</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+
+  <!-- 联系表单交互 -->
+  <script>
+    (function() {
+      var form = document.getElementById('contact-form');
+      var successBox = document.getElementById('form-success');
+      var msgEl = document.getElementById('form-msg');
+
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+
+          // 简单校验：至少填了姓名和电话
+          var name = document.getElementById('parent-name').value.trim();
+          var phone = document.getElementById('phone').value.trim();
+
+          if (!name || !phone) {
+            msgEl.textContent = '⚠️ 请至少填写家长姓名和联系电话';
+            msgEl.className = 'form-message error';
+            return;
+          }
+
+          // 手机号简单校验
+          if (!/^1\d{10}$/.test(phone)) {
+            msgEl.textContent = '⚠️ 请输入正确的11位手机号码';
+            msgEl.className = 'form-message error';
+            return;
+          }
+
+          // 显示成功信息
+          form.style.display = 'none';
+          successBox.style.display = 'block';
+          msgEl.textContent = '';
+
+          // 滚动到成功提示
+          successBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
+    })();
+  </script>
+
+</body>
+</html>

@@ -377,6 +377,11 @@ body.dark-mode table th {
   border-color: #444;
 }
 
+body.dark-mode section a[href="contact.html"] {
+  background: #d7a86e !important;
+  color: #1a1a1a !important;
+}
+
 /* ========== 回到顶部按钮 ========== */
 .back-to-top {
   position: fixed;
@@ -416,6 +421,187 @@ body.dark-mode .back-to-top {
 
 body.dark-mode .back-to-top:hover {
   background: #c9a87c;
+}
+
+/* ========== 联系表单样式 ========== */
+.contact-form {
+  max-width: 650px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 35px;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.form-group {
+  margin-bottom: 22px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #5d4037;
+  font-weight: bold;
+  font-size: 0.95em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="tel"],
+.form-group input[type="email"],
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+  font-size: 1em;
+  font-family: inherit;
+  color: #3a3a3a;
+  background: #fdfaf5;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #d7a86e;
+  box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.2);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* 复选框组 */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal !important;
+  color: #555 !important;
+  cursor: pointer;
+  padding: 8px 16px;
+  background: #fdfaf5;
+  border: 2px solid #e8d4c8;
+  border-radius: 20px;
+  transition: all 0.2s;
+  font-size: 0.9em;
+}
+
+.checkbox-label:hover {
+  border-color: #d7a86e;
+  background: #f8e8d0;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: #5d4037;
+}
+
+/* 提交按钮 */
+.submit-btn {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 14px 30px;
+  background: linear-gradient(135deg, #5d4037, #795548);
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(135deg, #4e342e, #5d4037);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(93, 64, 55, 0.3);
+}
+
+/* 表单提示信息 */
+.form-message {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 0.95em;
+  min-height: 1.5em;
+}
+
+.form-message.error {
+  color: #e88;
+}
+
+/* 提交成功 */
+.form-success {
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 550px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.06);
+}
+
+/* 深色模式 - 表单 */
+body.dark-mode .contact-form,
+body.dark-mode .form-success {
+  background: #2a2a2a;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .form-group label {
+  color: #d7a86e;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .form-group textarea {
+  background: #1a1a1a;
+  color: #ccc;
+  border-color: #444;
+}
+
+body.dark-mode .form-group input:focus,
+body.dark-mode .form-group select:focus,
+body.dark-mode .form-group textarea:focus {
+  border-color: #d7a86e;
+  box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.15);
+}
+
+body.dark-mode .checkbox-label {
+  background: #1a1a1a;
+  border-color: #444;
+  color: #aaa !important;
+}
+
+body.dark-mode .checkbox-label:hover {
+  border-color: #d7a86e;
+  background: #2c2418;
+}
+
+body.dark-mode .form-success h3 {
+  color: #d7a86e;
 }
 
 /* ========== 手机端适配 ========== */
@@ -500,5 +686,32 @@ body.dark-mode .back-to-top:hover {
     bottom: 20px;
     right: 20px;
     font-size: 1.1em;
+  }
+
+  /* 表单手机适配 */
+  .contact-form {
+    padding: 20px 15px;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-row .form-group {
+    min-width: 0;
+  }
+
+  .checkbox-group {
+    gap: 8px;
+  }
+
+  .checkbox-label {
+    padding: 6px 12px;
+    font-size: 0.85em;
+  }
+
+  .submit-btn {
+    max-width: 100%;
   }
 }
