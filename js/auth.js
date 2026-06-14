@@ -19,7 +19,7 @@ var AUTH_CONFIG = {
 
   // 手机通知（PushPlus）：去 https://www.pushplus.plus 注册获取 token，填在这里
   // 填好之后，有人填预约表单时微信就会收到通知。不填则只在老师后台显示。
-  notifyToken: '',
+  notifyToken: '8a9d4a11fed14506a36dcae8f8d42f5a',
 };
 
 // ============================================================
