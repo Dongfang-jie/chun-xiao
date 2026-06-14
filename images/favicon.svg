@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- 五瓣小花 -->
+  <g transform="translate(50,50)">
+    <!-- 花瓣 -->
+    <ellipse cx="0" cy="-28" rx="14" ry="22" fill="#f0a8b8" transform="rotate(0)" opacity="0.9"/>
+    <ellipse cx="0" cy="-28" rx="14" ry="22" fill="#f0b8c0" transform="rotate(72)" opacity="0.9"/>
+    <ellipse cx="0" cy="-28" rx="14" ry="22" fill="#f4c2c8" transform="rotate(144)" opacity="0.9"/>
+    <ellipse cx="0" cy="-28" rx="14" ry="22" fill="#f0a8b0" transform="rotate(216)" opacity="0.9"/>
+    <ellipse cx="0" cy="-28" rx="14" ry="22" fill="#f4b4b8" transform="rotate(288)" opacity="0.9"/>
+    <!-- 花蕊 -->
+    <circle cx="0" cy="0" r="9" fill="#d7a86e"/>
+    <circle cx="0" cy="0" r="5" fill="#c9985e"/>
+  </g>
+</svg>
