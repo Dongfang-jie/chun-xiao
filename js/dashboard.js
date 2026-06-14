@@ -479,17 +479,29 @@ function startAttendance() {
 
   var html = '<div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06);">';
   html += '<h4 style="color:#5d4037; margin-bottom:12px;">📋 ' + cls.name + ' — ' + date + '</h4>';
-  html += '<button id="att-all-present" class="login-btn" style="width:auto; padding:6px 16px; margin-bottom:12px; font-size:0.85em;">✅ 全部出勤</button>';
-  html += '<table><thead><tr><th>学员</th><th>出勤</th><th>请假</th><th>缺勤</th></tr></thead><tbody>';
+  html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">';
+  html += '<button id="att-all-present" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em;">✅ 全部出勤</button>';
+  html += '<input type="number" id="att-deduct-all" value="0" min="0" style="width:60px; padding:6px; border:2px solid #e8d4c8; border-radius:6px; text-align:center;">';
+  html += '<button id="att-deduct-all-btn" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em; background:#795548;">📉 全部扣课时</button>';
+  html += '<span style="color:#888; font-size:0.8em;">仅扣出勤学员</span>';
+  html += '</div>';
+  html += '<table><thead><tr><th>学员</th><th>总/已消耗/剩余</th><th>出勤</th><th>请假</th><th>缺勤</th><th>扣课时</th></tr></thead><tbody>';
 
   students.forEach(function(s) {
     var rec = existingRecords.find(function(r) { return r.studentId == s.id; });
     var status = rec ? rec.status : 'present';
+    var deducted = rec ? (rec.deducted || 0) : 0;
+    var total = s.totalLessons || 0;
+    var consumed = s.consumedLessons || 0;
+    var remaining = total - consumed;
+    var remainColor = remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9';
     html += '<tr>';
     html += '<td><strong>' + s.name + '</strong></td>';
+    html += '<td style="font-size:0.85em;">总' + total + ' / <span style="color:#e88;">消' + consumed + '</span> / <span style="color:' + remainColor + ';">剩' + remaining + '</span></td>';
     html += '<td><button class="att-btn att-present' + (status === 'present' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="present">✅</button></td>';
     html += '<td><button class="att-btn att-leave' + (status === 'leave' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="leave">⭕</button></td>';
     html += '<td><button class="att-btn att-absent' + (status === 'absent' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="absent">❌</button></td>';
+    html += '<td><input type="number" class="att-deduct" value="' + deducted + '" min="0" data-sid="' + s.id + '" style="width:55px; padding:4px; border:2px solid #e8d4c8; border-radius:4px; text-align:center;"></td>';
     html += '</tr>';
   });
   html += '</tbody></table>';
@@ -506,6 +518,14 @@ function startAttendance() {
     });
   });
 
+  // 全部扣课时
+  document.getElementById('att-deduct-all-btn').addEventListener('click', function() {
+    var val = parseInt(document.getElementById('att-deduct-all').value) || 0;
+    area.querySelectorAll('.att-deduct').forEach(function(input) {
+      input.value = val;
+    });
+  });
+
   // 状态按钮切换
   area.querySelectorAll('.att-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -518,16 +538,36 @@ function startAttendance() {
   // 保存
   document.getElementById('att-save-btn').addEventListener('click', function() {
     var records = [];
+    var studentDeductions = {}; // {studentId: deducted}
+
     area.querySelectorAll('tbody tr').forEach(function(row) {
       var sid = parseInt(row.querySelector('.att-btn').dataset.sid);
       var activeBtn = row.querySelector('.att-btn.active');
-      records.push({ studentId: sid, status: activeBtn ? activeBtn.dataset.st : 'present' });
+      var status = activeBtn ? activeBtn.dataset.st : 'present';
+      var deducted = parseInt(row.querySelector('.att-deduct').value) || 0;
+      records.push({ studentId: sid, status: status, deducted: deducted });
+
+      // 只有出勤才扣课时
+      if (status === 'present' && deducted > 0) {
+        studentDeductions[sid] = (studentDeductions[sid] || 0) + deducted;
+      }
     });
 
+    // 更新学生已消耗课时
+    var studentList = getStudents();
+    Object.keys(studentDeductions).forEach(function(sid) {
+      var s = studentList.find(function(x) { return x.id == parseInt(sid); });
+      if (s) {
+        s.consumedLessons = (s.consumedLessons || 0) + studentDeductions[sid];
+      }
+    });
+    saveStudents(studentList);
+
+    // 保存点名记录
     var all = getAttendance().filter(function(a) { return !(a.classId == classId && a.date == date); });
     all.push({ id: Date.now(), classId: classId, date: date, records: records });
     saveAttendance(all);
-    document.getElementById('att-msg').textContent = '✅ 点名已保存';
+    document.getElementById('att-msg').textContent = '✅ 点名已保存，课时已更新';
     document.getElementById('att-msg').style.color = '#5a9';
     renderAttendanceHistory();
   });
@@ -695,6 +735,7 @@ function loadStudents() {
       document.getElementById('s-parent').value = '';
       document.getElementById('s-phone').value = '';
       document.getElementById('s-status').value = '在读';
+      document.getElementById('s-lessons').value = '';
     };
   }
   // 取消按钮
@@ -712,6 +753,11 @@ function loadStudents() {
       var name = document.getElementById('s-name').value.trim();
       if (!name) { alert('请输入学生姓名'); return; }
 
+      var totalLessons = parseInt(document.getElementById('s-lessons').value) || 0;
+      // 编辑时保留已消耗课时
+      var oldStudent = editId ? getStudents().find(function(s) { return s.id == editId; }) : null;
+      var consumed = oldStudent ? (oldStudent.consumedLessons || 0) : 0;
+
       var student = {
         id: editId || Date.now(),
         name: name,
@@ -720,6 +766,8 @@ function loadStudents() {
         parent: document.getElementById('s-parent').value.trim() || '--',
         phone: document.getElementById('s-phone').value.trim() || '--',
         status: document.getElementById('s-status').value,
+        totalLessons: totalLessons,
+        consumedLessons: consumed,
         addedAt: new Date().toISOString()
       };
 
@@ -751,15 +799,21 @@ function renderStudents() {
     return;
   }
 
-  var html = '<table><thead><tr><th>姓名</th><th>年龄</th><th>课程</th><th>家长</th><th>电话</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  var html = '<table><thead><tr><th>姓名</th><th>年龄</th><th>课程</th><th>家长</th><th>总课时</th><th>已消耗</th><th>剩余</th><th>状态</th><th>操作</th></tr></thead><tbody>';
   list.forEach(function(s) {
+    var total = s.totalLessons || 0;
+    var consumed = s.consumedLessons || 0;
+    var remaining = total - consumed;
+    var remainColor = remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9';
     var statusColor = s.status === '在读' ? '#5a9' : s.status === '休学' ? '#e88' : '#999';
     html += '<tr>';
     html += '<td><strong>' + s.name + '</strong></td>';
     html += '<td>' + s.age + '</td>';
     html += '<td>' + s.course + '</td>';
     html += '<td>' + s.parent + '</td>';
-    html += '<td>' + s.phone + '</td>';
+    html += '<td>' + total + '</td>';
+    html += '<td>' + consumed + '</td>';
+    html += '<td style="color:' + remainColor + '; font-weight:bold;">' + remaining + '</td>';
     html += '<td><span style="color:' + statusColor + '; font-weight:bold;">' + s.status + '</span></td>';
     html += '<td>';
     html += '<a href="#" class="edit-student" data-id="' + s.id + '">✏️</a> ';
@@ -785,6 +839,7 @@ function renderStudents() {
       document.getElementById('s-parent').value = s.parent;
       document.getElementById('s-phone').value = s.phone;
       document.getElementById('s-status').value = s.status;
+      document.getElementById('s-lessons').value = s.totalLessons || 0;
     });
   });
 
