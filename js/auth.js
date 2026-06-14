@@ -19,8 +19,12 @@ var AUTH_CONFIG = {
 
   // 手机通知（Server酱）：去 https://sct.ftqq.com 微信扫码登录，获取 SendKey
   // 支持多个老师，每个老师一个 SendKey，有人填表时全部都能收到微信通知
-  // 通知 SendKey 在 js/notify-config.js 中配置（该文件不提交 Git）
-  notifyKeys: [],
+  // 手机通知（Server酱）：去 https://sct.ftqq.com 微信扫码获取 SendKey
+  // 支持多个老师，有人填预约表单时微信全部收到通知
+  notifyKeys: [
+    'SCT364390TgpWv9nIL4dE2g1frC1DCIrzq',  // 张校长
+    // '',  // 郑校长
+  ],
 };
 
 // ============================================================
