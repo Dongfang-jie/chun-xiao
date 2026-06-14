@@ -31,6 +31,7 @@
         <a href="#" class="sidebar-link active" data-page="overview">📊 总览</a>
         <a href="#" class="sidebar-link" data-page="students">👨‍🎓 学生管理</a>
         <a href="#" class="sidebar-link" data-page="artworks">🖼️ 作品管理</a>
+        <a href="#" class="sidebar-link" data-page="inquiries">📩 预约查询 <span id="inquiry-badge" class="inquiry-badge" style="display:none;">0</span></a>
         <a href="#" class="sidebar-link" data-page="announcements">📢 发布通知</a>
         <a href="#" class="sidebar-link" data-page="courses">📚 课程管理</a>
       </nav>
@@ -94,6 +95,18 @@
         <h2>🖼️ 作品管理</h2>
         <p style="color:#888;">上传和管理学生作品（功能开发中）</p>
         <button class="login-btn" style="width:auto; padding:10px 24px;">+ 上传新作品</button>
+      </section>
+
+      <!-- 预约查询 -->
+      <section id="page-inquiries" class="dash-page">
+        <h2>📩 预约查询</h2>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+          <span style="color:#888;">家长填写的免费试听预约，点击行标记已读</span>
+          <button id="clear-inquiries" class="logout-btn" style="margin-left:auto;">🗑️ 清空全部</button>
+        </div>
+        <div id="inquiries-list">
+          <p style="text-align:center; color:#999; padding:40px;">暂无预约记录</p>
+        </div>
       </section>
 
       <!-- 发布通知 -->

@@ -302,6 +302,48 @@ body.dark-mode .logout-btn {
   color: #d7a86e;
 }
 
+/* ========== 预约查询 ========== */
+.inquiry-badge {
+  display: inline-block;
+  background: #e88;
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 0.75em;
+  margin-left: 4px;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+
+.inquiry-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+}
+
+.inquiry-unread {
+  background: #fff8fa !important;
+}
+
+body.dark-mode .inquiry-card {
+  background: #2a2a2a !important;
+}
+
+body.dark-mode .inquiry-unread {
+  background: #2a1a22 !important;
+}
+
+body.dark-mode .inquiry-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+}
+
+body.dark-mode .inquiry-badge {
+  background: #c06070;
+}
+
 /* ========== 响应式：手机横排变竖排 ========== */
 @media (max-width: 768px) {
   .dash-layout {
