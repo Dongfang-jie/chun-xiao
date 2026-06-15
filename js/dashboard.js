@@ -254,14 +254,6 @@ function loadInquiries() {
   }
 }
 
-function getInquiries() {
-  return JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]');
-}
-
-function saveInquiries(list) {
-  localStorage.setItem('chunxiao-inquiries', JSON.stringify(list));
-}
-
 function renderInquiries() {
   var container = document.getElementById('inquiries-list');
   if (!container) return;
@@ -384,13 +376,6 @@ function initStudentSubTabs() {
 // ============================================================
 //  班级管理
 // ============================================================
-function getClasses() {
-  return JSON.parse(localStorage.getItem('chunxiao-classes') || '[]');
-}
-function saveClasses(list) {
-  localStorage.setItem('chunxiao-classes', JSON.stringify(list));
-}
-
 function loadClasses() {
   renderClasses();
   var addBtn = document.getElementById('add-class-btn');
@@ -645,13 +630,6 @@ function renderSchedule() {
 // ============================================================
 //  点名
 // ============================================================
-function getAttendance() {
-  return JSON.parse(localStorage.getItem('chunxiao-attendance') || '[]');
-}
-function saveAttendance(list) {
-  localStorage.setItem('chunxiao-attendance', JSON.stringify(list));
-}
-
 function loadAttendance() {
   var today = getLocalDateStr();
   document.getElementById('att-date-nav').value = today;
@@ -1198,13 +1176,6 @@ function renderAttendanceStats() {
 // ============================================================
 //  上课记录
 // ============================================================
-function getRecords() {
-  return JSON.parse(localStorage.getItem('chunxiao-records') || '[]');
-}
-function saveRecords(list) {
-  localStorage.setItem('chunxiao-records', JSON.stringify(list));
-}
-
 function loadRecords() {
   refreshRecordSelects();
   renderRecordsList();
@@ -1284,13 +1255,6 @@ function renderRecordsList() {
 // ============================================================
 //  课消日志
 // ============================================================
-function getLessonCorrections() {
-  return JSON.parse(localStorage.getItem('chunxiao-lesson-corrections') || '[]');
-}
-function saveLessonCorrections(list) {
-  localStorage.setItem('chunxiao-lesson-corrections', JSON.stringify(list));
-}
-
 function loadLessonLog() {
   refreshLogStudentSelects();
   renderLessonLog();
@@ -1633,13 +1597,6 @@ function getOperatorName() {
 // 是否管理员（有全部权限）
 function hasAdminPermission() {
   return Auth.isAdmin();
-}
-
-function getStudents() {
-  return JSON.parse(localStorage.getItem('chunxiao-students') || '[]');
-}
-function saveStudents(list) {
-  localStorage.setItem('chunxiao-students', JSON.stringify(list));
 }
 
 function loadStudents() {
@@ -2127,13 +2084,6 @@ function hideStudentDetail() {
 // ============================================================
 //  作品管理
 // ============================================================
-function getArtworks() {
-  return JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
-}
-function saveArtworks(list) {
-  localStorage.setItem('chunxiao-artworks', JSON.stringify(list));
-}
-
 function seedArtworks() {
   var existing = getArtworks();
   if (existing.length > 0) return; // 已有数据，不重复填充
@@ -2341,13 +2291,6 @@ function renderArtworks() {
 // ============================================================
 //  发布通知
 // ============================================================
-function getAnnouncements() {
-  return JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]');
-}
-function saveAnnouncements(list) {
-  localStorage.setItem('chunxiao-announcements', JSON.stringify(list));
-}
-
 function loadAnnouncements() {
   // 非管理员隐藏发布表单
   var formWrap = document.getElementById('announce-form-wrap');

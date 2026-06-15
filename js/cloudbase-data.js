@@ -30,19 +30,15 @@ var DataStore = {
     var db = getDB();
     if (!db) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
 
-    // ====== 连接测试 ======
+    // ====== 连接测试（只读，确保匿名用户也能通过） ======
     showSyncStatus('🔍 测试数据库连接...', '#5d4037');
     var pingOk = false;
     try {
-      var testRes = await db.collection('_ping').add({ t: Date.now(), from: 'web' });
-      if (testRes && testRes.id) {
-        // 读回来验证
-        var readBack = await db.collection('_ping').doc(testRes.id).get();
-        if (readBack.data && readBack.data.length > 0) {
-          pingOk = true;
-          showSyncStatus('✅ 数据库连接正常', '#2e7d32');
-        }
-      }
+      // 只做读测试：尝试读取 students 集合（不需要写权限）
+      var testRes = await db.collection(DataStore._collections.students).where({ _type: '_sync' }).get();
+      // 无论有没有数据，只要没抛异常就说明数据库可读
+      pingOk = true;
+      showSyncStatus('✅ 数据库连接正常', '#2e7d32');
     } catch (e) {
       showSyncStatus('❌ 数据库不可达: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 50), '#c62828');
       return;
@@ -209,10 +205,4 @@ function saveInquiries(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.inquiries, 'chunxiao-inquiries');
 }
 
-// --- 课程（基本不变，可以在 CloudBase 创建后就不用改了） ---
-function getCourses() {
-  return JSON.parse(localStorage.getItem('chunxiao-courses') || '[]');
-}
-function saveCourses(list) {
-  localStorage.setItem('chunxiao-courses', JSON.stringify(list));
-}
+// --- 课程：由 dashboard.js 定义（含 DEFAULT_COURSES 回退） ---
