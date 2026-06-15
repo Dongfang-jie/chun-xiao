@@ -7,8 +7,8 @@
 var AUTH_CONFIG = {
   // 老师列表（用于角色验证，实际认证走 CloudBase）
   teachers: [
-    { email: '756924037@qq.com', name: '张校长', role: 'admin' },
-    { email: '953034984@qq.com', name: '郑校长', role: 'teacher' }
+    { email: '756924037@qq.com', password: '756924', name: '张校长', role: 'admin' },
+    { email: '953034984@qq.com', password: '454657', name: '郑校长', role: 'teacher' }
   ],
   sessionKey: 'chunxiao_session',
   // Server酱通知
@@ -49,28 +49,48 @@ var Auth = {
   // 登录（老师 + 家长通用）
   login: async function (email, password) {
     var auth = getAuth();
+
+    // 检查是否老师（优先本地密码校验，CloudBase 为辅助）
+    var teacher = getTeacherByEmail(email);
+    if (teacher) {
+      // 本地密码校验
+      if (teacher.password !== password) {
+        throw new Error('邮箱或密码错误');
+      }
+
+      // 尝试 CloudBase 登录/注册（后台同步，不阻塞）
+      var uid = null;
+      if (auth) {
+        try {
+          var result = await auth.signInWithEmailAndPassword(email, password);
+          uid = result.user.uid;
+        } catch (cbErr) {
+          // 可能账号不存在，尝试自动注册
+          try {
+            var signUpResult = await auth.signUpWithEmailAndPassword(email, password);
+            uid = signUpResult.user.uid;
+          } catch (cbErr2) {
+            console.warn('CloudBase 同步失败，使用本地模式:', cbErr2.message || cbErr2.code);
+          }
+        }
+      }
+
+      var teacherUser = {
+        uid: uid,
+        email: teacher.email,
+        name: teacher.name,
+        role: teacher.role,
+        loginTime: new Date().toISOString()
+      };
+      Auth._setSession(teacherUser);
+      return teacherUser;
+    }
+
+    // 家长登录
     if (!auth) throw new Error('认证服务未就绪');
 
     try {
-      // 先检查是否老师
-      var teacher = getTeacherByEmail(email);
-      if (teacher) {
-        // 老师走 CloudBase 邮箱登录
-        var result = await auth.signInWithEmailAndPassword(email, password);
-        var teacherUser = {
-          uid: result.user.uid,
-          email: teacher.email,
-          name: teacher.name,
-          role: teacher.role,
-          loginTime: new Date().toISOString()
-        };
-        Auth._setSession(teacherUser);
-        return teacherUser;
-      }
-
-      // 家长走 CloudBase 邮箱登录
       var parentResult = await auth.signInWithEmailAndPassword(email, password);
-      // 从 parents 集合获取额外信息
       var db = getDB();
       if (db) {
         try {
@@ -96,9 +116,6 @@ var Auth = {
       throw new Error('账号信息不完整，请联系老师');
     } catch (e) {
       if (e.message.indexOf('账号信息') >= 0) throw e;
-      if (e.code === 'INVALID_EMAIL' || e.code === 'INVALID_PASSWORD' || e.message.indexOf('密码') >= 0) {
-        throw new Error('邮箱或密码错误');
-      }
       throw new Error('邮箱或密码错误');
     }
   },
