@@ -548,6 +548,48 @@ body.dark-mode .att-btn.active:hover {
   background: #e0b878;
 }
 
+/* 深色模式 - 点名操作区 */
+body.dark-mode #attendance-area > div:first-child {
+  background: #2a2a2a !important;
+  border-color: #555 !important;
+}
+body.dark-mode #attendance-area h4 {
+  color: #d7a86e !important;
+}
+body.dark-mode #attendance-area .att-deduct {
+  background: #333 !important;
+  border-color: #555 !important;
+  color: #ddd !important;
+}
+body.dark-mode #attendance-area tbody td {
+  color: #ddd;
+}
+body.dark-mode #att-deduct-all {
+  background: #333 !important;
+  border-color: #555 !important;
+  color: #ddd !important;
+}
+body.dark-mode #att-all-present {
+  background: #3a5a3a !important;
+  border-color: #5a8a5a !important;
+}
+body.dark-mode #att-all-leave {
+  background: #5a4030 !important;
+  border-color: #8a6040 !important;
+}
+body.dark-mode #att-deduct-all-btn {
+  background: #d84315 !important;
+  border-color: #bf360c !important;
+}
+body.dark-mode #att-save-btn {
+  background: #d7a86e !important;
+  border-color: #b8955a !important;
+  color: #1a1a1a !important;
+}
+body.dark-mode #att-msg {
+  color: #d7a86e !important;
+}
+
 /* ========== 课表时间表 ========== */
 .schedule-table {
   width: 100%;

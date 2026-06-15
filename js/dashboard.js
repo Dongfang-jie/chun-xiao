@@ -790,26 +790,35 @@ function startAttendanceForClass(classId, date) {
       if (status === 'present') {
         input.value = val;
         presentCount++;
-        // 输入框闪烁效果
-        input.style.transition = 'all 0.15s';
-        input.style.background = '#fff3e0';
-        input.style.borderColor = '#e65100';
-        input.style.transform = 'scale(1.08)';
-        setTimeout(function(el) {
-          el.style.background = '';
-          el.style.borderColor = '';
-          el.style.transform = '';
-        }, 300, input);
+        if (val > 0) {
+          // 输入框闪烁效果（仅当有实际扣课时）
+          input.style.transition = 'all 0.15s';
+          input.style.background = '#fff3e0';
+          input.style.borderColor = '#e65100';
+          input.style.transform = 'scale(1.08)';
+          setTimeout(function(el) {
+            el.style.background = '';
+            el.style.borderColor = '';
+            el.style.transform = '';
+          }, 300, input);
+        }
       }
     });
 
     // 按钮反馈
     var btn = this;
     var origText = btn.textContent;
-    btn.textContent = '✅ 已填充 ' + presentCount + ' 人';
-    btn.style.background = '#2e7d32';
-    btn.style.borderColor = '#1b5e20';
-    btn.style.transform = 'scale(1.05)';
+    if (val > 0 && presentCount > 0) {
+      btn.textContent = '✅ 已填充 ' + presentCount + ' 人';
+      btn.style.background = '#2e7d32';
+      btn.style.borderColor = '#1b5e20';
+      btn.style.transform = 'scale(1.05)';
+    } else {
+      btn.textContent = '已归零 ' + presentCount + ' 人';
+      btn.style.background = '#888';
+      btn.style.borderColor = '#666';
+      btn.style.transform = 'scale(0.97)';
+    }
     setTimeout(function() {
       btn.textContent = origText;
       btn.style.background = '';
@@ -820,8 +829,13 @@ function startAttendanceForClass(classId, date) {
     // 顶部消息提示
     var msgEl = document.getElementById('att-msg');
     if (msgEl) {
-      msgEl.textContent = '📌 已填充 ' + presentCount + ' 名出勤学员扣 ' + val + ' 课时，请点击保存';
-      msgEl.style.color = '#e65100';
+      if (val > 0) {
+        msgEl.textContent = '📌 已填充 ' + presentCount + ' 名出勤学员扣 ' + val + ' 课时，请点击保存';
+        msgEl.style.color = '#e65100';
+      } else {
+        msgEl.textContent = '已清零 ' + presentCount + ' 名学员的扣课时';
+        msgEl.style.color = '#888';
+      }
       msgEl.style.fontWeight = 'bold';
     }
   });
@@ -880,6 +894,9 @@ function startAttendanceForClass(classId, date) {
     renderAttendanceHistory();
     renderAttendanceStats();
     renderDailyAttendanceTable(date);
+
+    // 保存后自动收起表单
+    area.style.display = 'none';
   });
 }
 
