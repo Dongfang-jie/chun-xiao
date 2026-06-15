@@ -47,23 +47,37 @@ var DataStore = {
   // ========== 单集合同步到 CloudBase ==========
   _syncOneToCloud: async function (collection, key) {
     var db = getDB();
-    if (!db) return;
+    if (!db) {
+      console.warn('⚠️ CloudBase DB 未初始化，跳过同步 ' + collection);
+      return;
+    }
     var list = JSON.parse(localStorage.getItem(key) || '[]');
+    if (list.length === 0) return;
 
+    console.log('🔄 同步 ' + collection + ' → CloudBase（' + list.length + ' 条）...');
     try {
       // 先删全部旧数据
       var old = await db.collection(collection).limit(500).get();
       if (old.data) {
         for (var i = 0; i < old.data.length; i++) {
-          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch(e) {}
+          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch(e) {
+            console.warn('  ✗ 删除失败:', e.message || e.code);
+          }
         }
       }
       // 再全部写入新数据
+      var ok = 0;
       for (var j = 0; j < list.length; j++) {
-        try { await db.collection(collection).add(list[j]); } catch(e) {}
+        try {
+          await db.collection(collection).add(list[j]);
+          ok++;
+        } catch(e) {
+          console.warn('  ✗ 写入 ' + collection + '[' + j + '] 失败:', e.message || e.code);
+        }
       }
+      console.log('✅ ' + collection + ' 同步完成: ' + ok + '/' + list.length);
     } catch (e) {
-      console.warn('⚠️ 上传 ' + collection + ' 失败:', e.message);
+      console.error('❌ 同步 ' + collection + ' 失败:', e.message || e.code || e);
     }
   },
 
