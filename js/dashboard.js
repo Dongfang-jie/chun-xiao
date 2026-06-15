@@ -737,19 +737,43 @@ function startAttendanceForClass(classId, date) {
 
   // 全部出勤按钮
   document.getElementById('att-all-present').addEventListener('click', function() {
+    var count = 0;
     area.querySelectorAll('.att-btn').forEach(function(b) {
-      if (b.dataset.st === 'present') { b.classList.add('active'); }
+      if (b.dataset.st === 'present') { b.classList.add('active'); count++; }
       else { b.classList.remove('active'); }
     });
+    // 按钮反馈
+    var btn = this;
+    var origText = btn.textContent;
+    btn.textContent = '✅ 已设 ' + count + ' 人出勤';
+    btn.style.background = '#2e7d32';
+    btn.style.borderColor = '#1b5e20';
+    setTimeout(function() {
+      btn.textContent = origText;
+      btn.style.background = '';
+      btn.style.borderColor = '';
+    }, 1000);
   });
 
   // 全部请假按钮
   document.getElementById('att-all-leave').addEventListener('click', function() {
+    var count = 0;
     area.querySelectorAll('.att-btn').forEach(function(b) {
-      if (b.dataset.st === 'leave') { b.classList.add('active'); }
+      if (b.dataset.st === 'leave') { b.classList.add('active'); count++; }
       else { b.classList.remove('active'); }
     });
     area.querySelectorAll('.att-deduct').forEach(function(input) { input.value = 0; });
+    // 按钮反馈
+    var btn = this;
+    var origText = btn.textContent;
+    btn.textContent = '⭕ 已设 ' + count + ' 人请假';
+    btn.style.background = '#5d4037';
+    btn.style.borderColor = '#3e2723';
+    setTimeout(function() {
+      btn.textContent = origText;
+      btn.style.background = '';
+      btn.style.borderColor = '';
+    }, 1000);
   });
 
   // 全部扣课时
@@ -829,6 +853,18 @@ function startAttendanceForClass(classId, date) {
     });
 
     var studentList = getStudents();
+
+    // 先撤销旧点名记录的课时扣除，避免重复保存时翻倍
+    if (existing) {
+      existing.records.forEach(function(r) {
+        if (r.deducted > 0 && r.status === 'present') {
+          var s = studentList.find(function(x) { return x.id === r.studentId; });
+          if (s) { s.consumedLessons = Math.max(0, (s.consumedLessons || 0) - r.deducted); }
+        }
+      });
+    }
+
+    // 再应用本次扣除
     Object.keys(studentDeductions).forEach(function(sid) {
       var s = studentList.find(function(x) { return x.id == parseInt(sid); });
       if (s) { s.consumedLessons = (s.consumedLessons || 0) + studentDeductions[sid]; }
@@ -840,6 +876,7 @@ function startAttendanceForClass(classId, date) {
     saveAttendance(all);
     document.getElementById('att-msg').textContent = '✅ 点名已保存，课时已更新';
     document.getElementById('att-msg').style.color = '#5a9';
+    document.getElementById('att-msg').style.fontWeight = '';
     renderAttendanceHistory();
     renderAttendanceStats();
     renderDailyAttendanceTable(date);
