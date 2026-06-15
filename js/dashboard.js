@@ -680,7 +680,7 @@ function startAttendanceForClass(classId, date) {
   html += '<button id="att-all-leave" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em; background:#e8a040; border-color:#e8a040;">⭕ 全部请假</button>';
   html += '<span style="color:#ccc; margin:0 4px;">|</span>';
   html += '<input type="number" id="att-deduct-all" value="0" min="0" style="width:60px; padding:6px; border:2px solid #e8d4c8; border-radius:6px; text-align:center;">';
-  html += '<button id="att-deduct-all-btn" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em; background:#795548;">📉 全部扣课时</button>';
+  html += '<button id="att-deduct-all-btn" class="login-btn" style="width:auto; padding:8px 20px; font-size:0.9em; background:#e65100; border-color:#bf360c; font-weight:bold; letter-spacing:1px; transition:all 0.15s;">📉 全部扣课时</button>';
   html += '<span style="color:#888; font-size:0.8em;">仅扣出勤学员</span>';
   html += '</div>';
 
@@ -755,7 +755,51 @@ function startAttendanceForClass(classId, date) {
   // 全部扣课时
   document.getElementById('att-deduct-all-btn').addEventListener('click', function() {
     var val = parseInt(document.getElementById('att-deduct-all').value) || 0;
-    area.querySelectorAll('.att-deduct').forEach(function(input) { input.value = val; });
+    var inputs = area.querySelectorAll('.att-deduct');
+    var presentCount = 0;
+
+    inputs.forEach(function(input) {
+      var row = input.parentElement.parentElement;
+      var activeBtn = row.querySelector('.att-btn.active');
+      var status = activeBtn ? activeBtn.dataset.st : 'present';
+      // 仅填充出勤学员
+      if (status === 'present') {
+        input.value = val;
+        presentCount++;
+        // 输入框闪烁效果
+        input.style.transition = 'all 0.15s';
+        input.style.background = '#fff3e0';
+        input.style.borderColor = '#e65100';
+        input.style.transform = 'scale(1.08)';
+        setTimeout(function(el) {
+          el.style.background = '';
+          el.style.borderColor = '';
+          el.style.transform = '';
+        }, 300, input);
+      }
+    });
+
+    // 按钮反馈
+    var btn = this;
+    var origText = btn.textContent;
+    btn.textContent = '✅ 已填充 ' + presentCount + ' 人';
+    btn.style.background = '#2e7d32';
+    btn.style.borderColor = '#1b5e20';
+    btn.style.transform = 'scale(1.05)';
+    setTimeout(function() {
+      btn.textContent = origText;
+      btn.style.background = '';
+      btn.style.borderColor = '';
+      btn.style.transform = '';
+    }, 1200);
+
+    // 顶部消息提示
+    var msgEl = document.getElementById('att-msg');
+    if (msgEl) {
+      msgEl.textContent = '📌 已填充 ' + presentCount + ' 名出勤学员扣 ' + val + ' 课时，请点击保存';
+      msgEl.style.color = '#e65100';
+      msgEl.style.fontWeight = 'bold';
+    }
   });
 
   // 状态按钮切换
