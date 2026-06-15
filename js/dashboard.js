@@ -1596,7 +1596,8 @@ function getOperatorName() {
 
 // 是否管理员（有全部权限）
 function hasAdminPermission() {
-  return Auth.isAdmin();
+  var user = Auth.currentUser();
+  return user && (user.role === 'admin' || user.role === 'teacher');
 }
 
 function loadStudents() {
