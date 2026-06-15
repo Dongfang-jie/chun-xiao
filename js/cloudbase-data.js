@@ -28,7 +28,28 @@ var DataStore = {
   // ========== 从 CloudBase 拉取全部数据 ==========
   syncAllFromCloud: async function () {
     var db = getDB();
-    if (!db) { showSyncStatus('⚠️ CloudBase 未就绪', '#e65100'); return; }
+    if (!db) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
+
+    // ====== 连接测试 ======
+    showSyncStatus('🔍 测试数据库连接...', '#5d4037');
+    var pingOk = false;
+    try {
+      var testRes = await db.collection('_ping').add({ t: Date.now(), from: 'web' });
+      if (testRes && testRes.id) {
+        // 读回来验证
+        var readBack = await db.collection('_ping').doc(testRes.id).get();
+        if (readBack.data && readBack.data.length > 0) {
+          pingOk = true;
+          showSyncStatus('✅ 数据库连接正常', '#2e7d32');
+        }
+      }
+    } catch (e) {
+      showSyncStatus('❌ 数据库不可达: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 50), '#c62828');
+      return;
+    }
+
+    if (!pingOk) { showSyncStatus('⚠️ 连接异常，跳过同步', '#e65100'); return; }
+    // ====== 连接测试结束 ======
 
     showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
     var _ = DataStore._collections;
