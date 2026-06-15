@@ -67,8 +67,24 @@ document.addEventListener('DOMContentLoaded', function () {
       if (targetPage) {
         targetPage.classList.add('active');
       }
+
+      // 记住当前页面，刷新后恢复
+      localStorage.setItem('chunxiao_dashboard_page', pageName);
     });
   });
+
+  // 刷新后恢复到上次的页面
+  var savedPage = localStorage.getItem('chunxiao_dashboard_page');
+  if (savedPage) {
+    sidebarLinks.forEach(function (l) { l.classList.remove('active'); });
+    var savedLink = document.querySelector('.sidebar-link[data-page="' + savedPage + '"]');
+    if (savedLink) savedLink.classList.add('active');
+    document.querySelectorAll('.dash-page').forEach(function (page) {
+      page.classList.remove('active');
+    });
+    var target = document.getElementById('page-' + savedPage);
+    if (target) target.classList.add('active');
+  }
 
   // ==========================================================
   //  退出登录
@@ -266,6 +282,9 @@ function initStudentSubTabs() {
       document.querySelectorAll('.sub-page').forEach(function(p) { p.classList.remove('active'); });
       document.getElementById('sub-' + sub).classList.add('active');
 
+      // 记住当前子标签，刷新后恢复
+      localStorage.setItem('chunxiao_dashboard_subtab', sub);
+
       // 切换到课表/点名时刷新数据
       if (sub === 'schedule') renderSchedule();
       if (sub === 'attendance') { renderDailyAttendanceTable(document.getElementById('att-date-nav').value); renderAttendanceHistory(); renderAttendanceStats(); }
@@ -274,6 +293,17 @@ function initStudentSubTabs() {
       if (sub === 'classes') { refreshClassStudentCheckboxes(); }
     });
   });
+
+  // 刷新后恢复到上次的子标签
+  var savedSub = localStorage.getItem('chunxiao_dashboard_subtab');
+  if (savedSub) {
+    document.querySelectorAll('.sub-tab').forEach(function(t) { t.classList.remove('active'); });
+    var savedSubTab = document.querySelector('.sub-tab[data-sub="' + savedSub + '"]');
+    if (savedSubTab) savedSubTab.classList.add('active');
+    document.querySelectorAll('.sub-page').forEach(function(p) { p.classList.remove('active'); });
+    var subTarget = document.getElementById('sub-' + savedSub);
+    if (subTarget) subTarget.classList.add('active');
+  }
 }
 
 // ============================================================
