@@ -1,11 +1,17 @@
 /*
   数据库代理云函数
+  使用 @cloudbase/node-sdk（Web 端云函数，非微信小程序）
+  以管理员权限代理数据库读写，完全绕过集合安全规则
 */
-const cloud = require('wx-server-sdk');
-cloud.init({ env: 'chunxiao-d8ghfaw3y0781da11' });
-const db = cloud.database();
+const cloudbase = require('@cloudbase/node-sdk');
 
-exports.main = async (event) => {
+const app = cloudbase.init({
+  env: 'chunxiao-d8ghfaw3y0781da11'
+});
+
+const db = app.database();
+
+exports.main = async (event, context) => {
   const { action, collection, items } = event;
 
   try {
@@ -26,13 +32,20 @@ exports.main = async (event) => {
 
     if (action === 'write') {
       if (!items || items.length === 0) return { success: true };
+
+      // 删除旧文档
       const old = await db.collection(collection).where({ _type: '_sync' }).get();
       for (const doc of old.data) {
         await db.collection(collection).doc(doc._id).remove();
       }
+
+      // 写入新文档
       await db.collection(collection).add({
-        data: { _type: '_sync', items: items, updatedAt: new Date().toISOString() }
+        _type: '_sync',
+        items: items,
+        updatedAt: new Date().toISOString()
       });
+
       return { success: true };
     }
 
