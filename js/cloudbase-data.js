@@ -1,6 +1,6 @@
 /*
   春晓画室 - CloudBase 数据同步层
-  本地 localStorage 缓存 + 云函数代理（管理员权限，绕过安全规则）
+  本地 localStorage 缓存 + CloudBase 远程同步
   get 函数同步返回（读缓存），save 函数本地+远程双写
 */
 
@@ -24,73 +24,37 @@ function showSyncStatus(msg, color) {
 var DataStore = {
   _collections: CLOUDBASE_CONFIG.collections,
 
-  // ========== 调用云函数（管理员权限，绕过集合安全规则） ==========
-  _callFunction: async function (data) {
-    var app = getApp();
-    if (!app) throw new Error('SDK未加载');
-    var res = await app.callFunction({ name: 'dbProxy', data: data });
-    if (!res.result || !res.result.success) {
-      throw new Error(res.result ? res.result.message : '云函数无响应');
-    }
-    return res.result;
-  },
-
   // ========== 从 CloudBase 拉取全部数据 ==========
   syncAllFromCloud: async function () {
-    var app = getApp();
-    if (!app) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
+    var db = getDB();
+    if (!db) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
 
-    // 确保有登录态（匿名即可，云函数需要 auth 上下文）
+    // 确保有登录态
     try {
       var auth = getAuth();
       if (auth) {
         var loginState = await auth.getLoginState();
         if (!loginState) {
+          showSyncStatus('🔑 登录中...', '#5d4037');
           await auth.signInAnonymously();
-        }
-      }
-    } catch (e) { /* 忽略 */ }
-
-    showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
-
-    // 确保有登录态
-    var authOk = false;
-    try {
-      var auth = getAuth();
-      if (auth) {
-        var ls = await auth.getLoginState();
-        if (!ls) {
-          // 尝试匿名登录
-          showSyncStatus('🔑 正在登录...', '#5d4037');
-          await auth.signInAnonymously();
-          ls = await auth.getLoginState();
-        }
-        if (ls) {
-          authOk = true;
-          showSyncStatus('🔑 已登录(' + (ls.loginType || 'ok') + ')', '#2e7d32');
         }
       }
     } catch (e) {
-      showSyncStatus('🔑 登录失败: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 60), '#c62828');
-    }
-    if (!authOk) {
-      showSyncStatus('❌ 未登录，请在CloudBase控制台开启匿名登录', '#c62828');
+      showSyncStatus('❌ 登录失败: ' + (e.message || e.code || '').substring(0, 40), '#c62828');
       return;
     }
 
     showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
-
-    var db = getDB();
     var _ = DataStore._collections;
     var tasks = [
-      { key: 'chunxiao-students',      col: _.students,      label: '学员' },
-      { key: 'chunxiao-classes',       col: _.classes,       label: '班级' },
-      { key: 'chunxiao-attendance',    col: _.attendance,    label: '点名' },
-      { key: 'chunxiao-records',       col: _.records,       label: '上课记录' },
-      { key: 'chunxiao-lesson-corrections', col: _.corrections, label: '课时调整' },
-      { key: 'chunxiao-artworks',      col: _.artworks,      label: '作品' },
-      { key: 'chunxiao-announcements', col: _.announcements, label: '通知' },
-      { key: 'chunxiao-inquiries',     col: _.inquiries,     label: '预约' }
+      { key: 'chunxiao-students',      col: _.students },
+      { key: 'chunxiao-classes',       col: _.classes },
+      { key: 'chunxiao-attendance',    col: _.attendance },
+      { key: 'chunxiao-records',       col: _.records },
+      { key: 'chunxiao-lesson-corrections', col: _.corrections },
+      { key: 'chunxiao-artworks',      col: _.artworks },
+      { key: 'chunxiao-announcements', col: _.announcements },
+      { key: 'chunxiao-inquiries',     col: _.inquiries }
     ];
 
     var totalItems = 0;
@@ -108,7 +72,6 @@ var DataStore = {
         if (!firstError) firstError = (e.message || e.code || JSON.stringify(e)).substring(0, 50);
       }
     }
-
     if (totalItems > 0) {
       showSyncStatus('✅ 同步完成: ' + totalItems + ' 条', '#2e7d32');
     } else if (firstError) {
@@ -139,7 +102,7 @@ var DataStore = {
       });
       showSyncStatus('✅ 已上传 ' + collection + '(' + list.length + '条)', '#2e7d32');
     } catch (e) {
-      showSyncStatus('❌ 上传失败: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 40), '#c62828');
+      showSyncStatus('❌ 上传失败: ' + (e.message || e.code || '').substring(0, 40), '#c62828');
     }
   },
 
@@ -162,7 +125,7 @@ var DataStore = {
   }
 };
 
-// ========== 数据操作方法（本地 + 云函数双写） ==========
+// ========== 数据操作方法（本地 + CloudBase 双写） ==========
 
 function getStudents() {
   return JSON.parse(localStorage.getItem('chunxiao-students') || '[]');
