@@ -1,39 +1,43 @@
 /*
-  数据库代理云函数 - 以管理员权限读写，绕过集合安全规则
-  前端调用 cloud.callFunction({ name: 'dbProxy', data: { action, collection, items } })
+  数据库代理云函数
 */
-const cloudbase = require('@cloudbase/node-sdk');
+const cloud = require('wx-server-sdk');
+cloud.init({ env: 'chunxiao-d8ghfaw3y0781da11' });
+const db = cloud.database();
 
-const app = cloudbase.init({ env: cloudbase.SYMBOL_CURRENT_ENV });
-const db = app.database();
-
-exports.main = async (event, context) => {
+exports.main = async (event) => {
   const { action, collection, items } = event;
 
   try {
+    if (action === 'ping') {
+      // 最简单的数据库连通性测试
+      try {
+        const cnt = await db.collection('students').count();
+        return { success: true, count: cnt.total };
+      } catch (e) {
+        return { success: false, message: 'db access denied: ' + (e.message || String(e)) };
+      }
+    }
+
     if (action === 'read') {
       const res = await db.collection(collection).where({ _type: '_sync' }).get();
       return { success: true, data: res.data };
     }
 
     if (action === 'write') {
-      if (!items || items.length === 0) {
-        return { success: true, message: 'no items' };
-      }
+      if (!items || items.length === 0) return { success: true };
       const old = await db.collection(collection).where({ _type: '_sync' }).get();
       for (const doc of old.data) {
-        try { await db.collection(collection).doc(doc._id).remove(); } catch (e) {}
+        await db.collection(collection).doc(doc._id).remove();
       }
-      const addRes = await db.collection(collection).add({
-        _type: '_sync',
-        items: items,
-        updatedAt: new Date().toISOString()
+      await db.collection(collection).add({
+        data: { _type: '_sync', items: items, updatedAt: new Date().toISOString() }
       });
-      return { success: true, id: addRes.id || addRes._id };
+      return { success: true };
     }
 
-    return { success: false, message: 'unknown action' };
+    return { success: false, message: 'unknown action: ' + action };
   } catch (e) {
-    return { success: false, message: e.message || e.code || String(e) };
+    return { success: false, message: String(e) };
   }
 };

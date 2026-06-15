@@ -6,7 +6,11 @@
       "name": "dbProxy",
       "runtime": "Nodejs18.15",
       "handler": "index.main",
-      "timeout": 15
+      "timeout": 15,
+      "triggers": [],
+      "params": {
+        "enablePublicAccess": true
+      }
     }
   ]
 }

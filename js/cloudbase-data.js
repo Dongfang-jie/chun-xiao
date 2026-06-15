@@ -53,6 +53,34 @@ var DataStore = {
 
     showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
 
+    // 确保有登录态
+    var authOk = false;
+    try {
+      var auth = getAuth();
+      if (auth) {
+        var ls = await auth.getLoginState();
+        if (!ls) {
+          // 尝试匿名登录
+          showSyncStatus('🔑 正在登录...', '#5d4037');
+          await auth.signInAnonymously();
+          ls = await auth.getLoginState();
+        }
+        if (ls) {
+          authOk = true;
+          showSyncStatus('🔑 已登录(' + (ls.loginType || 'ok') + ')', '#2e7d32');
+        }
+      }
+    } catch (e) {
+      showSyncStatus('🔑 登录失败: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 60), '#c62828');
+    }
+    if (!authOk) {
+      showSyncStatus('❌ 未登录，请在CloudBase控制台开启匿名登录', '#c62828');
+      return;
+    }
+
+    showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
+
+    var db = getDB();
     var _ = DataStore._collections;
     var tasks = [
       { key: 'chunxiao-students',      col: _.students,      label: '学员' },
@@ -67,24 +95,17 @@ var DataStore = {
 
     var totalItems = 0;
     var firstError = '';
-    var detailLog = [];
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
       try {
-        // 通过云函数读取（管理员权限）
-        var result = await DataStore._callFunction({ action: 'read', collection: t.col });
-        if (result.data && result.data.length > 0 && result.data[0].items) {
-          var items = result.data[0].items;
+        var res = await db.collection(t.col).where({ _type: '_sync' }).get();
+        if (res.data && res.data.length > 0 && res.data[0].items) {
+          var items = res.data[0].items;
           localStorage.setItem(t.key, JSON.stringify(items));
           totalItems += items.length;
-          detailLog.push(t.label + ': ' + items.length + '条');
-        } else {
-          detailLog.push(t.label + ': 0条');
         }
       } catch (e) {
-        var errMsg = (e.message || e.code || JSON.stringify(e)).substring(0, 50);
-        if (!firstError) firstError = errMsg;
-        detailLog.push(t.label + ': ❌');
+        if (!firstError) firstError = (e.message || e.code || JSON.stringify(e)).substring(0, 50);
       }
     }
 
@@ -93,17 +114,29 @@ var DataStore = {
     } else if (firstError) {
       showSyncStatus('❌ ' + firstError, '#c62828');
     } else {
-      showSyncStatus('☁️ 云端暂无数据 (云函数)', '#5d4037');
+      showSyncStatus('☁️ 云端暂无数据', '#5d4037');
     }
   },
 
-  // ========== 单集合同步到 CloudBase（通过云函数） ==========
+  // ========== 单集合同步到 CloudBase ==========
   _syncOneToCloud: async function (collection, key) {
+    var db = getDB();
+    if (!db) return;
     var list = JSON.parse(localStorage.getItem(key) || '[]');
     if (list.length === 0) return;
 
     try {
-      await DataStore._callFunction({ action: 'write', collection: collection, items: list });
+      var old = await db.collection(collection).where({ _type: '_sync' }).get();
+      if (old.data) {
+        for (var i = 0; i < old.data.length; i++) {
+          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch(e) {}
+        }
+      }
+      await db.collection(collection).add({
+        _type: '_sync',
+        items: list,
+        updatedAt: new Date().toISOString()
+      });
       showSyncStatus('✅ 已上传 ' + collection + '(' + list.length + '条)', '#2e7d32');
     } catch (e) {
       showSyncStatus('❌ 上传失败: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 40), '#c62828');
