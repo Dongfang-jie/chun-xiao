@@ -67,13 +67,19 @@ var Auth = {
           console.log('✅ CloudBase 登录成功:', email);
         } catch (cbErr) {
           console.warn('CloudBase 登录失败，尝试注册:', cbErr.message || cbErr.code);
-          // 可能账号不存在，尝试自动注册
           try {
             var signUpResult = await auth.signUpWithEmailAndPassword(email, password);
             uid = signUpResult.user.uid;
             console.log('✅ CloudBase 注册成功:', email);
           } catch (cbErr2) {
-            console.warn('CloudBase 注册也失败，使用本地模式:', cbErr2.message || cbErr2.code);
+            console.warn('CloudBase 注册失败，降级匿名登录:', cbErr2.message || cbErr2.code);
+            // 匿名登录作为兜底（至少能读数据）
+            try {
+              await auth.signInAnonymously();
+              console.log('✅ 已切换匿名登录（仅可读数据）');
+            } catch (anonErr) {
+              console.warn('匿名登录也失败:', anonErr.message || anonErr.code);
+            }
           }
         }
       }
