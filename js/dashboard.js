@@ -2059,7 +2059,41 @@ function saveArtworks(list) {
   localStorage.setItem('chunxiao-artworks', JSON.stringify(list));
 }
 
+function seedArtworks() {
+  var existing = getArtworks();
+  if (existing.length > 0) return; // 已有数据，不重复填充
+
+  var samples = [
+    { title: '春天的小鸟', student: '小明', type: '美术', image: 'https://placehold.co/400x300/ffccbc/d84315?text=%E6%98%A5%E5%A4%A9%E7%9A%84%E5%B0%8F%E9%B8%9F' },
+    { title: '静物素描·陶罐', student: '小红', type: '美术', image: 'https://placehold.co/400x300/e0e0e0/424242?text=%E9%9D%99%E7%89%A9%E7%B4%A0%E6%8F%8F' },
+    { title: '水彩·江南水乡', student: '小华', type: '美术', image: 'https://placehold.co/400x300/b3e5fc/01579b?text=%E6%B0%B4%E5%BD%A9%E6%B1%9F%E5%8D%97' },
+    { title: '动漫人物·魔法少女', student: '小雪', type: '美术', image: 'https://placehold.co/400x300/f3e5f5/7b1fa2?text=%E9%AD%94%E6%B3%95%E5%B0%91%E5%A5%B3' },
+    { title: '硬笔·《静夜思》', student: '小刚', type: '书法', image: 'https://placehold.co/400x300/fff8e1/f9a825?text=%E9%9D%99%E5%A4%9C%E6%80%9D' },
+    { title: '软笔·春联', student: '小丽', type: '书法', image: 'https://placehold.co/400x300/fbe9e7/bf360c?text=%E6%98%A5%E8%81%94' },
+    { title: '儿童画·海底世界', student: '小明', type: '美术', image: 'https://placehold.co/400x300/b2dfdb/00695c?text=%E6%B5%B7%E5%BA%95%E4%B8%96%E7%95%8C' },
+    { title: '素描·石膏几何体', student: '小红', type: '美术', image: 'https://placehold.co/400x300/d7ccc8/4e342e?text=%E7%9F%B3%E8%86%8F%E5%87%A0%E4%BD%95%E4%BD%93' },
+    { title: '创意画·彩虹城堡', student: '小雪', type: '美术', image: 'https://placehold.co/400x300/e1bee7/6a1b9a?text=%E5%BD%A9%E8%99%B9%E5%9F%8E%E5%A0%A1' },
+    { title: '水彩·向日葵', student: '小华', type: '美术', image: 'https://placehold.co/400x300/fff9c4/f57f17?text=%E5%90%91%E6%97%A5%E8%91%B5' }
+  ];
+
+  var list = samples.map(function(s, idx) {
+    return {
+      id: Date.now() - idx * 1000, // 时间戳递减，保证顺序
+      title: s.title,
+      student: s.student,
+      type: s.type,
+      image: s.image,
+      addedAt: new Date(Date.now() - idx * 86400000).toISOString(), // 每天一个
+      addedBy: '张校长'
+    };
+  });
+
+  saveArtworks(list);
+}
+
 function loadArtworks() {
+  // 首次使用：填充示例作品数据
+  seedArtworks();
   renderArtworks();
   var addBtn = document.getElementById('add-artwork-btn');
   if (addBtn) {
