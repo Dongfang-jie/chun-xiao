@@ -31,34 +31,73 @@ var DataStore = {
     if (!db) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
 
     // 确保至少有匿名登录态（否则数据库请求会被拒绝）
+    var loginType = 'none';
     try {
       var auth = getAuth();
       if (auth) {
         var loginState = await auth.getLoginState();
         if (!loginState) {
           await auth.signInAnonymously();
+          loginType = 'new-anonymous';
           console.log('🟢 同步前补充匿名登录');
+        } else {
+          loginType = (loginState.loginType || 'existing');
+          console.log('🔵 已有登录态:', loginType);
         }
       }
     } catch (e) {
-      console.warn('登录态检查失败:', e.message || e.code);
+      loginType = 'error:' + (e.message || e.code || '');
+      console.warn('登录态检查失败:', loginType);
     }
 
-    showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
+    showSyncStatus('☁️ 正在从云端同步... (登录态:' + loginType + ')', '#5d4037');
+
+    // ====== SDK 自诊断：用 where 验证读写 ======
+    var sdkDiag = '';
+    var diagTag = 'diag-' + Date.now();
+    try {
+      // 先清理旧诊断数据
+      try {
+        var olds = await db.collection(DataStore._collections.students).where({ _type: '_diag' }).get();
+        if (olds.data) {
+          for (var oi = 0; oi < olds.data.length; oi++) {
+            try { await db.collection(DataStore._collections.students).doc(olds.data[oi]._id).remove(); } catch(e) {}
+          }
+        }
+      } catch(e) {}
+      // 写入诊断文档
+      var diagData = { _type: '_diag', tag: diagTag, t: Date.now() };
+      await db.collection(DataStore._collections.students).add(diagData);
+      // 通过 where 查询验证写入了
+      var verify = await db.collection(DataStore._collections.students).where({ tag: diagTag }).get();
+      if (verify.data && verify.data.length > 0) {
+        sdkDiag = 'SDK读写OK';
+        // 清理
+        try { await db.collection(DataStore._collections.students).doc(verify.data[0]._id).remove(); } catch(e) {}
+      } else {
+        sdkDiag = 'SDK写后查不到';
+      }
+    } catch (e) {
+      sdkDiag = 'SDK异常:' + (e.message || e.code || JSON.stringify(e)).substring(0, 35);
+    }
+    console.log('🔧 SDK自诊断:', sdkDiag);
+    // ====== SDK 自诊断结束 ======
+
     var _ = DataStore._collections;
     var tasks = [
-      { key: 'chunxiao-students',      col: _.students },
-      { key: 'chunxiao-classes',       col: _.classes },
-      { key: 'chunxiao-attendance',    col: _.attendance },
-      { key: 'chunxiao-records',       col: _.records },
-      { key: 'chunxiao-lesson-corrections', col: _.corrections },
-      { key: 'chunxiao-artworks',      col: _.artworks },
-      { key: 'chunxiao-announcements', col: _.announcements },
-      { key: 'chunxiao-inquiries',     col: _.inquiries }
+      { key: 'chunxiao-students',      col: _.students,      label: '学员' },
+      { key: 'chunxiao-classes',       col: _.classes,       label: '班级' },
+      { key: 'chunxiao-attendance',    col: _.attendance,    label: '点名' },
+      { key: 'chunxiao-records',       col: _.records,       label: '上课记录' },
+      { key: 'chunxiao-lesson-corrections', col: _.corrections, label: '课时调整' },
+      { key: 'chunxiao-artworks',      col: _.artworks,      label: '作品' },
+      { key: 'chunxiao-announcements', col: _.announcements, label: '通知' },
+      { key: 'chunxiao-inquiries',     col: _.inquiries,     label: '预约' }
     ];
 
     var totalItems = 0;
     var firstError = '';
+    var detailLog = [];
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
       try {
@@ -68,17 +107,27 @@ var DataStore = {
           var items = res.data[0].items;
           localStorage.setItem(t.key, JSON.stringify(items));
           totalItems += items.length;
+          detailLog.push(t.label + ': ' + items.length + '条');
+          console.log('  ✅ ' + t.col + ' → ' + items.length + ' 条');
+        } else {
+          detailLog.push(t.label + ': 0条');
+          console.log('  ⚪ ' + t.col + ' → 无数据 (res.data=' + (res.data ? res.data.length : 'null') + ')');
         }
       } catch (e) {
-        if (!firstError) firstError = (e.message || e.code || JSON.stringify(e)).substring(0, 60);
+        var errMsg = (e.message || e.code || JSON.stringify(e)).substring(0, 60);
+        if (!firstError) firstError = errMsg;
+        detailLog.push(t.label + ': ❌ ' + errMsg);
+        console.error('  ❌ ' + t.col + ' → ' + errMsg);
       }
     }
+    console.log('📊 同步结果: ' + detailLog.join(' | '));
     if (totalItems > 0) {
-      showSyncStatus('✅ 云端同步完成: ' + totalItems + ' 条数据', '#2e7d32');
+      showSyncStatus('✅ 同步:' + totalItems + '条', '#2e7d32');
     } else if (firstError) {
-      showSyncStatus('❌ ' + firstError, '#c62828');
+      showSyncStatus('❌' + firstError.substring(0,40) + ' | 自检:' + sdkDiag, '#c62828');
     } else {
-      showSyncStatus('☁️ 云端暂无数据', '#5d4037');
+      // 把自检结果直接显示在状态栏，不隐藏
+      showSyncStatus('🔧自检:' + sdkDiag + ' | ☁️无数据', '#e65100');
     }
   },
 

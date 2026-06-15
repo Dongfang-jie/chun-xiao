@@ -1,0 +1,5 @@
+{
+  "name": "dbProxy",
+  "version": "1.0.0",
+  "description": "数据库代理 - 以管理员权限读写，绕过集合权限限制"
+}
