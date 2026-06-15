@@ -1,6 +1,6 @@
 /*
   春晓画室 - CloudBase 数据同步层
-  本地 localStorage 缓存 + CloudBase 远程同步
+  本地 localStorage 缓存 + 云函数代理（管理员权限，绕过安全规则）
   get 函数同步返回（读缓存），save 函数本地+远程双写
 */
 
@@ -16,7 +16,6 @@ function showSyncStatus(msg, color) {
   el.style.background = color || '#333';
   el.textContent = msg;
   el.style.display = 'block';
-  // 5 秒后自动隐藏成功消息
   if (color === '#2e7d32') {
     setTimeout(function() { el.style.display = 'none'; }, 5000);
   }
@@ -25,63 +24,34 @@ function showSyncStatus(msg, color) {
 var DataStore = {
   _collections: CLOUDBASE_CONFIG.collections,
 
+  // ========== 调用云函数（管理员权限，绕过集合安全规则） ==========
+  _callFunction: async function (data) {
+    var app = getApp();
+    if (!app) throw new Error('SDK未加载');
+    var res = await app.callFunction({ name: 'dbProxy', data: data });
+    if (!res.result || !res.result.success) {
+      throw new Error(res.result ? res.result.message : '云函数无响应');
+    }
+    return res.result;
+  },
+
   // ========== 从 CloudBase 拉取全部数据 ==========
   syncAllFromCloud: async function () {
-    var db = getDB();
-    if (!db) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
+    var app = getApp();
+    if (!app) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
 
-    // 确保至少有匿名登录态（否则数据库请求会被拒绝）
-    var loginType = 'none';
+    // 确保有登录态（匿名即可，云函数需要 auth 上下文）
     try {
       var auth = getAuth();
       if (auth) {
         var loginState = await auth.getLoginState();
         if (!loginState) {
           await auth.signInAnonymously();
-          loginType = 'new-anonymous';
-          console.log('🟢 同步前补充匿名登录');
-        } else {
-          loginType = (loginState.loginType || 'existing');
-          console.log('🔵 已有登录态:', loginType);
         }
       }
-    } catch (e) {
-      loginType = 'error:' + (e.message || e.code || '');
-      console.warn('登录态检查失败:', loginType);
-    }
+    } catch (e) { /* 忽略 */ }
 
-    showSyncStatus('☁️ 正在从云端同步... (登录态:' + loginType + ')', '#5d4037');
-
-    // ====== SDK 自诊断：用 where 验证读写 ======
-    var sdkDiag = '';
-    var diagTag = 'diag-' + Date.now();
-    try {
-      // 先清理旧诊断数据
-      try {
-        var olds = await db.collection(DataStore._collections.students).where({ _type: '_diag' }).get();
-        if (olds.data) {
-          for (var oi = 0; oi < olds.data.length; oi++) {
-            try { await db.collection(DataStore._collections.students).doc(olds.data[oi]._id).remove(); } catch(e) {}
-          }
-        }
-      } catch(e) {}
-      // 写入诊断文档
-      var diagData = { _type: '_diag', tag: diagTag, t: Date.now() };
-      await db.collection(DataStore._collections.students).add(diagData);
-      // 通过 where 查询验证写入了
-      var verify = await db.collection(DataStore._collections.students).where({ tag: diagTag }).get();
-      if (verify.data && verify.data.length > 0) {
-        sdkDiag = 'SDK读写OK';
-        // 清理
-        try { await db.collection(DataStore._collections.students).doc(verify.data[0]._id).remove(); } catch(e) {}
-      } else {
-        sdkDiag = 'SDK写后查不到';
-      }
-    } catch (e) {
-      sdkDiag = 'SDK异常:' + (e.message || e.code || JSON.stringify(e)).substring(0, 35);
-    }
-    console.log('🔧 SDK自诊断:', sdkDiag);
-    // ====== SDK 自诊断结束 ======
+    showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
 
     var _ = DataStore._collections;
     var tasks = [
@@ -101,60 +71,42 @@ var DataStore = {
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
       try {
-        // 按标记字段查询同步数据
-        var res = await db.collection(t.col).where({ _type: '_sync' }).get();
-        if (res.data && res.data.length > 0 && res.data[0].items) {
-          var items = res.data[0].items;
+        // 通过云函数读取（管理员权限）
+        var result = await DataStore._callFunction({ action: 'read', collection: t.col });
+        if (result.data && result.data.length > 0 && result.data[0].items) {
+          var items = result.data[0].items;
           localStorage.setItem(t.key, JSON.stringify(items));
           totalItems += items.length;
           detailLog.push(t.label + ': ' + items.length + '条');
-          console.log('  ✅ ' + t.col + ' → ' + items.length + ' 条');
         } else {
           detailLog.push(t.label + ': 0条');
-          console.log('  ⚪ ' + t.col + ' → 无数据 (res.data=' + (res.data ? res.data.length : 'null') + ')');
         }
       } catch (e) {
-        var errMsg = (e.message || e.code || JSON.stringify(e)).substring(0, 60);
+        var errMsg = (e.message || e.code || JSON.stringify(e)).substring(0, 50);
         if (!firstError) firstError = errMsg;
-        detailLog.push(t.label + ': ❌ ' + errMsg);
-        console.error('  ❌ ' + t.col + ' → ' + errMsg);
+        detailLog.push(t.label + ': ❌');
       }
     }
-    console.log('📊 同步结果: ' + detailLog.join(' | '));
+
     if (totalItems > 0) {
-      showSyncStatus('✅ 同步:' + totalItems + '条', '#2e7d32');
+      showSyncStatus('✅ 同步完成: ' + totalItems + ' 条', '#2e7d32');
     } else if (firstError) {
-      showSyncStatus('❌' + firstError.substring(0,40) + ' | 自检:' + sdkDiag, '#c62828');
+      showSyncStatus('❌ ' + firstError, '#c62828');
     } else {
-      // 把自检结果直接显示在状态栏，不隐藏
-      showSyncStatus('🔧自检:' + sdkDiag + ' | ☁️无数据', '#e65100');
+      showSyncStatus('☁️ 云端暂无数据 (云函数)', '#5d4037');
     }
   },
 
-  // ========== 单集合同步到 CloudBase ==========
+  // ========== 单集合同步到 CloudBase（通过云函数） ==========
   _syncOneToCloud: async function (collection, key) {
-    var db = getDB();
-    if (!db) return;
     var list = JSON.parse(localStorage.getItem(key) || '[]');
     if (list.length === 0) return;
 
     try {
-      // 删掉旧的同步文档
-      var old = await db.collection(collection).where({ _type: '_sync' }).get();
-      if (old.data) {
-        for (var i = 0; i < old.data.length; i++) {
-          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch(e) {}
-        }
-      }
-      // 新增一条同步文档（用 add 让 CloudBase 自动生成 _id）
-      await db.collection(collection).add({
-        _type: '_sync',
-        items: list,
-        updatedAt: new Date().toISOString()
-      });
+      await DataStore._callFunction({ action: 'write', collection: collection, items: list });
       showSyncStatus('✅ 已上传 ' + collection + '(' + list.length + '条)', '#2e7d32');
     } catch (e) {
-      showSyncStatus('❌ 上传失败: ' + (e.message || e.code), '#c62828');
+      showSyncStatus('❌ 上传失败: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 40), '#c62828');
     }
   },
 
@@ -177,9 +129,8 @@ var DataStore = {
   }
 };
 
-// ========== 数据操作方法（本地 + CloudBase 双写） ==========
+// ========== 数据操作方法（本地 + 云函数双写） ==========
 
-// --- 学员 ---
 function getStudents() {
   return JSON.parse(localStorage.getItem('chunxiao-students') || '[]');
 }
@@ -188,7 +139,6 @@ function saveStudents(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.students, 'chunxiao-students');
 }
 
-// --- 班级 ---
 function getClasses() {
   return JSON.parse(localStorage.getItem('chunxiao-classes') || '[]');
 }
@@ -197,7 +147,6 @@ function saveClasses(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.classes, 'chunxiao-classes');
 }
 
-// --- 点名 ---
 function getAttendance() {
   return JSON.parse(localStorage.getItem('chunxiao-attendance') || '[]');
 }
@@ -206,7 +155,6 @@ function saveAttendance(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.attendance, 'chunxiao-attendance');
 }
 
-// --- 上课记录 ---
 function getRecords() {
   return JSON.parse(localStorage.getItem('chunxiao-records') || '[]');
 }
@@ -215,7 +163,6 @@ function saveRecords(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.records, 'chunxiao-records');
 }
 
-// --- 课时调整 ---
 function getLessonCorrections() {
   return JSON.parse(localStorage.getItem('chunxiao-lesson-corrections') || '[]');
 }
@@ -224,7 +171,6 @@ function saveLessonCorrections(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.corrections, 'chunxiao-lesson-corrections');
 }
 
-// --- 作品 ---
 function getArtworks() {
   return JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
 }
@@ -233,7 +179,6 @@ function saveArtworks(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.artworks, 'chunxiao-artworks');
 }
 
-// --- 通知 ---
 function getAnnouncements() {
   return JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]');
 }
@@ -242,7 +187,6 @@ function saveAnnouncements(list) {
   DataStore._syncOneToCloud(CLOUDBASE_CONFIG.collections.announcements, 'chunxiao-announcements');
 }
 
-// --- 预约 ---
 function getInquiries() {
   return JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]');
 }

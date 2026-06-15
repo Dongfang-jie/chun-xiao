@@ -1,5 +1,12 @@
 {
-  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
   "version": "2.0",
-  "envId": "chunxiao-d8ghfaw3y0781da11"
+  "envId": "chunxiao-d8ghfaw3y0781da11",
+  "functions": [
+    {
+      "name": "dbProxy",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "timeout": 15
+    }
+  ]
 }
