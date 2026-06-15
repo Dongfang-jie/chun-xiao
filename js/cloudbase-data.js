@@ -62,6 +62,16 @@ var DataStore = {
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
       try {
+        // 本地已有数据 → 优先保留（防止云端旧数据覆盖本地修改）
+        var localData = localStorage.getItem(t.key);
+        if (localData) {
+          var parsed = JSON.parse(localData);
+          if (parsed && parsed.length > 0) {
+            totalItems += parsed.length;
+            continue;
+          }
+        }
+        // 本地空 → 从云端拉取
         var res = await db.collection(t.col).where({ _type: '_sync' }).get();
         if (res.data && res.data.length > 0 && res.data[0].items) {
           var items = res.data[0].items;
@@ -86,7 +96,7 @@ var DataStore = {
     var db = getDB();
     if (!db) return;
     var list = JSON.parse(localStorage.getItem(key) || '[]');
-    if (list.length === 0) return;
+    // 即使空列表也同步——清除云端旧数据，防止下次拉取回滚到旧版本
 
     try {
       var old = await db.collection(collection).where({ _type: '_sync' }).get();
