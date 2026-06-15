@@ -14,13 +14,13 @@ document.addEventListener('DOMContentLoaded', function () {
   var backToLogin = document.getElementById('back-to-login');
   var registerHint = document.getElementById('register-hint');
 
-  // 如果已登录，直接跳转
+  // 如果已登录，直接跳转（admin/teacher → 老师端，parent → 家长端）
   var savedUser = Auth.currentUser();
   if (savedUser) {
-    if (savedUser.role === 'teacher') {
-      window.location.href = 'teacher-dashboard.html';
-    } else {
+    if (savedUser.role === 'parent') {
       window.location.href = 'parent-dashboard.html';
+    } else {
+      window.location.href = 'teacher-dashboard.html';
     }
     return;
   }
