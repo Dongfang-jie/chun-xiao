@@ -44,22 +44,25 @@ var DataStore = {
     ];
 
     var totalItems = 0;
+    var firstError = '';
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
       try {
-        // 读取合集文档
-        var res = await db.collection(t.col).doc('_data').get();
+        // 按标记字段查询同步数据
+        var res = await db.collection(t.col).where({ _type: '_sync' }).get();
         if (res.data && res.data.length > 0 && res.data[0].items) {
           var items = res.data[0].items;
           localStorage.setItem(t.key, JSON.stringify(items));
           totalItems += items.length;
         }
       } catch (e) {
-        // 文档不存在等，跳过
+        if (!firstError) firstError = (e.message || e.code || JSON.stringify(e)).substring(0, 60);
       }
     }
     if (totalItems > 0) {
       showSyncStatus('✅ 云端同步完成: ' + totalItems + ' 条数据', '#2e7d32');
+    } else if (firstError) {
+      showSyncStatus('❌ ' + firstError, '#c62828');
     } else {
       showSyncStatus('☁️ 云端暂无数据', '#5d4037');
     }
@@ -73,8 +76,19 @@ var DataStore = {
     if (list.length === 0) return;
 
     try {
-      // 每个集合只存一个文档 _data，包含全部数据
-      await db.collection(collection).doc('_data').set({ items: list, updatedAt: new Date().toISOString() });
+      // 删掉旧的同步文档
+      var old = await db.collection(collection).where({ _type: '_sync' }).get();
+      if (old.data) {
+        for (var i = 0; i < old.data.length; i++) {
+          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch(e) {}
+        }
+      }
+      // 新增一条同步文档（用 add 让 CloudBase 自动生成 _id）
+      await db.collection(collection).add({
+        _type: '_sync',
+        items: list,
+        updatedAt: new Date().toISOString()
+      });
       showSyncStatus('✅ 已上传 ' + collection + '(' + list.length + '条)', '#2e7d32');
     } catch (e) {
       showSyncStatus('❌ 上传失败: ' + (e.message || e.code), '#c62828');
