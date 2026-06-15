@@ -2156,18 +2156,42 @@ function loadArtworks() {
   if (addBtn) {
     addBtn.onclick = function() {
       document.getElementById('artwork-form-wrap').style.display = 'block';
+      document.getElementById('artwork-form-title').textContent = '添加作品';
       document.getElementById('a-title').value = '';
       document.getElementById('a-student').value = '';
       document.getElementById('a-type').value = '美术';
       document.getElementById('a-image').value = '';
+      document.getElementById('a-image-file').value = '';
+      document.getElementById('artwork-preview-wrap').style.display = 'none';
     };
   }
   var cancelBtn = document.getElementById('artwork-cancel-btn');
   if (cancelBtn) {
     cancelBtn.onclick = function() {
       document.getElementById('artwork-form-wrap').style.display = 'none';
+      resetArtworkForm();
     };
   }
+
+  // 文件选择 → 预览 + 压缩
+  var fileInput = document.getElementById('a-image-file');
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      var file = fileInput.files[0];
+      if (!file) return;
+      compressAndPreviewImage(file);
+    });
+  }
+
+  // 清空预览
+  var clearBtn = document.getElementById('artwork-preview-clear');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      document.getElementById('a-image-file').value = '';
+      document.getElementById('artwork-preview-wrap').style.display = 'none';
+    });
+  }
+
   var saveBtn = document.getElementById('artwork-save-btn');
   if (saveBtn) {
     saveBtn.onclick = function() {
@@ -2175,12 +2199,27 @@ function loadArtworks() {
       var student = document.getElementById('a-student').value.trim();
       if (!title || !student) { alert('请填写作品名称和学生姓名'); return; }
 
+      // 优先使用拍照的 base64 图片，其次用链接
+      var previewWrap = document.getElementById('artwork-preview-wrap');
+      var previewImg = document.getElementById('artwork-preview-img');
+      var imageData = previewImg.src;
+      var urlValue = document.getElementById('a-image').value.trim();
+      var finalImage;
+
+      if (previewWrap.style.display !== 'none' && imageData && imageData.indexOf('data:image') === 0) {
+        finalImage = imageData; // 拍照/选图的 base64
+      } else if (urlValue) {
+        finalImage = urlValue; // 手动填的链接
+      } else {
+        finalImage = 'https://placehold.co/400x300/e8d8c8/5d4037?text=' + encodeURIComponent(title);
+      }
+
       var artwork = {
         id: Date.now(),
         title: title,
         student: student,
         type: document.getElementById('a-type').value,
-        image: document.getElementById('a-image').value.trim() || 'https://placehold.co/400x300/e8d8c8/5d4037?text=' + encodeURIComponent(title),
+        image: finalImage,
         addedAt: new Date().toISOString(),
         addedBy: getOperatorName()
       };
@@ -2189,10 +2228,54 @@ function loadArtworks() {
       list.unshift(artwork);
       saveArtworks(list);
       document.getElementById('artwork-form-wrap').style.display = 'none';
+      resetArtworkForm();
       renderArtworks();
       updateOverview();
     };
   }
+}
+
+function resetArtworkForm() {
+  document.getElementById('a-image-file').value = '';
+  document.getElementById('artwork-preview-img').src = '';
+  document.getElementById('artwork-preview-wrap').style.display = 'none';
+  document.getElementById('a-image').value = '';
+}
+
+// 压缩图片并预览（手机拍照 → 压缩到合理大小 → base64）
+function compressAndPreviewImage(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      // 最大宽度 800px，保持比例
+      var maxW = 800;
+      var w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // 压缩为 JPEG，质量 0.75
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+
+      // 显示预览
+      var previewWrap = document.getElementById('artwork-preview-wrap');
+      var previewImg = document.getElementById('artwork-preview-img');
+      var previewSize = document.getElementById('artwork-preview-size');
+      previewImg.src = dataUrl;
+      previewWrap.style.display = 'block';
+
+      // 显示压缩后大小
+      var sizeKB = Math.round(dataUrl.length * 3 / 4 / 1024);
+      previewSize.textContent = '已压缩至 ' + w + '×' + h + ' · ≈' + sizeKB + 'KB';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function renderArtworks() {
