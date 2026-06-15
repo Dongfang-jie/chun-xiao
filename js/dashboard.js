@@ -27,10 +27,11 @@ document.addEventListener('DOMContentLoaded', function () {
     userNameEl.innerHTML = icon + (user.name || user.email) + roleBadge;
   }
 
-  // 家长端：加载个人信息 + 画室通知
+  // 家长端：加载个人信息 + 画室通知 + 孩子作品
   if (!isTeacher) {
     loadParentInfo(user);
     loadParentAnnouncements();
+    loadParentArtworks(user);
   }
 
   // 老师端：加载所有管理功能
@@ -118,6 +119,62 @@ function loadParentInfo(user) {
     + '<p><strong>📧 邮箱：</strong>' + (user.email || '--') + '</p>'
     + '<p><strong>👶 孩子姓名：</strong>' + (user.childName || '--') + '</p>'
     + '<p><strong>📅 登录时间：</strong>' + (user.loginTime ? new Date(user.loginTime).toLocaleString('zh-CN') : '--') + '</p>';
+}
+
+// 家长端：加载孩子作品
+function loadParentArtworks(user) {
+  var childName = user.childName;
+  if (!childName) return;
+
+  var allArtworks = JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
+  var childWorks = allArtworks.filter(function(a) {
+    return a.student === childName;
+  });
+
+  // 统计数字
+  var statEl = document.querySelector('#page-overview .stat-cards .stat-card:first-child .stat-number');
+  if (statEl) statEl.textContent = childWorks.length;
+
+  // 概览区：最新 4 件
+  var overviewContainer = document.getElementById('parent-overview-works');
+  if (overviewContainer) {
+    if (childWorks.length === 0) {
+      overviewContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + childName + '」的作品，老师添加后自动展示</p>';
+    } else {
+      var html = '';
+      childWorks.slice(0, 4).forEach(function(a) {
+        html += buildParentArtworkCard(a);
+      });
+      overviewContainer.innerHTML = html;
+    }
+  }
+
+  // 作品子页面：全部
+  var worksContainer = document.getElementById('parent-child-works');
+  var subtitleEl = document.getElementById('parent-works-subtitle');
+  if (worksContainer) {
+    if (subtitleEl) subtitleEl.textContent = '👶 ' + childName + ' 的课堂作品 · 共 ' + childWorks.length + ' 件';
+    if (childWorks.length === 0) {
+      worksContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + childName + '」的作品，老师添加后自动展示</p>';
+    } else {
+      var allHtml = '';
+      childWorks.forEach(function(a) {
+        allHtml += buildParentArtworkCard(a);
+      });
+      worksContainer.innerHTML = allHtml;
+    }
+  }
+}
+
+function buildParentArtworkCard(a) {
+  return [
+    '<div class="card">',
+    '<img src="' + a.image + '" alt="' + a.title + '" class="card-img" onerror="this.src=\'https://placehold.co/400x300/e8d8c8/5d4037?text=作品\'">',
+    '<div class="card-body">',
+    '<h4>' + a.title + '</h4>',
+    '<p>' + a.type + (a.addedAt ? ' | ' + new Date(a.addedAt).toLocaleDateString('zh-CN') : '') + '</p>',
+    '</div></div>'
+  ].join('');
 }
 
 // ============================================================

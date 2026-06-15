@@ -66,23 +66,17 @@
         </div>
 
         <h3>🌟 最近作品</h3>
-        <div class="card-container">
-          <div class="card">
-            <img src="https://placehold.co/400x250/f8e8d0/5d4037?text=暂无作品" alt="暂无" class="card-img">
-            <div class="card-body">
-              <h4>还没有作品</h4>
-              <p>孩子的作品将在这里展示</p>
-            </div>
-          </div>
+        <div class="card-container" id="parent-overview-works">
+          <p style="text-align:center; color:#999; padding:40px; width:100%;">老师添加作品后这里会自动展示</p>
         </div>
       </section>
 
       <!-- 孩子作品 -->
       <section id="page-child-works" class="dash-page">
         <h2>🖼️ 孩子作品</h2>
-        <p style="color:#888;">此处展示您孩子的课堂作品（连接后端后显示真实数据）</p>
-        <div class="card-container">
-          <!-- 作品卡片将通过 JS 动态加载 -->
+        <p style="color:#888;" id="parent-works-subtitle">加载中...</p>
+        <div class="card-container" id="parent-child-works">
+          <p style="text-align:center; color:#999; padding:40px; width:100%;">老师添加作品后这里会自动展示</p>
         </div>
       </section>
 
