@@ -30,22 +30,19 @@ var DataStore = {
     var db = getDB();
     if (!db) { showSyncStatus('⚠️ SDK未加载', '#e65100'); return; }
 
-    // ====== 连接测试（只读，确保匿名用户也能通过） ======
-    showSyncStatus('🔍 测试数据库连接...', '#5d4037');
-    var pingOk = false;
+    // 确保至少有匿名登录态（否则数据库请求会被拒绝）
     try {
-      // 只做读测试：尝试读取 students 集合（不需要写权限）
-      var testRes = await db.collection(DataStore._collections.students).where({ _type: '_sync' }).get();
-      // 无论有没有数据，只要没抛异常就说明数据库可读
-      pingOk = true;
-      showSyncStatus('✅ 数据库连接正常', '#2e7d32');
+      var auth = getAuth();
+      if (auth) {
+        var loginState = await auth.getLoginState();
+        if (!loginState) {
+          await auth.signInAnonymously();
+          console.log('🟢 同步前补充匿名登录');
+        }
+      }
     } catch (e) {
-      showSyncStatus('❌ 数据库不可达: ' + (e.message || e.code || JSON.stringify(e)).substring(0, 50), '#c62828');
-      return;
+      console.warn('登录态检查失败:', e.message || e.code);
     }
-
-    if (!pingOk) { showSyncStatus('⚠️ 连接异常，跳过同步', '#e65100'); return; }
-    // ====== 连接测试结束 ======
 
     showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
     var _ = DataStore._collections;
