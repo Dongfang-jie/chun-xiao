@@ -4,14 +4,33 @@
   get 函数同步返回（读缓存），save 函数本地+远程双写
 */
 
+// 页面上的同步状态显示
+function showSyncStatus(msg, color) {
+  var el = document.getElementById('cloudbase-sync-status');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'cloudbase-sync-status';
+    el.style.cssText = 'position:fixed; bottom:12px; right:12px; background:#333; color:#fff; padding:8px 14px; border-radius:8px; font-size:0.8em; z-index:9999; max-width:90vw; word-break:break-all; opacity:0.9;';
+    document.body.appendChild(el);
+  }
+  el.style.background = color || '#333';
+  el.textContent = msg;
+  el.style.display = 'block';
+  // 5 秒后自动隐藏成功消息
+  if (color === '#2e7d32') {
+    setTimeout(function() { el.style.display = 'none'; }, 5000);
+  }
+}
+
 var DataStore = {
   _collections: CLOUDBASE_CONFIG.collections,
 
   // ========== 从 CloudBase 拉取全部数据 ==========
   syncAllFromCloud: async function () {
     var db = getDB();
-    if (!db) { console.warn('⚠️ CloudBase 未就绪，使用本地数据'); return; }
+    if (!db) { showSyncStatus('⚠️ CloudBase 未就绪，使用本地数据', '#e65100'); return; }
 
+    showSyncStatus('☁️ 正在从云端同步...', '#5d4037');
     var _ = DataStore._collections;
     var tasks = [
       { key: 'chunxiao-students',      col: _.students },
@@ -24,23 +43,28 @@ var DataStore = {
       { key: 'chunxiao-inquiries',     col: _.inquiries }
     ];
 
+    var totalItems = 0;
     for (var i = 0; i < tasks.length; i++) {
       var t = tasks[i];
       try {
         var res = await db.collection(t.col).limit(500).get();
         if (res.data && res.data.length > 0) {
-          // CloudBase 返回的文档包含 _id，去掉后保存
           var items = res.data.map(function(doc) {
             var item = {};
             for (var k in doc) { if (k !== '_id' && k !== '_openid') item[k] = doc[k]; }
             return item;
           });
           localStorage.setItem(t.key, JSON.stringify(items));
-          console.log('✅ 同步 ' + t.col + ': ' + items.length + ' 条');
+          totalItems += items.length;
         }
       } catch (e) {
-        console.warn('⚠️ 同步 ' + t.col + ' 失败:', e.message);
+        showSyncStatus('⚠️ 读取 ' + t.col + ' 失败: ' + (e.message || e.code), '#e65100');
       }
+    }
+    if (totalItems > 0) {
+      showSyncStatus('✅ 云端同步完成: ' + totalItems + ' 条数据', '#2e7d32');
+    } else {
+      showSyncStatus('☁️ 云端暂无数据，等待本地上传...', '#5d4037');
     }
   },
 
@@ -48,21 +72,19 @@ var DataStore = {
   _syncOneToCloud: async function (collection, key) {
     var db = getDB();
     if (!db) {
-      console.warn('⚠️ CloudBase DB 未初始化，跳过同步 ' + collection);
+      showSyncStatus('⚠️ CloudBase 未初始化', '#e65100');
       return;
     }
     var list = JSON.parse(localStorage.getItem(key) || '[]');
     if (list.length === 0) return;
 
-    console.log('🔄 同步 ' + collection + ' → CloudBase（' + list.length + ' 条）...');
+    showSyncStatus('🔄 上传 ' + collection + '...', '#5d4037');
     try {
       // 先删全部旧数据
       var old = await db.collection(collection).limit(500).get();
       if (old.data) {
         for (var i = 0; i < old.data.length; i++) {
-          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch(e) {
-            console.warn('  ✗ 删除失败:', e.message || e.code);
-          }
+          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch(e) {}
         }
       }
       // 再全部写入新数据
@@ -72,12 +94,14 @@ var DataStore = {
           await db.collection(collection).add(list[j]);
           ok++;
         } catch(e) {
-          console.warn('  ✗ 写入 ' + collection + '[' + j + '] 失败:', e.message || e.code);
+          showSyncStatus('❌ 写入失败: ' + (e.message || e.code || e), '#c62828');
         }
       }
-      console.log('✅ ' + collection + ' 同步完成: ' + ok + '/' + list.length);
+      if (ok > 0) {
+        showSyncStatus('✅ 已上传 ' + ok + ' 条到云端', '#2e7d32');
+      }
     } catch (e) {
-      console.error('❌ 同步 ' + collection + ' 失败:', e.message || e.code || e);
+      showSyncStatus('❌ 同步失败: ' + (e.message || e.code || '未知错误'), '#c62828');
     }
   },
 
