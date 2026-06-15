@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ========== 登录 ==========
   if (loginForm) {
-    loginForm.addEventListener('submit', function (e) {
+    loginForm.addEventListener('submit', async function (e) {
       e.preventDefault();
 
       var email = document.getElementById('email').value.trim();
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
       loginError.textContent = '登录中...';
 
       try {
-        var user = Auth.login(email, password);
+        var user = await Auth.login(email, password);
 
         // 检查角色是否匹配（admin 也是老师端）
         if (currentRole === 'teacher' && user.role === 'parent') {
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ========== 注册 ==========
   if (registerForm) {
-    registerForm.addEventListener('submit', function (e) {
+    registerForm.addEventListener('submit', async function (e) {
       e.preventDefault();
 
       var name = document.getElementById('reg-name').value.trim();
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
       registerError.textContent = '注册中...';
 
       try {
-        Auth.register(name, email, password, childName);
+        await Auth.register(name, email, password, childName);
         window.location.href = 'parent-dashboard.html';
       } catch (err) {
         registerError.textContent = err.message;

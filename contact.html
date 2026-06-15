@@ -207,7 +207,9 @@
     <p>&copy; 2026 春晓画室 | 让艺术陪伴孩子成长</p>
   </footer>
 
-  <script src="js/auth.js"></script>
+  <script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/1.7.3/cloudbase.full.js"></script>
+  <script src="js/cloudbase-config.js"></script>
+  <script src="js/cloudbase-auth.js"></script>
   <script src="js/main.js"></script>
 
   <!-- 联系表单交互 + 通知 -->
@@ -262,6 +264,14 @@
           var inquiries = JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]');
           inquiries.unshift(inquiry);
           localStorage.setItem('chunxiao-inquiries', JSON.stringify(inquiries));
+
+          // 同步写入 CloudBase
+          var db = getDB();
+          if (db) {
+            db.collection('inquiries').add(inquiry).catch(function(e) {
+              console.warn('CloudBase 预约写入失败:', e.message);
+            });
+          }
 
           // 发送手机通知（PushPlus）
           sendPhoneNotify(inquiry);

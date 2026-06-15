@@ -36,6 +36,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 老师端：加载所有管理功能
   if (isTeacher) {
+    // 从 CloudBase 同步数据（后台静默更新 localStorage）
+    DataStore.syncAllFromCloud().then(function() {
+      console.log('✅ CloudBase 同步完成');
+      // 同步后刷新界面
+      renderStudents();
+      renderClasses();
+      renderAttendanceHistory();
+      renderAttendanceStats();
+      renderRecordsList();
+      renderLessonLog();
+      updateLessonLogSummary();
+      renderLowLessonAlerts();
+      renderArtworks();
+      renderAnnouncements();
+      renderCourses();
+      updateOverview();
+    });
+
     loadInquiries();
     initStudentSubTabs();
     loadStudents();

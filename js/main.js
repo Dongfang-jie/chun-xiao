@@ -166,11 +166,13 @@ function buildArtworkCard(a) {
 }
 
 // 画廊页：按类型分组展示
-function renderGalleryArtworks() {
+async function renderGalleryArtworks() {
   var artContainer = document.getElementById('artwork-art-list');
   var calligraphyContainer = document.getElementById('artwork-calligraphy-list');
   if (!artContainer && !calligraphyContainer) return;
 
+  // 从 CloudBase 拉取最新作品（后台同步到 localStorage）
+  await syncArtworksFromCloud();
   var list = getArtworksPublic();
 
   var artHtml = '';
@@ -192,6 +194,25 @@ function renderGalleryArtworks() {
   }
 }
 
+// 从 CloudBase 同步作品到 localStorage
+async function syncArtworksFromCloud() {
+  var db = getDB();
+  if (!db) return;
+  try {
+    var res = await db.collection('artworks').limit(500).get();
+    if (res.data && res.data.length > 0) {
+      var items = res.data.map(function(doc) {
+        var item = {};
+        for (var k in doc) { if (k !== '_id' && k !== '_openid') item[k] = doc[k]; }
+        return item;
+      });
+      localStorage.setItem('chunxiao-artworks', JSON.stringify(items));
+    }
+  } catch (e) {
+    console.warn('⚠️ 作品同步失败，使用本地缓存:', e.message);
+  }
+}
+
 // 首页：展示最新 N 件作品
 function renderLatestArtworks(containerId, count) {
   var container = document.getElementById(containerId);
@@ -207,7 +228,11 @@ function renderLatestArtworks(containerId, count) {
 }
 
 // 页面加载时自动渲染（如果是画廊页或首页）
-document.addEventListener('DOMContentLoaded', function() {
-  renderGalleryArtworks();
-  renderLatestArtworks('home-artworks', 4);
+document.addEventListener('DOMContentLoaded', async function() {
+  // CloudBase 匿名登录（公开页面无需账号）
+  if (typeof Auth !== 'undefined') {
+    await Auth.initAnonymous();
+  }
+  await renderGalleryArtworks();
+  await renderLatestArtworks('home-artworks', 4);
 });
