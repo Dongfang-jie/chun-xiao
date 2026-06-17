@@ -1,11 +1,10 @@
 /*
-  春晓画室 - 主脚本文件
-  阶段 4: JavaScript 交互
+  春晓画室 - 公开页面 UI 交互模块
   功能：图片灯箱 / 深色模式 / 回到顶部
 */
 
 // ============================================================
-//  一、等页面加载完再执行（防止 HTML 还没渲染就操作它）
+//  一、等页面加载完再执行
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -33,7 +32,7 @@ function initLightbox() {
   // 创建灯箱的 HTML 结构（一开始隐藏）
   var overlay = document.createElement('div');
   overlay.className = 'lightbox-overlay';
-  overlay.innerHTML = ''  // 将在打开时填充
+  overlay.innerHTML = ''
     + '<span class="lightbox-close">&times;</span>'
     + '<img class="lightbox-img" src="" alt="">'
     + '<p class="lightbox-caption"></p>';
@@ -143,96 +142,3 @@ function initBackToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
-
-// ============================================================
-//  功能 4：作品展示（从 localStorage 动态加载）
-// ============================================================
-function getArtworksPublic() {
-  try {
-    return JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
-  } catch (e) { return []; }
-}
-
-// 渲染作品卡片 HTML
-function buildArtworkCard(a) {
-  return [
-    '<div class="card">',
-    '<img src="' + a.image + '" alt="' + a.title + '" class="card-img" onerror="this.src=\'https://placehold.co/400x300/e8d8c8/5d4037?text=作品\'">',
-    '<div class="card-body">',
-    '<h4>' + a.title + '</h4>',
-    '<p>👦 ' + a.student + ' | ' + a.type + '</p>',
-    '</div></div>'
-  ].join('');
-}
-
-// 画廊页：按类型分组展示
-async function renderGalleryArtworks() {
-  var artContainer = document.getElementById('artwork-art-list');
-  var calligraphyContainer = document.getElementById('artwork-calligraphy-list');
-  if (!artContainer && !calligraphyContainer) return;
-
-  // 从 CloudBase 拉取最新作品（后台同步到 localStorage）
-  await syncArtworksFromCloud();
-  var list = getArtworksPublic();
-
-  var artHtml = '';
-  var calHtml = '';
-  list.forEach(function(a) {
-    var card = buildArtworkCard(a);
-    if (a.type === '书法') {
-      calHtml += card;
-    } else {
-      artHtml += card;
-    }
-  });
-
-  if (artContainer) {
-    artContainer.innerHTML = artHtml || '<p style="text-align:center; color:#999; padding:40px; width:100%;">暂无美术作品，老师端添加后自动展示</p>';
-  }
-  if (calligraphyContainer) {
-    calligraphyContainer.innerHTML = calHtml || '<p style="text-align:center; color:#999; padding:40px; width:100%;">暂无书法作品，老师端添加后自动展示</p>';
-  }
-}
-
-// 从 CloudBase 同步作品到 localStorage
-async function syncArtworksFromCloud() {
-  var db = getDB();
-  if (!db) return;
-  try {
-    var res = await db.collection('artworks').limit(500).get();
-    if (res.data && res.data.length > 0) {
-      var items = res.data.map(function(doc) {
-        var item = {};
-        for (var k in doc) { if (k !== '_id' && k !== '_openid') item[k] = doc[k]; }
-        return item;
-      });
-      localStorage.setItem('chunxiao-artworks', JSON.stringify(items));
-    }
-  } catch (e) {
-    console.warn('⚠️ 作品同步失败，使用本地缓存:', e.message);
-  }
-}
-
-// 首页：展示最新 N 件作品
-function renderLatestArtworks(containerId, count) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-
-  var list = getArtworksPublic();
-
-  var html = '';
-  list.slice(0, count || 4).forEach(function(a) {
-    html += buildArtworkCard(a);
-  });
-  container.innerHTML = html || '<p style="text-align:center; color:#999; padding:40px; width:100%;">暂无作品，老师端添加后自动展示</p>';
-}
-
-// 页面加载时自动渲染（如果是画廊页或首页）
-document.addEventListener('DOMContentLoaded', async function() {
-  // CloudBase 匿名登录（公开页面无需账号）
-  if (typeof Auth !== 'undefined') {
-    await Auth.initAnonymous();
-  }
-  await renderGalleryArtworks();
-  await renderLatestArtworks('home-artworks', 4);
-});

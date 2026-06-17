@@ -1,36 +1,28 @@
 /*
-  春晓画室 - CloudBase 认证模块
-  替换原 auth.js，保持相同的 Auth API
-  使用 CloudBase 邮箱密码登录
+  春晓画室 - 认证模块
+  教师走本地密码 + CloudBase 同步
+  家长走 CloudBase 邮箱密码登录
 */
 
 var AUTH_CONFIG = {
-  // 老师列表（用于角色验证，实际认证走 CloudBase）
   teachers: [
     { email: '756924037@qq.com', password: '756924', name: '张校长', role: 'admin' },
     { email: '953034984@qq.com', password: '454657', name: '郑校长', role: 'teacher' }
   ],
   sessionKey: 'chunxiao_session',
-  // Server酱通知
   notifyKeys: [
     'SCT364390TgpWv9nIL4dE2g1frC1DCIrzq'
   ]
 };
 
-// 获取老师配置
 function getTeacherByEmail(email) {
   return AUTH_CONFIG.teachers.find(function (t) {
     return t.email === email;
   });
 }
 
-function getOperatorName() {
-  var u = Auth.currentUser();
-  return u ? u.name : '';
-}
-
 var Auth = {
-  // 初始化（匿名登录，用于公开页面）
+  // 匿名登录（公开页面）
   initAnonymous: async function () {
     try {
       var auth = getAuth();
@@ -48,39 +40,22 @@ var Auth = {
 
   // 登录（老师 + 家长通用）
   login: async function (email, password) {
-    var auth = getAuth();
-
-    // 检查是否老师（优先本地密码校验，CloudBase 为辅助）
     var teacher = getTeacherByEmail(email);
     if (teacher) {
-      // 本地密码校验
+      // 老师：本地密码校验优先
       if (teacher.password !== password) {
         throw new Error('邮箱或密码错误');
       }
 
-      // 尝试 CloudBase 登录/注册（后台同步，不阻塞）
+      // CloudBase 后台同步（非阻塞）
       var uid = null;
+      var auth = getAuth();
       if (auth) {
         try {
           var result = await auth.signInWithEmailAndPassword(email, password);
           uid = result.user.uid;
-          console.log('✅ CloudBase 登录成功:', email);
-        } catch (cbErr) {
-          console.warn('CloudBase 登录失败，尝试注册:', cbErr.message || cbErr.code);
-          try {
-            var signUpResult = await auth.signUpWithEmailAndPassword(email, password);
-            uid = signUpResult.user.uid;
-            console.log('✅ CloudBase 注册成功:', email);
-          } catch (cbErr2) {
-            console.warn('CloudBase 注册失败，降级匿名登录:', cbErr2.message || cbErr2.code);
-            // 匿名登录作为兜底（至少能读数据）
-            try {
-              await auth.signInAnonymously();
-              console.log('✅ 已切换匿名登录（仅可读数据）');
-            } catch (anonErr) {
-              console.warn('匿名登录也失败:', anonErr.message || anonErr.code);
-            }
-          }
+        } catch (e) {
+          console.warn('CloudBase 老师登录同步失败:', e.message || e.code);
         }
       }
 
@@ -95,7 +70,8 @@ var Auth = {
       return teacherUser;
     }
 
-    // 家长登录
+    // 家长：CloudBase 登录
+    var auth = getAuth();
     if (!auth) throw new Error('认证服务未就绪');
 
     try {
@@ -134,21 +110,17 @@ var Auth = {
     var auth = getAuth();
     if (!auth) throw new Error('认证服务未就绪');
 
-    // 检查是否撞了老师邮箱
-    var isTeacher = getTeacherByEmail(email);
-    if (isTeacher) throw new Error('该邮箱无法注册');
+    if (getTeacherByEmail(email)) throw new Error('该邮箱无法注册');
 
-    // CloudBase 注册
     try {
       var result = await auth.signUpWithEmailAndPassword(email, password);
     } catch (e) {
-      if (e.code === 'EMAIL_ALREADY_EXISTS' || e.message.indexOf('已存在') >= 0) {
+      if (e.code === 'EMAIL_ALREADY_EXISTS' || (e.message && e.message.indexOf('已存在') >= 0)) {
         throw new Error('该邮箱已被注册');
       }
       throw new Error('注册失败，请稍后再试');
     }
 
-    // 保存家长资料到数据库
     var parentDoc = {
       uid: result.user.uid,
       name: name,
@@ -166,7 +138,6 @@ var Auth = {
       }
     }
 
-    // 自动登录
     var sessionUser = {
       uid: result.user.uid,
       email: email,
@@ -185,26 +156,14 @@ var Auth = {
     try {
       var auth = getAuth();
       if (auth) await auth.signOut();
-    } catch (e) {
-      // 忽略登出错误
-    }
-  },
-
-  // 是否管理员
-  isAdmin: function () {
-    var user = Auth.currentUser();
-    return user && user.role === 'admin';
+    } catch (e) { /* 忽略 */ }
   },
 
   // 获取当前用户
   currentUser: function () {
     var data = localStorage.getItem(AUTH_CONFIG.sessionKey);
     if (!data) return null;
-    try {
-      return JSON.parse(data);
-    } catch (e) {
-      return null;
-    }
+    try { return JSON.parse(data); } catch (e) { return null; }
   },
 
   _setSession: function (user) {
