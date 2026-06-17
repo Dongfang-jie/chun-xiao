@@ -3,16 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>春晓画室 - 美术 &amp; 书法兴趣班</title>
-  <!-- 👇 连接 CSS 样式表，让页面变好看 -->
+  <title>春晓画室 - 莒县少儿美术 &amp; 书法兴趣班</title>
+  <meta name="description" content="春晓画室专注4-15岁青少年美术与书法教育，开设儿童创意画、素描、水彩、动漫、硬笔书法、软笔书法课程。小班授课，免费试听。地址：莒县银杏大道33号金润财富大厦。">
+  <meta property="og:title" content="春晓画室 - 少儿美术 &amp; 书法兴趣班">
+  <meta property="og:description" content="专注青少年美术与书法教育，小班授课，免费试听。">
+  <meta property="og:image" content="https://dongfang-jie.github.io/chun-xiao/images/春晓画室logo.jpg">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="春晓画室">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/jpeg" href="images/春晓画室logo.jpg">
+  <link rel="preconnect" href="https://static.cloudbase.net">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "春晓画室",
+    "description": "专注4-15岁青少年美术与书法教育",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "银杏大道33号金润财富大厦西沿街",
+      "addressLocality": "莒县",
+      "addressRegion": "山东省"
+    },
+    "telephone": "19163384331",
+    "openingHours": "We-Su 08:00-18:00"
+  }
+  </script>
 </head>
 <body>
 
   <!-- ========== 页头 ========== -->
   <header>
-    <h1><img src="images/春晓画室logo.jpg" alt="春晓画室" class="header-logo"> 春晓画室</h1>
+    <h1><img src="images/春晓画室logo.jpg" alt="春晓画室" class="header-logo" width="48" height="48" loading="lazy"> 春晓画室</h1>
     <p class="subtitle">用画笔描绘春天，用墨香浸润童年</p>
 
     <nav>
@@ -21,7 +43,7 @@
       <a href="courses.html">📚 课程介绍</a>
       <a href="index.html#about">👩‍🏫 关于我们</a>
       <a href="contact.html">📞 联系我们</a>
-      <a href="login.html" style="border: 2px solid #5d4037;">🔐 登录</a>
+      <a href="login.html" class="nav-login">🔐 登录</a>
     </nav>
   </header>
 
@@ -29,7 +51,7 @@
   <main>
 
     <!-- ---- 关于画室 ---- -->
-    <section>
+    <section id="about">
       <h2>🎨 关于春晓画室</h2>
       <div class="about-content">
         <div class="about-text">
@@ -45,9 +67,8 @@
             ✨ <strong>教学理念：</strong>快乐学习 · 因材施教 · 小班授课 · 专注每一个孩子
           </p>
         </div>
-        <!-- 👇 图片占位区，后续换成画室照片 -->
         <div class="about-image">
-          🎨
+          <span class="about-image-text">📷 画室照片</span>
         </div>
       </div>
     </section>
@@ -58,12 +79,7 @@
       <div class="card-container">
 
         <div class="card">
-          <!-- 👇 占位图片，替换 src 属性即可换图 -->
-          <img
-            src="https://placehold.co/400x250/f8e8d0/5d4037?text=创意画"
-            alt="儿童创意画"
-            class="card-img"
-          >
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #f8e8d0, #f0c8a0);">儿童创意画</div>
           <div class="card-body">
             <h4>儿童创意画</h4>
             <p>4-7岁 | 激发想象力与色彩感知，用水彩笔、蜡笔自由创作</p>
@@ -71,11 +87,7 @@
         </div>
 
         <div class="card">
-          <img
-            src="https://placehold.co/400x250/e8d4c8/5d4037?text=素描"
-            alt="素描基础"
-            class="card-img"
-          >
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #e8d4c8, #d4b8a8);">素描基础</div>
           <div class="card-body">
             <h4>素描基础</h4>
             <p>8-12岁 | 培养造型能力与观察力，从几何体到静物写生</p>
@@ -83,11 +95,7 @@
         </div>
 
         <div class="card">
-          <img
-            src="https://placehold.co/400x250/f0d8b8/5d4037?text=水彩"
-            alt="水彩入门"
-            class="card-img"
-          >
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #e0d8f0, #c8b8e8);">水彩入门</div>
           <div class="card-body">
             <h4>水彩入门</h4>
             <p>8岁以上 | 学习色彩搭配与晕染技法，感受水与颜料的魔法</p>
@@ -95,11 +103,7 @@
         </div>
 
         <div class="card">
-          <img
-            src="https://placehold.co/400x250/d8c8b8/5d4037?text=动漫"
-            alt="动漫插画"
-            class="card-img"
-          >
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #f0d8e0, #e8c0d0);">动漫插画</div>
           <div class="card-body">
             <h4>动漫插画</h4>
             <p>10岁以上 | 角色设计、场景构图，画出心中的故事</p>
@@ -115,11 +119,7 @@
       <div class="card-container">
 
         <div class="card">
-          <img
-            src="https://placehold.co/400x250/f5ede0/5d4037?text=硬笔书法"
-            alt="硬笔书法"
-            class="card-img"
-          >
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #f5ede0, #e8d8c0);">硬笔书法</div>
           <div class="card-body">
             <h4>硬笔书法</h4>
             <p>6岁以上 | 规范字书写，纠正握笔姿势，培养专注力与耐心</p>
@@ -127,11 +127,7 @@
         </div>
 
         <div class="card">
-          <img
-            src="https://placehold.co/400x250/ede0d4/5d4037?text=软笔书法"
-            alt="软笔书法"
-            class="card-img"
-          >
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #ede0d4, #d8c8b0);">软笔书法</div>
           <div class="card-body">
             <h4>软笔书法</h4>
             <p>8岁以上 | 楷书入门，感受笔墨纸砚间的传统文化之美</p>
@@ -145,7 +141,7 @@
     <section>
       <h2>🌟 学生作品展示</h2>
       <div class="card-container" id="home-artworks">
-        <p style="text-align:center; color:#999; padding:40px; width:100%;">暂无作品，老师端添加后自动展示</p>
+        <p class="empty-hint">暂无作品，老师端添加后自动展示</p>
       </div>
     </section>
 
@@ -157,26 +153,24 @@
           <span class="icon">📍</span>
           <strong>地址</strong>
           <p>莒县银杏大道33号</p>
-          <p style="font-size:0.85em; color:#999;">金润财富大厦西沿街</p>
+          <p class="contact-sub">金润财富大厦西沿街</p>
         </div>
         <div class="contact-item">
           <span class="icon">📱</span>
           <strong>电话 / 微信</strong>
-          <p style="font-size:1.2em; font-weight:bold; color:#5d4037;">19163384331</p>
-          <p style="font-size:0.85em; color:#999;">张校长</p>
+          <p class="contact-highlight">19163384331</p>
+          <p class="contact-sub">张校长</p>
         </div>
         <div class="contact-item">
           <span class="icon">🕐</span>
           <strong>开放时间</strong>
           <p>周三至周日</p>
           <p>8:00 – 18:00</p>
-          <p style="font-size:0.85em; color:#e88;">周一、周二休假</p>
+          <p class="contact-closed">周一、周二休假</p>
         </div>
       </div>
       <p style="text-align:center; margin-top:25px;">
-        <a href="contact.html" style="display:inline-block; padding:12px 30px; background:#5d4037; color:#fff; border-radius:25px; text-decoration:none; font-weight:bold; transition:all 0.3s;">
-          📩 预约免费试听课 →
-        </a>
+        <a href="contact.html" class="cta-btn">📩 预约免费试听课 →</a>
       </p>
     </section>
 
@@ -187,13 +181,12 @@
     <p>&copy; 2026 春晓画室 | 让艺术陪伴孩子成长</p>
   </footer>
 
-  <!-- 👇 引入 JavaScript，放在页面最后加载更快 -->
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.21.0/cloudbase.full.js"></script>
-  <script src="js/app/config.js"></script>
-  <script src="js/app/auth.js"></script>
-  <script src="js/app/data.js"></script>
-  <script src="js/app/ui.js"></script>
-  <script src="js/app/gallery.js"></script>
+  <script defer src="js/app/config.js"></script>
+  <script defer src="js/app/auth.js"></script>
+  <script defer src="js/app/data.js"></script>
+  <script defer src="js/app/ui.js"></script>
+  <script defer src="js/app/gallery.js"></script>
 
 </body>
 </html>

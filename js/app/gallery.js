@@ -6,7 +6,7 @@
 function buildArtworkCard(a) {
   return [
     '<div class="card">',
-    '<img src="' + a.image + '" alt="' + a.title + '" class="card-img" onerror="this.src=\'https://placehold.co/400x300/e8d8c8/5d4037?text=作品\'">',
+    '<img src="' + a.image + '" alt="' + a.title + '" class="card-img" loading="lazy" onerror="var p=this.parentNode;var d=document.createElement(\'div\');d.className=\'card-img card-placeholder\';d.style.background=\'linear-gradient(135deg,#e8d8c8,#d4c0a8)\';d.textContent=this.alt;p.replaceChild(d,this)">',
     '<div class="card-body">',
     '<h4>' + a.title + '</h4>',
     '<p>👦 ' + a.student + ' | ' + a.type + '</p>',

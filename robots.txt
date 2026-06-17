@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://dongfang-jie.github.io/chun-xiao/sitemap.xml

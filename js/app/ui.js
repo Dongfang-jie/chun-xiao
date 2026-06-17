@@ -41,8 +41,8 @@ function initLightbox() {
   var lightboxImg = overlay.querySelector('.lightbox-img');
   var lightboxCaption = overlay.querySelector('.lightbox-caption');
 
-  // 给所有卡片图片绑定点击事件
-  var images = document.querySelectorAll('.card-img');
+  // 给所有卡片图片绑定点击事件（仅 img 标签，跳过占位 div）
+  var images = document.querySelectorAll('img.card-img');
   images.forEach(function (img) {
     img.style.cursor = 'pointer';  // 鼠标变手型，暗示可点击
     img.addEventListener('click', function () {

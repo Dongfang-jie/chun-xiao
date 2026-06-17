@@ -4,14 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>作品展示 - 春晓画室</title>
+  <meta name="description" content="春晓画室学生美术作品与书法作品展示，记录孩子们在画室的成长足迹。创意画、素描、水彩、动漫、硬笔书法、软笔书法作品欣赏。">
+  <meta property="og:title" content="学生作品展示 - 春晓画室">
+  <meta property="og:description" content="每一幅作品都是孩子们想象力的结晶，记录着在春晓画室的成长足迹。">
+  <meta property="og:image" content="https://dongfang-jie.github.io/chun-xiao/images/春晓画室logo.jpg">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="春晓画室">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" type="image/jpeg" href="images/春晓画室logo.jpg">
+  <link rel="preconnect" href="https://static.cloudbase.net">
 </head>
 <body>
 
   <!-- ========== 页头（跟首页一致） ========== -->
   <header>
-    <h1><img src="images/春晓画室logo.jpg" alt="春晓画室" class="header-logo"> 春晓画室</h1>
+    <h1><img src="images/春晓画室logo.jpg" alt="春晓画室" class="header-logo" width="48" height="48" loading="lazy"> 春晓画室</h1>
     <p class="subtitle">用画笔描绘春天，用墨香浸润童年</p>
 
     <nav>
@@ -20,7 +27,7 @@
       <a href="courses.html">📚 课程介绍</a>
       <a href="index.html#about">👩‍🏫 关于我们</a>
       <a href="contact.html">📞 联系我们</a>
-      <a href="login.html" style="border: 2px solid #5d4037;">🔐 登录</a>
+      <a href="login.html" class="nav-login">🔐 登录</a>
     </nav>
   </header>
 
@@ -30,7 +37,7 @@
     <!-- ---- 页面标题 ---- -->
     <section>
       <h2>🖼️ 学生作品展示</h2>
-      <p style="text-align:center; color:#888; max-width:600px; margin:0 auto;">
+      <p class="section-intro">
         每一幅作品都是孩子们想象力的结晶。这里记录着他们在春晓画室的成长足迹。
       </p>
     </section>
@@ -39,7 +46,7 @@
     <section>
       <h2>🎨 美术作品</h2>
       <div class="card-container" id="artwork-art-list">
-        <p style="text-align:center; color:#999; padding:40px; width:100%;" id="artwork-empty-hint">暂无美术作品，老师端添加后自动展示</p>
+        <p class="empty-hint" id="artwork-empty-hint">暂无美术作品，老师端添加后自动展示</p>
       </div>
     </section>
 
@@ -47,7 +54,7 @@
     <section>
       <h2>✒️ 书法作品</h2>
       <div class="card-container" id="artwork-calligraphy-list">
-        <p style="text-align:center; color:#999; padding:40px; width:100%;" id="calligraphy-empty-hint">暂无书法作品，老师端添加后自动展示</p>
+        <p class="empty-hint" id="calligraphy-empty-hint">暂无书法作品，老师端添加后自动展示</p>
       </div>
     </section>
 
@@ -57,7 +64,7 @@
       <div class="card-container">
 
         <div class="card">
-          <img src="https://placehold.co/400x250/e8d8c8/5d4037?text=美术课堂" alt="课堂" class="card-img">
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #ffe8d0, #ffc8a0);">美术课堂</div>
           <div class="card-body">
             <h4>美术课堂</h4>
             <p>孩子们正在专注地创作</p>
@@ -65,7 +72,7 @@
         </div>
 
         <div class="card">
-          <img src="https://placehold.co/400x250/d8c8b8/5d4037?text=书法课堂" alt="课堂" class="card-img">
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #e8d8c8, #d4c0a8);">书法课堂</div>
           <div class="card-body">
             <h4>书法课堂</h4>
             <p>一笔一划，感受汉字的魅力</p>
@@ -73,7 +80,7 @@
         </div>
 
         <div class="card">
-          <img src="https://placehold.co/400x250/c8b8a8/5d4037?text=课堂合影" alt="合影" class="card-img">
+          <div class="card-img card-placeholder" style="background: linear-gradient(135deg, #d8e8d0, #b8d4a8);">学期合影</div>
           <div class="card-body">
             <h4>学期合影</h4>
             <p>2026春季班结课留念</p>
@@ -91,11 +98,11 @@
   </footer>
 
   <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.21.0/cloudbase.full.js"></script>
-  <script src="js/app/config.js"></script>
-  <script src="js/app/auth.js"></script>
-  <script src="js/app/data.js"></script>
-  <script src="js/app/ui.js"></script>
-  <script src="js/app/gallery.js"></script>
+  <script defer src="js/app/config.js"></script>
+  <script defer src="js/app/auth.js"></script>
+  <script defer src="js/app/data.js"></script>
+  <script defer src="js/app/ui.js"></script>
+  <script defer src="js/app/gallery.js"></script>
 
 </body>
 </html>
