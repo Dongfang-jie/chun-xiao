@@ -2,7 +2,8 @@
   春晓画室 - 数据层
   策略：localStorage 为主 + CloudBase 双向同步（通过 dbProxy 云函数，管理员权限）
   - 每次页面加载通过 dbProxy 从 CloudBase 拉取，比较时间戳决定用谁的
-  - 每次保存本地写 + 异步通过 dbProxy 推 CloudBase + 记录同步时间
+  - 每次保存本地写 + 标记 _synced + 异步推 CloudBase
+  - 推送失败 _synced 已标记 → 下次 pullFromCloud 检测到本地更新 → 自动重试
   - dbProxy 以管理员权限运行，完全绕过集合安全规则 → 多设备同步无障碍
 */
 
@@ -38,9 +39,9 @@ var DataStore = {
     for (var i = 0; i < map.length; i++) {
       var m = map[i];
       var localTime = localStorage.getItem(m.key + '_synced') || '';
+      var localHasData = !!localStorage.getItem(m.key);
 
       try {
-        // 通过 dbProxy 云函数读取（管理员权限，不受安全规则限制）
         var res = await app.callFunction({
           name: 'dbProxy',
           data: { action: 'read', collection: m.col }
@@ -51,11 +52,20 @@ var DataStore = {
           if (doc.items) {
             var cloudTime = doc.updatedAt || '';
 
-            // 云端比本地新 → 用云端数据
-            if (!localTime || cloudTime > localTime) {
-              localStorage.setItem(m.key, JSON.stringify(doc.items));
-              localStorage.setItem(m.key + '_synced', cloudTime);
-              console.log('☁️ 云端更新 → 本地:', m.col);
+            // 迁移：本地有数据但无 _synced（旧版本遗留）→ 本地优先，不覆盖
+            var isLegacyData = localHasData && !localTime;
+
+            if (!isLegacyData) {
+              // 正常：云端比本地新 → 用云端数据
+              if (!localTime || cloudTime > localTime) {
+                localStorage.setItem(m.key, JSON.stringify(doc.items));
+                localStorage.setItem(m.key + '_synced', cloudTime);
+                console.log('☁️ 云端更新 → 本地:', m.col);
+              }
+            } else {
+              // 旧数据迁移：标记本地时间，触发下方推送（上传到云端）
+              console.log('📦 检测到旧版本数据，本地优先 → 将推送至云端:', m.col);
+              // localTime 保持空，下方 shouldPush 逻辑会触发
             }
           }
         }
@@ -63,7 +73,7 @@ var DataStore = {
         console.warn('CloudBase 拉取失败:', m.col, e.message);
       }
 
-      // 如果本地有数据且比云端新（或云端为空），则推送
+      // 本地有数据且比云端新 → 推送本地到云端
       var localData = localStorage.getItem(m.key);
       if (localData) {
         var localTime2 = localStorage.getItem(m.key + '_synced') || '';
@@ -75,12 +85,15 @@ var DataStore = {
             data: { action: 'read', collection: m.col }
           });
 
-          if (!checkRes.result || !checkRes.result.success || !checkRes.result.data || checkRes.result.data.length === 0) {
+          if (!checkRes.result || !checkRes.result.success ||
+              !checkRes.result.data || checkRes.result.data.length === 0) {
             // 云端没有数据 → 推送
             shouldPush = true;
           } else {
             var ct = checkRes.result.data[0].updatedAt || '';
-            if (localTime2 && (!ct || localTime2 > ct)) {
+            // 本地 _synced 比云端 updatedAt 新 → 推送
+            // 或者本地有数据但无 _synced（旧数据迁移）→ 推送
+            if (!localTime2 || localTime2 > ct) {
               shouldPush = true;
             }
           }
@@ -114,6 +127,7 @@ var DataStore = {
       });
 
       if (res.result && res.result.success) {
+        // 推送成功：_synced 更新为推送完成时间
         localStorage.setItem(key + '_synced', now);
         console.log('📤 已推送:', collection, list.length + '条');
       } else {
@@ -133,27 +147,85 @@ var DataStore = {
 };
 
 // ========== 数据操作方法 ==========
+// 每次保存：立即写 localStorage + 标记 _synced + 异步推 CloudBase
+// _synced 在保存时立即标记，确保推送失败后下次 pullFromCloud 能检测并重试
 
-function getStudents()  { return JSON.parse(localStorage.getItem('chunxiao-students') || '[]'); }
-function saveStudents(list)  { localStorage.setItem('chunxiao-students', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.students, 'chunxiao-students'); }
+function getStudents() {
+  return JSON.parse(localStorage.getItem('chunxiao-students') || '[]');
+}
+function saveStudents(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-students', JSON.stringify(list));
+  localStorage.setItem('chunxiao-students_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.students, 'chunxiao-students');
+}
 
-function getClasses()   { return JSON.parse(localStorage.getItem('chunxiao-classes') || '[]'); }
-function saveClasses(list)   { localStorage.setItem('chunxiao-classes', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.classes, 'chunxiao-classes'); }
+function getClasses() {
+  return JSON.parse(localStorage.getItem('chunxiao-classes') || '[]');
+}
+function saveClasses(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-classes', JSON.stringify(list));
+  localStorage.setItem('chunxiao-classes_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.classes, 'chunxiao-classes');
+}
 
-function getAttendance() { return JSON.parse(localStorage.getItem('chunxiao-attendance') || '[]'); }
-function saveAttendance(list) { localStorage.setItem('chunxiao-attendance', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.attendance, 'chunxiao-attendance'); }
+function getAttendance() {
+  return JSON.parse(localStorage.getItem('chunxiao-attendance') || '[]');
+}
+function saveAttendance(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-attendance', JSON.stringify(list));
+  localStorage.setItem('chunxiao-attendance_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.attendance, 'chunxiao-attendance');
+}
 
-function getRecords()  { return JSON.parse(localStorage.getItem('chunxiao-records') || '[]'); }
-function saveRecords(list)  { localStorage.setItem('chunxiao-records', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.records, 'chunxiao-records'); }
+function getRecords() {
+  return JSON.parse(localStorage.getItem('chunxiao-records') || '[]');
+}
+function saveRecords(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-records', JSON.stringify(list));
+  localStorage.setItem('chunxiao-records_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.records, 'chunxiao-records');
+}
 
-function getLessonCorrections() { return JSON.parse(localStorage.getItem('chunxiao-lesson-corrections') || '[]'); }
-function saveLessonCorrections(list) { localStorage.setItem('chunxiao-lesson-corrections', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.corrections, 'chunxiao-lesson-corrections'); }
+function getLessonCorrections() {
+  return JSON.parse(localStorage.getItem('chunxiao-lesson-corrections') || '[]');
+}
+function saveLessonCorrections(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-lesson-corrections', JSON.stringify(list));
+  localStorage.setItem('chunxiao-lesson-corrections_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.corrections, 'chunxiao-lesson-corrections');
+}
 
-function getArtworks() { return JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]'); }
-function saveArtworks(list) { localStorage.setItem('chunxiao-artworks', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.artworks, 'chunxiao-artworks'); }
+function getArtworks() {
+  return JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
+}
+function saveArtworks(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-artworks', JSON.stringify(list));
+  localStorage.setItem('chunxiao-artworks_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.artworks, 'chunxiao-artworks');
+}
 
-function getAnnouncements() { return JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]'); }
-function saveAnnouncements(list) { localStorage.setItem('chunxiao-announcements', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.announcements, 'chunxiao-announcements'); }
+function getAnnouncements() {
+  return JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]');
+}
+function saveAnnouncements(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-announcements', JSON.stringify(list));
+  localStorage.setItem('chunxiao-announcements_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.announcements, 'chunxiao-announcements');
+}
 
-function getInquiries() { return JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]'); }
-function saveInquiries(list) { localStorage.setItem('chunxiao-inquiries', JSON.stringify(list)); DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.inquiries, 'chunxiao-inquiries'); }
+function getInquiries() {
+  return JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]');
+}
+function saveInquiries(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-inquiries', JSON.stringify(list));
+  localStorage.setItem('chunxiao-inquiries_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.inquiries, 'chunxiao-inquiries');
+}
