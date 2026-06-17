@@ -20,6 +20,10 @@
       "triggers": [],
       "params": {
         "enablePublicAccess": true
+      },
+      "envVariables": {
+        "EMAIL_USER": "",
+        "EMAIL_PASS": ""
       }
     }
   ]
