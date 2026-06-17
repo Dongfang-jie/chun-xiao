@@ -39,7 +39,7 @@ var Auth = {
   },
 
   // 登录（老师 + 家长通用）
-  login: async function (email, password) {
+  login: async function (email, password, rememberMe) {
     var teacher = getTeacherByEmail(email);
     if (teacher) {
       // 老师：本地密码校验优先
@@ -66,7 +66,7 @@ var Auth = {
         role: teacher.role,
         loginTime: new Date().toISOString()
       };
-      Auth._setSession(teacherUser);
+      Auth._setSession(teacherUser, rememberMe);
       return teacherUser;
     }
 
@@ -91,7 +91,7 @@ var Auth = {
               role: 'parent',
               loginTime: new Date().toISOString()
             };
-            Auth._setSession(parentUser);
+            Auth._setSession(parentUser, rememberMe);
             return parentUser;
           }
         } catch (dbErr) {
@@ -146,13 +146,14 @@ var Auth = {
       role: 'parent',
       loginTime: new Date().toISOString()
     };
-    Auth._setSession(sessionUser);
+    Auth._setSession(sessionUser, true);  // 注册默认记住
     return sessionUser;
   },
 
   // 登出
   logout: async function () {
     localStorage.removeItem(AUTH_CONFIG.sessionKey);
+    sessionStorage.removeItem(AUTH_CONFIG.sessionKey);
     try {
       var auth = getAuth();
       if (auth) await auth.signOut();
@@ -161,12 +162,12 @@ var Auth = {
 
   // 获取当前用户
   currentUser: function () {
-    var data = localStorage.getItem(AUTH_CONFIG.sessionKey);
+    var data = localStorage.getItem(AUTH_CONFIG.sessionKey) || sessionStorage.getItem(AUTH_CONFIG.sessionKey);
     if (!data) return null;
     try { return JSON.parse(data); } catch (e) { return null; }
   },
 
-  _setSession: function (user) {
+  _setSession: function (user, rememberMe) {
     var session = {
       uid: user.uid,
       email: user.email,
@@ -175,6 +176,14 @@ var Auth = {
       role: user.role,
       loginTime: new Date().toISOString()
     };
-    localStorage.setItem(AUTH_CONFIG.sessionKey, JSON.stringify(session));
+    var data = JSON.stringify(session);
+    // 记住我：存 localStorage（持久化）；否则存 sessionStorage（关闭浏览器后清除）
+    if (rememberMe) {
+      localStorage.setItem(AUTH_CONFIG.sessionKey, data);
+      sessionStorage.removeItem(AUTH_CONFIG.sessionKey);
+    } else {
+      sessionStorage.setItem(AUTH_CONFIG.sessionKey, data);
+      localStorage.removeItem(AUTH_CONFIG.sessionKey);
+    }
   }
 };

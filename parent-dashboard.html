@@ -30,9 +30,11 @@
     <aside class="dash-sidebar">
       <nav>
         <a href="#" class="sidebar-link active" data-page="overview">📊 总览</a>
+        <a href="#" class="sidebar-link" data-page="my-courses">📅 我的课程</a>
+        <a href="#" class="sidebar-link" data-page="my-attendance">📝 上课记录</a>
+        <a href="#" class="sidebar-link" data-page="my-lessons">📉 课时明细</a>
         <a href="#" class="sidebar-link" data-page="child-works">🖼️ 孩子作品</a>
         <a href="#" class="sidebar-link" data-page="notices">📢 画室通知</a>
-        <a href="#" class="sidebar-link" data-page="schedule">📅 课程表</a>
         <a href="#" class="sidebar-link" data-page="settings">⚙️ 个人信息</a>
       </nav>
       <div class="sidebar-footer">
@@ -43,25 +45,25 @@
     <!-- 内容区 -->
     <main class="dash-content">
 
-      <!-- 总览 -->
+      <!-- ===== 总览 ===== -->
       <section id="page-overview" class="dash-page active">
         <h2>📊 学习总览</h2>
         <div class="stat-cards">
           <div class="stat-card">
-            <div class="stat-number">--</div>
-            <div class="stat-label">已完成作品</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">--</div>
-            <div class="stat-label">本月课时</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">--</div>
-            <div class="stat-label">新通知</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">--</div>
+            <div class="stat-number" id="ov-next-class">--</div>
             <div class="stat-label">下次上课</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="ov-remaining">--</div>
+            <div class="stat-label">剩余课时</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="ov-att-rate">--</div>
+            <div class="stat-label">出勤率</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="ov-works">--</div>
+            <div class="stat-label">已完成作品</div>
           </div>
         </div>
 
@@ -69,9 +71,60 @@
         <div class="card-container" id="parent-overview-works">
           <p style="text-align:center; color:#999; padding:40px; width:100%;">老师添加作品后这里会自动展示</p>
         </div>
+
+        <h3 style="margin-top:30px;">📢 最新通知</h3>
+        <div id="parent-overview-notices">
+          <p style="text-align:center; color:#999; padding:20px;">加载中...</p>
+        </div>
       </section>
 
-      <!-- 孩子作品 -->
+      <!-- ===== 我的课程 ===== -->
+      <section id="page-my-courses" class="dash-page">
+        <h2>📅 我的课程</h2>
+        <div id="parent-schedule-wrap">
+          <p style="text-align:center; color:#999; padding:30px;">加载中...</p>
+        </div>
+        <div id="parent-class-list" style="margin-top:24px;"></div>
+      </section>
+
+      <!-- ===== 上课记录 ===== -->
+      <section id="page-my-attendance" class="dash-page">
+        <h2>📝 上课记录</h2>
+        <div class="stat-cards" id="att-stats-row">
+          <div class="stat-card">
+            <div class="stat-number" id="att-total">--</div>
+            <div class="stat-label">总出勤次数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="att-rate-card">--</div>
+            <div class="stat-label">出勤率</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="att-leave-count">--</div>
+            <div class="stat-label">请假次数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="att-deduct-total">--</div>
+            <div class="stat-label">累计扣课时</div>
+          </div>
+        </div>
+        <h3>📋 考勤明细</h3>
+        <div id="parent-attendance-list">
+          <p style="text-align:center; color:#999; padding:30px;">暂无记录</p>
+        </div>
+      </section>
+
+      <!-- ===== 课时明细 ===== -->
+      <section id="page-my-lessons" class="dash-page">
+        <h2>📉 课时明细</h2>
+        <div id="parent-lesson-progress" style="margin-bottom:24px;"></div>
+        <h3>📋 消课日志</h3>
+        <div id="parent-lesson-log">
+          <p style="text-align:center; color:#999; padding:30px;">暂无记录</p>
+        </div>
+      </section>
+
+      <!-- ===== 孩子作品 ===== -->
       <section id="page-child-works" class="dash-page">
         <h2>🖼️ 孩子作品</h2>
         <p style="color:#888;" id="parent-works-subtitle">加载中...</p>
@@ -80,38 +133,32 @@
         </div>
       </section>
 
-      <!-- 画室通知 -->
+      <!-- ===== 画室通知 ===== -->
       <section id="page-notices" class="dash-page">
         <h2>📢 画室通知</h2>
         <div id="parent-announcements">
           <p style="text-align:center; color:#999; padding:30px;">加载中...</p>
         </div>
-          <div style="padding:20px; border-bottom:1px solid #e8d4c8;">
-            <h4 style="color:#5d4037;">📌 功能持续更新中</h4>
-            <p style="color:#999; font-size:0.9em;">2026-06-13</p>
-            <p>更多功能正在开发中，敬请期待！如有建议请联系老师。</p>
-          </div>
-        </div>
       </section>
 
-      <!-- 课程表 -->
-      <section id="page-schedule" class="dash-page">
-        <h2>📅 课程表</h2>
-        <table>
-          <thead>
-            <tr><th>时间</th><th>课程</th><th>教室</th><th>老师</th></tr>
-          </thead>
-          <tbody>
-            <tr><td colspan="4" style="text-align:center; color:#999;">请等待老师排课后查看</td></tr>
-          </tbody>
-        </table>
-      </section>
-
-      <!-- 个人信息 -->
+      <!-- ===== 个人信息 ===== -->
       <section id="page-settings" class="dash-page">
         <h2>⚙️ 个人信息</h2>
-        <div id="parent-info" style="background:#fff; padding:25px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-          <p style="color:#999;">加载中...</p>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div id="parent-info" class="parent-info-card" style="flex:1 1 300px;">
+            <p style="color:#999;">加载中...</p>
+          </div>
+          <div class="parent-pwd-card" style="flex:1 1 300px;">
+            <h3>🔒 修改密码</h3>
+            <div style="margin-top:12px;">
+              <label style="display:block; color:#888; font-size:0.9em; margin-bottom:4px;">新密码（至少6位）</label>
+              <input type="password" id="pwd-new" class="pwd-input" placeholder="输入新密码">
+              <label style="display:block; color:#888; font-size:0.9em; margin-bottom:4px;">确认新密码</label>
+              <input type="password" id="pwd-confirm" class="pwd-input" placeholder="再次输入新密码">
+              <button id="pwd-change-btn" class="login-btn" style="width:100%;">🔒 修改密码</button>
+              <span id="pwd-msg" style="display:block; margin-top:8px; font-size:0.9em;"></span>
+            </div>
+          </div>
         </div>
       </section>
 

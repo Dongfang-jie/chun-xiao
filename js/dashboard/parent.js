@@ -1,27 +1,476 @@
 /*
   春晓画室 - 家长端模块
-  功能：个人信息 / 孩子作品 / 画室通知
+  功能：总览 / 我的课程 / 上课记录 / 课时明细 / 孩子作品 / 画室通知 / 个人信息
 */
 
-function loadParentInfo(user) {
-  var infoEl = document.getElementById('parent-info');
-  if (!infoEl) return;
+// ============================================================
+//  工具函数
+// ============================================================
 
-  infoEl.innerHTML = ''
-    + '<p><strong>👤 家长姓名：</strong>' + (user.name || '--') + '</p>'
-    + '<p><strong>📧 邮箱：</strong>' + (user.email || '--') + '</p>'
-    + '<p><strong>👶 孩子姓名：</strong>' + (user.childName || '--') + '</p>'
-    + '<p><strong>📅 登录时间：</strong>' + (user.loginTime ? new Date(user.loginTime).toLocaleString('zh-CN') : '--') + '</p>';
+/** 根据家长的 childName 找到对应学生记录 */
+function findChildStudent(user) {
+  if (!user || !user.childName) return null;
+  var students = getStudents();
+  return students.find(function (s) { return s.name === user.childName; }) || null;
 }
+
+/** 获取学生所在的所有班级 */
+function getStudentClasses(studentId) {
+  var classes = getClasses();
+  return classes.filter(function (c) {
+    return c.studentIds && c.studentIds.indexOf(studentId) !== -1;
+  });
+}
+
+/** 星期映射：中文 → 数字 (0=周日) */
+var DAY_MAP = { '周日': 0, '周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6 };
+var DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+/** 计算下次上课日期 */
+function calcNextClassDate(classes) {
+  if (!classes || classes.length === 0) return null;
+  var now = new Date();
+  var today = now.getDay(); // 0=周日
+  var bestDate = null;
+  var bestClass = null;
+  classes.forEach(function (cls) {
+    var targetDay = DAY_MAP[cls.day];
+    if (targetDay === undefined) return;
+    var daysUntil = targetDay - today;
+    if (daysUntil < 0) daysUntil += 7;
+    if (daysUntil === 0) {
+      // 今天有课：检查时间是否已过（简单处理：如果当前时间>17:00则跳到下周）
+      // 粗略处理：即使今天有课也显示今天
+      daysUntil = 0;
+    }
+    var d = new Date(now);
+    d.setDate(d.getDate() + daysUntil);
+    d.setHours(0, 0, 0, 0);
+    if (bestDate === null || d < bestDate) {
+      bestDate = d;
+      bestClass = cls;
+    }
+  });
+  return bestClass ? { date: bestDate, cls: bestClass } : null;
+}
+
+/** 格式化日期为 MM-DD */
+function fmtShortDate(dateStr) {
+  if (!dateStr) return '--';
+  var parts = dateStr.split('-');
+  return parts[1] + '/' + parts[2];
+}
+
+// ============================================================
+//  1. 总览
+// ============================================================
+
+function loadParentOverview(user) {
+  var student = findChildStudent(user);
+
+  // --- 下次上课 ---
+  var elNextClass = document.getElementById('ov-next-class');
+  if (elNextClass) {
+    if (!student) {
+      elNextClass.textContent = '--';
+    } else {
+      var classes = getStudentClasses(student.id);
+      var next = calcNextClassDate(classes);
+      if (next) {
+        var month = next.date.getMonth() + 1;
+        var day = next.date.getDate();
+        elNextClass.innerHTML = '<span style="font-size:0.5em;">' + month + '月' + day + '日</span><br>' + next.cls.day + ' ' + (next.cls.timeSlot || '');
+        elNextClass.style.fontSize = '1.6em';
+      } else {
+        elNextClass.innerHTML = '<span style="font-size:0.7em;">待排课</span>';
+      }
+    }
+  }
+
+  // --- 剩余课时 ---
+  var elRemaining = document.getElementById('ov-remaining');
+  if (elRemaining) {
+    if (!student) {
+      elRemaining.textContent = '--';
+    } else {
+      var total = student.totalLessons || 0;
+      var consumed = student.consumedLessons || 0;
+      var remaining = total - consumed;
+      var color = remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9';
+      elRemaining.innerHTML = '<span style=\"color:' + color + ';\">' + remaining + '</span><span style=\"font-size:0.4em; color:#999;\"> / ' + total + '</span>';
+    }
+  }
+
+  // --- 出勤率 ---
+  var elAttRate = document.getElementById('ov-att-rate');
+  if (elAttRate) {
+    if (!student) {
+      elAttRate.textContent = '--';
+    } else {
+      var stats = calcAttendanceStats(student.id);
+      elAttRate.textContent = stats.rateDisplay;
+    }
+  }
+
+  // --- 完成作品数 ---
+  loadParentArtworks(user); // 这个函数同时更新作品数和最近作品
+
+  // --- 最新通知 ---
+  loadParentOverviewNotices();
+}
+
+/** 计算学生考勤统计 */
+function calcAttendanceStats(studentId) {
+  var attendance = getAttendance();
+  var present = 0, leave = 0, absent = 0, totalDeducted = 0;
+  attendance.forEach(function (a) {
+    a.records.forEach(function (r) {
+      if (r.studentId === studentId) {
+        if (r.status === 'present') { present++; totalDeducted += (r.deducted || 0); }
+        else if (r.status === 'leave') leave++;
+        else if (r.status === 'absent') absent++;
+      }
+    });
+  });
+  var total = present + leave + absent;
+  var rate = total > 0 ? Math.round(present / total * 100) : 0;
+  return {
+    present: present, leave: leave, absent: absent,
+    total: total, rate: rate,
+    totalDeducted: totalDeducted,
+    rateDisplay: total === 0 ? '--' : rate + '%'
+  };
+}
+
+/** 总览页最新3条通知 */
+function loadParentOverviewNotices() {
+  var container = document.getElementById('parent-overview-notices');
+  if (!container) return;
+  var list = JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]');
+  if (list.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">📭 暂无通知</p>';
+    return;
+  }
+  var recent = list.slice(0, 3);
+  var html = '';
+  recent.forEach(function (a) {
+    html += [
+      '<div class="parent-notice-mini">',
+      '<span class="parent-notice-title">' + a.title + '</span>',
+      '<span class="parent-notice-time">' + a.time + '</span>',
+      '</div>'
+    ].join('');
+  });
+  if (list.length > 3) {
+    html += '<p style="text-align:center; color:#999; font-size:0.85em;">📌 还有 ' + (list.length - 3) + ' 条通知，点击「画室通知」查看全部</p>';
+  }
+  container.innerHTML = html;
+}
+
+// ============================================================
+//  2. 我的课程
+// ============================================================
+
+function loadParentSchedule(user) {
+  var student = findChildStudent(user);
+  var wrap = document.getElementById('parent-schedule-wrap');
+  var classList = document.getElementById('parent-class-list');
+  if (!wrap) return;
+
+  if (!student) {
+    wrap.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">未找到学生信息，请联系老师确认</p>';
+    if (classList) classList.innerHTML = '';
+    return;
+  }
+
+  var classes = getStudentClasses(student.id);
+  if (classes.length === 0) {
+    wrap.innerHTML = '<p style="text-align:center; color:#999; padding:40px; background:#fff; border-radius:12px;">📅 等待老师排课后查看课表</p>';
+    if (classList) classList.innerHTML = '';
+    return;
+  }
+
+  // 构建周视图表格
+  renderParentWeeklySchedule(wrap, classes);
+
+  // 下方班级详情卡片
+  if (classList) renderParentClassCards(classList, classes);
+}
+
+/** 渲染孩子的周课表 */
+function renderParentWeeklySchedule(wrap, classes) {
+  var now = new Date();
+  var today = now.getDay(); // 0=周日
+
+  // 找使用的时间段
+  var allSlots = [];
+  classes.forEach(function (c) {
+    if (c.timeSlot && allSlots.indexOf(c.timeSlot) === -1) allSlots.push(c.timeSlot);
+  });
+  allSlots.sort();
+  if (allSlots.length === 0) allSlots = ['--'];
+
+  var html = '<table class="schedule-table"><thead><tr><th class="schedule-time-header">时间</th>';
+  for (var d = 0; d < 7; d++) {
+    var isToday = (d === today);
+    html += '<th' + (isToday ? ' class="schedule-today-header"' : '') + '>' + DAY_NAMES[d] + '</th>';
+  }
+  html += '</tr></thead><tbody>';
+
+  allSlots.forEach(function (slot) {
+    html += '<tr><td class="schedule-time-cell">' + slot + '</td>';
+    for (var d = 0; d < 7; d++) {
+      var dayName = DAY_NAMES[d];
+      var match = null;
+      for (var i = 0; i < classes.length; i++) {
+        if (classes[i].day === dayName && classes[i].timeSlot === slot) {
+          match = classes[i];
+          break;
+        }
+      }
+      if (match) {
+        var colorIdx = (match.course || '').length % 6;
+        html += '<td><span class="schedule-class-card sc-color-' + colorIdx + '">';
+        html += '<span class="sc-name">' + match.name + '</span>';
+        html += '<span class="sc-meta">' + (match.course || '') + ' · ' + (match.room || '未设教室') + '</span>';
+        html += '</span></td>';
+      } else {
+        html += '<td class="schedule-empty-cell">—</td>';
+      }
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+/** 渲染班级详情卡片 */
+function renderParentClassCards(container, classes) {
+  var studentCounts = {};
+  classes.forEach(function (c) {
+    studentCounts[c.id] = (c.studentIds || []).length;
+  });
+
+  var html = '<h3 style="color:#5d4037; margin-bottom:12px;">📌 我的班级</h3><div class="parent-class-cards">';
+  classes.forEach(function (c) {
+    html += [
+      '<div class="parent-class-card">',
+      '<h4>' + c.name + '</h4>',
+      '<p>📖 ' + (c.course || '--') + '</p>',
+      '<p>📅 ' + c.day + ' ' + (c.timeSlot || '--') + '</p>',
+      '<p>📍 ' + (c.room || '未设教室') + '</p>',
+      '<p style="color:#999; margin:4px 0; font-size:0.85em;">👥 ' + (studentCounts[c.id] || '--') + ' 名同学</p>',
+      '</div>'
+    ].join('');
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ============================================================
+//  3. 上课记录（考勤）
+// ============================================================
+
+function loadParentAttendance(user) {
+  var student = findChildStudent(user);
+  if (!student) {
+    document.getElementById('parent-attendance-list').innerHTML = '<p style="text-align:center; color:#999; padding:30px;">未找到学生信息</p>';
+    return;
+  }
+
+  // 统计卡片
+  var stats = calcAttendanceStats(student.id);
+  document.getElementById('att-total').textContent = stats.present;
+  document.getElementById('att-rate-card').textContent = stats.total === 0 ? '--' : stats.rate + '%';
+  document.getElementById('att-leave-count').textContent = stats.leave;
+  document.getElementById('att-deduct-total').textContent = stats.totalDeducted;
+
+  // 考勤明细列表
+  renderParentAttendanceList(student.id);
+}
+
+/** 渲染考勤明细列表 */
+function renderParentAttendanceList(studentId) {
+  var container = document.getElementById('parent-attendance-list');
+  if (!container) return;
+
+  var attendance = getAttendance();
+  var classes = getClasses();
+
+  // 收集所有包含该学生的考勤记录
+  var entries = [];
+  attendance.forEach(function (a) {
+    a.records.forEach(function (r) {
+      if (r.studentId === studentId) {
+        var cls = classes.find(function (c) { return c.id === a.classId; });
+        entries.push({
+          date: a.date,
+          className: cls ? cls.name : '(已删除班级)',
+          course: cls ? (cls.course || '') : '',
+          status: r.status,
+          deducted: r.deducted || 0,
+          operator: a.operator || ''
+        });
+      }
+    });
+  });
+
+  // 按日期倒序
+  entries.sort(function (a, b) { return b.date.localeCompare(a.date); });
+
+  if (entries.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">暂无考勤记录</p>';
+    return;
+  }
+
+  var html = '<table><thead><tr><th>日期</th><th>班级</th><th>状态</th><th>扣课时</th></tr></thead><tbody>';
+  entries.forEach(function (e) {
+    var statusLabel, statusColor;
+    if (e.status === 'present') { statusLabel = '✅ 出勤'; statusColor = '#5a9'; }
+    else if (e.status === 'leave') { statusLabel = '⭕ 请假'; statusColor = '#e8a040'; }
+    else { statusLabel = '❌ 缺勤'; statusColor = '#e88'; }
+
+    html += '<tr>';
+    html += '<td>' + e.date + ' <span style="color:#999; font-size:0.8em;">' + getDayOfWeek(e.date) + '</span></td>';
+    html += '<td>' + e.className + '</td>';
+    html += '<td><span style="font-weight:bold; color:' + statusColor + ';">' + statusLabel + '</span></td>';
+    html += '<td>' + (e.deducted > 0 ? '<span style="color:#e88; font-weight:bold;">-' + e.deducted + '</span>' : '0') + '</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+/** 从日期字符串获取星期 */
+function getDayOfWeek(dateStr) {
+  var d = new Date(dateStr + 'T00:00:00');
+  return DAY_NAMES[d.getDay()];
+}
+
+// ============================================================
+//  4. 课时明细
+// ============================================================
+
+function loadParentLessonLog(user) {
+  var student = findChildStudent(user);
+  if (!student) {
+    document.getElementById('parent-lesson-progress').innerHTML = '<p style="text-align:center; color:#999;">未找到学生信息</p>';
+    document.getElementById('parent-lesson-log').innerHTML = '<p style="text-align:center; color:#999; padding:30px;">暂无记录</p>';
+    return;
+  }
+
+  renderLessonProgress(student);
+  renderParentLessonLog(student.id);
+}
+
+/** 渲染课时进度条 */
+function renderLessonProgress(student) {
+  var container = document.getElementById('parent-lesson-progress');
+  if (!container) return;
+
+  var total = student.totalLessons || 0;
+  var consumed = student.consumedLessons || 0;
+  var remaining = total - consumed;
+  var pct = total > 0 ? Math.round(consumed / total * 100) : 0;
+  var barColor = remaining <= 2 ? 'warning' : '';
+
+  var html = '<div class="student-lesson-bar-wrap">';
+  html += '<div class="student-lesson-bar-header">';
+  html += '<span>课时进度</span>';
+  html += '<strong>' + consumed + ' / ' + total + ' 已消耗</strong>';
+  html += '</div>';
+  html += '<div class="student-lesson-bar">';
+  html += '<div class="student-lesson-bar-fill ' + barColor + '" style="width:' + pct + '%;"></div>';
+  html += '</div>';
+  html += '<div class="student-lesson-legend">';
+  html += '<span>总课时 <strong>' + total + '</strong></span>';
+  html += '<span>已消耗 <strong style="color:#e88;">' + consumed + '</strong></span>';
+  html += '<span>剩余 <strong style="color:' + (remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9') + ';">' + remaining + '</strong></span>';
+  html += '</div>';
+
+  if (remaining <= 2 && remaining > 0) {
+    html += '<p class="parent-lesson-warning">⚠️ 剩余课时不足，请及时续费</p>';
+  } else if (remaining <= 0) {
+    html += '<p class="parent-lesson-warning">⚠️ 课时已用完，请联系老师续费</p>';
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+/** 渲染消课日志 */
+function renderParentLessonLog(studentId) {
+  var container = document.getElementById('parent-lesson-log');
+  if (!container) return;
+
+  var attendance = getAttendance();
+  var corrections = getLessonCorrections();
+  var classes = getClasses();
+  var entries = [];
+
+  // 从考勤收集
+  attendance.forEach(function (a) {
+    a.records.forEach(function (r) {
+      if (r.studentId === studentId && r.deducted > 0) {
+        var cls = classes.find(function (c) { return c.id === a.classId; });
+        entries.push({
+          date: a.date,
+          source: a.operator || '',
+          reason: (cls ? cls.name : '(已删班级)') + ' · 点名扣课',
+          amount: r.deducted,
+          type: 'att'
+        });
+      }
+    });
+  });
+
+  // 从手动调整收集
+  corrections.forEach(function (c) {
+    if (c.studentId === studentId) {
+      entries.push({
+        date: c.date,
+        source: c.operator || '',
+        reason: c.reason || '手动调整',
+        amount: c.amount || 0,
+        type: 'manual'
+      });
+    }
+  });
+
+  // 按日期倒序
+  entries.sort(function (a, b) { return b.date.localeCompare(a.date); });
+
+  if (entries.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">暂无消课记录</p>';
+    return;
+  }
+
+  var html = '<table><thead><tr><th>日期</th><th>事由</th><th>类型</th><th>扣除</th></tr></thead><tbody>';
+  entries.forEach(function (e) {
+    html += '<tr>';
+    html += '<td>' + e.date + '</td>';
+    html += '<td>' + e.reason + '</td>';
+    html += '<td><span class="log-type-badge ' + (e.type === 'att' ? 'log-type-att' : 'log-type-manual') + '">' + (e.type === 'att' ? '点名扣课' : '手动调整') + '</span></td>';
+    html += '<td><span style="color:#e88; font-weight:bold;">-' + e.amount + '</span></td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ============================================================
+//  5. 孩子作品（已有，保留逻辑）
+// ============================================================
 
 function loadParentArtworks(user) {
   var childName = user.childName;
   if (!childName) return;
 
   var allArtworks = JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
-  var childWorks = allArtworks.filter(function(a) { return a.student === childName; });
+  var childWorks = allArtworks.filter(function (a) { return a.student === childName; });
 
-  var statEl = document.querySelector('#page-overview .stat-cards .stat-card:first-child .stat-number');
+  var statEl = document.getElementById('ov-works');
   if (statEl) statEl.textContent = childWorks.length;
 
   var overviewContainer = document.getElementById('parent-overview-works');
@@ -30,7 +479,7 @@ function loadParentArtworks(user) {
       overviewContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + childName + '」的作品，老师添加后自动展示</p>';
     } else {
       var html = '';
-      childWorks.slice(0, 4).forEach(function(a) { html += buildParentArtworkCard(a); });
+      childWorks.slice(0, 4).forEach(function (a) { html += buildParentArtworkCard(a); });
       overviewContainer.innerHTML = html;
     }
   }
@@ -43,7 +492,7 @@ function loadParentArtworks(user) {
       worksContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + childName + '」的作品，老师添加后自动展示</p>';
     } else {
       var allHtml = '';
-      childWorks.forEach(function(a) { allHtml += buildParentArtworkCard(a); });
+      childWorks.forEach(function (a) { allHtml += buildParentArtworkCard(a); });
       worksContainer.innerHTML = allHtml;
     }
   }
@@ -60,6 +509,10 @@ function buildParentArtworkCard(a) {
   ].join('');
 }
 
+// ============================================================
+//  6. 画室通知（已有，保留逻辑）
+// ============================================================
+
 function loadParentAnnouncements() {
   var container = document.getElementById('parent-announcements');
   if (!container) return;
@@ -72,7 +525,7 @@ function loadParentAnnouncements() {
   }
 
   var html = '';
-  list.forEach(function(a) {
+  list.forEach(function (a) {
     html += [
       '<div style="background:#fff; border-radius:10px; padding:16px 20px; margin-bottom:12px; box-shadow:0 1px 6px rgba(0,0,0,0.05); border-left:4px solid #d7a86e;">',
       '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">',
@@ -84,4 +537,119 @@ function loadParentAnnouncements() {
     ].join('');
   });
   container.innerHTML = html;
+}
+
+// ============================================================
+//  7. 个人信息 + 修改密码
+// ============================================================
+
+function loadParentInfo(user) {
+  var infoEl = document.getElementById('parent-info');
+  if (!infoEl) return;
+
+  var student = findChildStudent(user);
+
+  var html = '';
+  html += '<p><strong>👤 家长姓名：</strong>' + (user.name || '--') + '</p>';
+  html += '<p><strong>📧 邮箱：</strong>' + (user.email || '--') + '</p>';
+  html += '<p><strong>👶 孩子姓名：</strong>' + (user.childName || '--') + '</p>';
+
+  if (student) {
+    html += '<hr style="border:none; border-top:1px solid #e8d4c8; margin:16px 0;">';
+    html += '<p><strong>📊 在读状态：</strong>' + (student.status || '--') + '</p>';
+    html += '<p><strong>📖 主修课程：</strong>' + (student.course || '--') + '</p>';
+    html += '<p><strong>📚 总课时：</strong>' + (student.totalLessons || 0) + '</p>';
+    html += '<p><strong>✅ 已消耗：</strong>' + (student.consumedLessons || 0) + '</p>';
+    html += '<p><strong>⭐ 剩余：</strong>' + ((student.totalLessons || 0) - (student.consumedLessons || 0)) + '</p>';
+  }
+
+  html += '<hr style="border:none; border-top:1px solid #e8d4c8; margin:16px 0;">';
+  html += '<p><strong>📅 登录时间：</strong>' + (user.loginTime ? new Date(user.loginTime).toLocaleString('zh-CN') : '--') + '</p>';
+
+  infoEl.innerHTML = html;
+
+  // 修改密码按钮事件
+  var pwdBtn = document.getElementById('pwd-change-btn');
+  if (pwdBtn) {
+    pwdBtn.addEventListener('click', function () {
+      changePassword();
+    });
+  }
+}
+
+/** 修改密码 */
+function changePassword() {
+  var newPwd = document.getElementById('pwd-new').value.trim();
+  var confirmPwd = document.getElementById('pwd-confirm').value.trim();
+  var msgEl = document.getElementById('pwd-msg');
+  if (!msgEl) return;
+
+  if (!newPwd || newPwd.length < 6) {
+    msgEl.textContent = '⚠️ 密码至少6位';
+    msgEl.style.color = '#e88';
+    return;
+  }
+  if (newPwd !== confirmPwd) {
+    msgEl.textContent = '⚠️ 两次密码不一致';
+    msgEl.style.color = '#e88';
+    return;
+  }
+
+  var user = Auth.currentUser();
+  if (!user) {
+    msgEl.textContent = '⚠️ 登录状态异常，请重新登录';
+    msgEl.style.color = '#e88';
+    return;
+  }
+
+  // 教师账户不支持在线改密码
+  if (user.role === 'teacher' || user.role === 'admin') {
+    msgEl.textContent = '⚠️ 教师账户暂不支持在线修改密码';
+    msgEl.style.color = '#e8a040';
+    return;
+  }
+
+  // 家长：调用 CloudBase 修改密码
+  var auth = getAuth();
+  if (!auth) {
+    msgEl.textContent = '⚠️ 认证服务未就绪，请稍后再试';
+    msgEl.style.color = '#e88';
+    return;
+  }
+
+  msgEl.textContent = '⏳ 修改中...';
+  msgEl.style.color = '#999';
+
+  // CloudBase SDK 密码重置（通过发送重置邮件或直接更新）
+  // 新版 SDK 可能需要用 auth.updatePassword 或类似方法
+  try {
+    // 尝试用 CloudBase 的密码更新能力
+    if (typeof auth.updatePassword === 'function') {
+      auth.updatePassword(newPwd).then(function () {
+        msgEl.textContent = '✅ 密码修改成功';
+        msgEl.style.color = '#5a9';
+        document.getElementById('pwd-new').value = '';
+        document.getElementById('pwd-confirm').value = '';
+      }).catch(function (err) {
+        msgEl.textContent = '⚠️ 修改失败：' + (err.message || '请重新登录后再试');
+        msgEl.style.color = '#e88';
+      });
+    } else if (typeof auth.updateUser === 'function') {
+      auth.updateUser({ password: newPwd }).then(function () {
+        msgEl.textContent = '✅ 密码修改成功';
+        msgEl.style.color = '#5a9';
+        document.getElementById('pwd-new').value = '';
+        document.getElementById('pwd-confirm').value = '';
+      }).catch(function (err) {
+        msgEl.textContent = '⚠️ 修改失败：' + (err.message || '请重新登录后再试');
+        msgEl.style.color = '#e88';
+      });
+    } else {
+      msgEl.textContent = '⚠️ 当前版本暂不支持在线修改密码，请联系老师重置';
+      msgEl.style.color = '#e8a040';
+    }
+  } catch (e) {
+    msgEl.textContent = '⚠️ 操作异常，请稍后再试';
+    msgEl.style.color = '#e88';
+  }
 }

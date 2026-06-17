@@ -1,6 +1,6 @@
 /*
   春晓画室 - 登录页样式
-  阶段 5: 登录系统
+  登录 / 注册 / 忘记密码
 */
 
 /* ========== 登录卡片容器 ========== */
@@ -9,7 +9,7 @@
   margin: 0 auto;
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 36px rgba(93, 64, 55, 0.12);
   overflow: hidden;
 }
 
@@ -22,46 +22,181 @@
   flex: 1;
   padding: 16px;
   border: none;
-  background: #f0e6d8;
+  background: #f5efe4;
   color: #8d6e63;
   font-size: 1em;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s;
+  user-select: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border-bottom: 3px solid transparent;
 }
 
 .login-tab.active {
   background: #fff;
   color: #5d4037;
-  border-bottom: 3px solid #d7a86e;
+  border-bottom-color: #d7a86e;
 }
 
-.login-tab:hover {
+.login-tab:hover:not(.active) {
   background: #faf5ed;
 }
 
-/* ========== 表单区域 ========== */
+/* ========== 登录方式切换标签 ========== */
+.login-method-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #e8d4c8;
+}
+
+.method-tab {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  background: #fff;
+  color: #8d6e63;
+  font-size: 0.9em;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.method-tab + .method-tab {
+  border-left: 2px solid #e8d4c8;
+}
+
+.method-tab.active {
+  background: #5d4037;
+  color: #fff;
+}
+
+.method-tab:hover:not(.active) {
+  background: #fdfaf5;
+}
+
+/* 登录方式面板切换 */
+.login-method-panel {
+  display: none;
+  animation: fadeSlideIn 0.25s ease;
+}
+
+.login-method-panel.active {
+  display: block;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========== 短信验证码行 ========== */
+.sms-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sms-row input {
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 6px;
+  text-align: center;
+  font-size: 1.2em !important;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+.sms-send-btn {
+  flex-shrink: 0;
+  padding: 12px 18px;
+  background: #d7a86e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9em;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.sms-send-btn:hover:not(:disabled) {
+  background: #c99750;
+}
+
+.sms-send-btn:active:not(:disabled) {
+  background: #b8955a;
+}
+
+.sms-send-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ========== 表单动画舞台 ========== */
+.login-form-stage {
+  position: relative;
+  min-height: 320px;
+}
+
 .login-form {
   padding: 30px 35px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.login-form.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  position: relative;
+}
+
+/* ========== 表单标题 ========== */
+.form-title {
+  text-align: center;
+  color: #5d4037;
+  margin: 0 0 16px;
+  font-size: 1.15em;
+}
+
+/* ========== 表单组 ========== */
+.form-group {
+  margin-bottom: 16px;
 }
 
 .login-form label {
   display: block;
-  margin-top: 16px;
   margin-bottom: 6px;
   color: #5d4037;
   font-weight: bold;
-  font-size: 0.95em;
+  font-size: 0.93em;
 }
 
-.login-form input {
+.login-form input[type="email"],
+.login-form input[type="text"],
+.login-form input[type="password"] {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 14px;
   border: 2px solid #e8d4c8;
   border-radius: 8px;
-  font-size: 1em;
-  transition: border-color 0.3s;
+  font-size: 0.98em;
+  transition: border-color 0.25s, box-shadow 0.25s;
   box-sizing: border-box;
+  background: #fff;
+  color: #333;
 }
 
 .login-form input:focus {
@@ -70,10 +205,120 @@
   box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.15);
 }
 
+/* 校验状态 */
+.login-form input.input-error {
+  border-color: #e88;
+  box-shadow: 0 0 0 3px rgba(238, 136, 136, 0.12);
+}
+
+.login-form input.input-error:focus {
+  border-color: #e88;
+  box-shadow: 0 0 0 3px rgba(238, 136, 136, 0.2);
+}
+
+.login-form input.input-valid {
+  border-color: #5a9;
+}
+
+/* ========== 密码输入组 ========== */
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrap input {
+  padding-right: 48px !important;
+}
+
+.pwd-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  font-size: 1.1em;
+  line-height: 1;
+  border-radius: 6px;
+  transition: background 0.15s;
+  color: #999;
+}
+
+.pwd-toggle:hover {
+  background: #f0e6d8;
+  color: #5d4037;
+}
+
+.pwd-toggle:active {
+  background: #e8d4c8;
+}
+
+.pwd-eye {
+  pointer-events: none;
+}
+
+/* ========== 字段即时提示 ========== */
+.field-hint {
+  display: block;
+  min-height: 1.1em;
+  margin-top: 4px;
+  font-size: 0.8em;
+  color: #e88;
+  line-height: 1.3;
+}
+
+/* ========== 记住我 + 忘记密码行 ========== */
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 0 0;
+  font-size: 0.9em;
+}
+
+.remember-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #888;
+  user-select: none;
+  font-weight: normal;
+  margin: 0;
+}
+
+.remember-wrap input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #d7a86e;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.remember-wrap:hover {
+  color: #5d4037;
+}
+
+.forgot-link {
+  color: #d7a86e;
+  text-decoration: none;
+  font-size: 0.9em;
+  transition: color 0.2s;
+}
+
+.forgot-link:hover {
+  color: #b8955a;
+  text-decoration: underline;
+}
+
 /* ========== 登录按钮 / 主操作按钮 ========== */
 .login-btn {
   width: 100%;
-  margin-top: 24px;
+  margin-top: 20px;
   padding: 14px 24px;
   background: #5d4037;
   color: #fff;
@@ -85,48 +330,87 @@
   cursor: pointer;
   user-select: none;
   box-shadow: 0 3px 10px rgba(93, 64, 55, 0.25);
-  transition: background 0.15s, transform 0.1s, box-shadow 0.15s, border-color 0.15s;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s, border-color 0.15s, opacity 0.15s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.login-btn:hover {
+.login-btn:hover:not(:disabled) {
   background: #6d4c41;
   border-bottom-color: #4e342e;
   box-shadow: 0 5px 16px rgba(93, 64, 55, 0.35);
   transform: translateY(-1px);
 }
 
-.login-btn:active {
+.login-btn:active:not(:disabled) {
   background: #4e342e;
   border-bottom-color: transparent;
   transform: translateY(1px);
   box-shadow: 0 1px 4px rgba(93, 64, 55, 0.2);
 }
 
-/* ========== 错误提示 ========== */
-.login-error {
+.login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-btn.loading .btn-text {
+  opacity: 0.6;
+}
+
+/* ========== 按钮加载旋转器 ========== */
+.btn-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========== 表单错误提示 ========== */
+.form-error {
   color: #e53935;
   text-align: center;
-  margin-top: 14px;
+  margin-top: 12px;
   font-size: 0.9em;
-  min-height: 1.2em;       /* 即使没错误也占位，避免抖动 */
+  min-height: 1.2em;
+}
+
+/* ========== 表单切换链接 ========== */
+.form-switch-link {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.form-switch-link a,
+.register-hint a {
+  color: #d7a86e;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.2s;
+}
+
+.form-switch-link a:hover,
+.register-hint a:hover {
+  color: #b8955a;
+  text-decoration: underline;
 }
 
 /* ========== 注册提示区域 ========== */
 .register-hint {
   text-align: center;
   padding: 0 35px 25px;
-}
-
-.register-hint a,
-#register-form a {
-  color: #d7a86e;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-.register-hint a:hover,
-#register-form a:hover {
-  text-decoration: underline;
 }
 
 /* ========== 登录信息卡片 ========== */
@@ -146,7 +430,7 @@
 /* ========== 深色模式适配 ========== */
 body.dark-mode .login-container {
   background: #2a2a2a;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  box-shadow: 0 8px 36px rgba(0,0,0,0.45);
 }
 
 body.dark-mode .login-tab {
@@ -160,18 +444,63 @@ body.dark-mode .login-tab.active {
   border-bottom-color: #d7a86e;
 }
 
-body.dark-mode .login-form label {
+body.dark-mode .login-tab:hover:not(.active) {
+  background: #252525;
+}
+
+body.dark-mode .form-title {
   color: #d7a86e;
 }
 
-body.dark-mode .login-form input {
+body.dark-mode .login-form label {
+  color: #c9a87c;
+}
+
+body.dark-mode .login-form input[type="email"],
+body.dark-mode .login-form input[type="text"],
+body.dark-mode .login-form input[type="password"] {
   background: #1e1e1e;
   border-color: #444;
-  color: #ccc;
+  color: #ddd;
 }
 
 body.dark-mode .login-form input:focus {
   border-color: #d7a86e;
+  box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.2);
+}
+
+body.dark-mode .login-form input.input-error {
+  border-color: #c06070;
+  box-shadow: 0 0 0 3px rgba(192, 96, 112, 0.15);
+}
+
+body.dark-mode .login-form input.input-valid {
+  border-color: #5a9;
+}
+
+body.dark-mode .pwd-toggle {
+  color: #888;
+}
+
+body.dark-mode .pwd-toggle:hover {
+  background: #333;
+  color: #d7a86e;
+}
+
+body.dark-mode .remember-wrap {
+  color: #888;
+}
+
+body.dark-mode .remember-wrap:hover {
+  color: #d7a86e;
+}
+
+body.dark-mode .forgot-link {
+  color: #c9a87c;
+}
+
+body.dark-mode .forgot-link:hover {
+  color: #e0b878;
 }
 
 body.dark-mode .login-btn {
@@ -181,16 +510,21 @@ body.dark-mode .login-btn {
   box-shadow: 0 3px 10px rgba(215, 168, 110, 0.3);
 }
 
-body.dark-mode .login-btn:hover {
+body.dark-mode .login-btn:hover:not(:disabled) {
   background: #e0b878;
   border-bottom-color: #c9a060;
   box-shadow: 0 5px 16px rgba(215, 168, 110, 0.4);
 }
 
-body.dark-mode .login-btn:active {
+body.dark-mode .login-btn:active:not(:disabled) {
   background: #c99750;
   border-bottom-color: transparent;
   box-shadow: 0 1px 4px rgba(215, 168, 110, 0.2);
+}
+
+body.dark-mode .btn-spinner {
+  border-color: rgba(26,26,26,0.25);
+  border-top-color: #1a1a1a;
 }
 
 body.dark-mode .login-info {
@@ -203,6 +537,77 @@ body.dark-mode .login-info strong {
   color: #d7a86e;
 }
 
-body.dark-mode .login-error {
+body.dark-mode .form-error {
   color: #ef5350;
+}
+
+body.dark-mode .field-hint {
+  color: #c06070;
+}
+
+body.dark-mode .form-switch-link a {
+  color: #c9a87c;
+}
+
+body.dark-mode .login-method-tabs {
+  border-color: #444;
+}
+
+body.dark-mode .method-tab {
+  background: #2a2a2a;
+  color: #999;
+}
+
+body.dark-mode .method-tab + .method-tab {
+  border-left-color: #444;
+}
+
+body.dark-mode .method-tab.active {
+  background: #d7a86e;
+  color: #1a1a1a;
+}
+
+body.dark-mode .method-tab:hover:not(.active) {
+  background: #333;
+}
+
+body.dark-mode .sms-send-btn {
+  background: #d7a86e;
+  color: #1a1a1a;
+}
+
+body.dark-mode .sms-send-btn:hover:not(:disabled) {
+  background: #e0b878;
+}
+
+body.dark-mode .sms-send-btn:disabled {
+  background: #444;
+  color: #888;
+}
+
+/* ========== 手机端适配 ========== */
+@media (max-width: 480px) {
+  .login-container {
+    border-radius: 12px;
+    margin: 0 8px;
+  }
+
+  .login-form {
+    padding: 22px 18px;
+  }
+
+  .login-tab {
+    padding: 14px 10px;
+    font-size: 0.9em;
+  }
+
+  .login-info {
+    padding: 16px 18px;
+  }
+
+  .form-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }

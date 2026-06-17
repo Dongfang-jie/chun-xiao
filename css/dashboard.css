@@ -1452,3 +1452,167 @@ body.dark-mode .student-lesson-legend strong {
     font-size: 1.3em;
   }
 }
+
+/* ========== 家长端：个人信息卡 ========== */
+.parent-info-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.parent-pwd-card {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.parent-pwd-card h3 {
+  margin-top: 0;
+  color: #5d4037;
+}
+
+.pwd-input {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.95em;
+  box-sizing: border-box;
+}
+
+.pwd-input:focus {
+  border-color: #d7a86e;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.15);
+}
+
+/* 家长端：班级列表卡片 */
+.parent-class-cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.parent-class-card {
+  flex: 1 1 250px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 4px solid #d7a86e;
+}
+
+.parent-class-card h4 {
+  color: #5d4037;
+  margin: 0 0 8px;
+}
+
+.parent-class-card p {
+  color: #666;
+  margin: 4px 0;
+  font-size: 0.9em;
+}
+
+/* 家长端：总览通知摘要 */
+.parent-notice-mini {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  border-left: 3px solid #d7a86e;
+}
+
+/* 家长端：课时不足警告 */
+.parent-lesson-warning {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 4px solid #e88;
+  font-weight: bold;
+  background: #fff5f5;
+  color: #e88;
+}
+
+.parent-notice-title {
+  font-weight: bold;
+  color: #5d4037;
+}
+
+.parent-notice-time {
+  color: #999;
+  font-size: 0.8em;
+  margin-left: 10px;
+}
+
+/* ========== 深色模式：家长端补充 ========== */
+body.dark-mode .parent-info-card,
+body.dark-mode .parent-pwd-card {
+  background: #2a2a2a;
+}
+
+body.dark-mode .parent-pwd-card h3 {
+  color: #d7a86e;
+}
+
+body.dark-mode .pwd-input {
+  background: #333;
+  border-color: #555;
+  color: #ddd;
+}
+
+body.dark-mode .pwd-input:focus {
+  border-color: #d7a86e;
+  box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.2);
+}
+
+body.dark-mode .parent-class-card {
+  background: #2a2a2a;
+}
+
+body.dark-mode .parent-class-card h4 {
+  color: #d7a86e;
+}
+
+body.dark-mode .parent-class-card p {
+  color: #bbb;
+}
+
+body.dark-mode .parent-notice-mini {
+  background: #2a2a2a;
+}
+
+body.dark-mode .parent-notice-mini {
+  background: #2a2a2a;
+}
+
+body.dark-mode .parent-notice-title {
+  color: #d7a86e;
+}
+
+body.dark-mode .parent-notice-time {
+  color: #888;
+}
+
+body.dark-mode .parent-lesson-warning {
+  background: #2a1a1a;
+  color: #e88;
+}
+
+body.dark-mode #parent-info hr {
+  border-top-color: #444 !important;
+}
+
+/* 手机端：家长端适配 */
+@media (max-width: 768px) {
+  .parent-class-cards {
+    flex-direction: column;
+  }
+
+  .parent-class-card {
+    flex: 1 1 auto;
+  }
+}

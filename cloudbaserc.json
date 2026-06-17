@@ -11,6 +11,16 @@
       "params": {
         "enablePublicAccess": true
       }
+    },
+    {
+      "name": "verify-code",
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "timeout": 20,
+      "triggers": [],
+      "params": {
+        "enablePublicAccess": true
+      }
     }
   ]
 }

@@ -1,20 +1,27 @@
 /*
   春晓画室 - 登录页逻辑
+  功能：角色切换 / 邮箱密码登录 / 邮箱验证码注册 / 忘记密码 / 密码可见 / 记住我 / 实时校验
   依赖 auth.js
 */
 
 document.addEventListener('DOMContentLoaded', function () {
 
   // ========== 页面元素 ==========
-  var loginForm = document.getElementById('login-form');
+  var loginForm    = document.getElementById('login-form');
   var registerForm = document.getElementById('register-form');
-  var loginError = document.getElementById('login-error');
-  var registerError = document.getElementById('register-error');
-  var showRegister = document.getElementById('show-register');
-  var backToLogin = document.getElementById('back-to-login');
-  var registerHint = document.getElementById('register-hint');
+  var forgotForm   = document.getElementById('forgot-form');
 
-  // 如果已登录，直接跳转（admin/teacher → 老师端，parent → 家长端）
+  var loginError    = document.getElementById('login-error');
+  var registerError = document.getElementById('register-error');
+  var forgotError   = document.getElementById('forgot-error');
+
+  var allForms = [loginForm, registerForm, forgotForm];
+
+  // 注册表单倒计时
+  var regCountdown = 0;
+  var regTimer = null;
+
+  // ========== 已登录自动跳转 ==========
   var savedUser = Auth.currentUser();
   if (savedUser) {
     if (savedUser.role === 'parent') {
@@ -25,73 +32,212 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  // ========== 角色标签切换 ==========
+  // ================================================================
+  //  工具函数
+  // ================================================================
+
+  function showForm(form) {
+    allForms.forEach(function (f) { if (f) f.classList.remove('active'); });
+    if (form) form.classList.add('active');
+    [loginError, registerError, forgotError].forEach(function (el) {
+      if (el) el.textContent = '';
+    });
+    document.querySelectorAll('.field-hint').forEach(function (el) { el.textContent = ''; });
+    document.querySelectorAll('.login-form input').forEach(function (el) {
+      el.classList.remove('input-error', 'input-valid');
+    });
+  }
+
+  function setBtnLoading(btn, loading) {
+    if (!btn) return;
+    var textEl = btn.querySelector('.btn-text');
+    var spinnerEl = btn.querySelector('.btn-spinner');
+    if (loading) {
+      btn.disabled = true;
+      btn.classList.add('loading');
+      if (textEl) textEl.style.display = 'none';
+      if (spinnerEl) spinnerEl.style.display = 'inline-block';
+    } else {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      if (textEl) textEl.style.display = '';
+      if (spinnerEl) spinnerEl.style.display = 'none';
+    }
+  }
+
+  function getEyeText(input) {
+    return input.type === 'password' ? '👁️' : '🙈';
+  }
+
+  // ================================================================
+  //  密码可见切换
+  // ================================================================
+
+  function initPwdToggle(toggleBtnId, inputId) {
+    var btn = document.getElementById(toggleBtnId);
+    var input = document.getElementById(inputId);
+    if (!btn || !input) return;
+    btn.addEventListener('click', function () {
+      var isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      var eye = btn.querySelector('.pwd-eye');
+      if (eye) eye.textContent = getEyeText(input);
+    });
+  }
+  initPwdToggle('pwd-toggle-login', 'password');
+
+  // ================================================================
+  //  角色标签切换
+  // ================================================================
+
   var currentRole = 'parent';
 
   document.querySelectorAll('.login-tab').forEach(function (tab) {
     tab.addEventListener('click', function () {
-      document.querySelectorAll('.login-tab').forEach(function (t) {
-        t.classList.remove('active');
-      });
+      document.querySelectorAll('.login-tab').forEach(function (t) { t.classList.remove('active'); });
       tab.classList.add('active');
       currentRole = tab.dataset.role;
-
-      if (currentRole === 'teacher') {
-        if (registerHint) registerHint.style.display = 'none';
-        if (registerForm) registerForm.style.display = 'none';
-        if (loginForm) loginForm.style.display = 'block';
-      } else {
-        if (registerHint) registerHint.style.display = 'block';
-      }
+      showForm(loginForm);
     });
   });
 
-  // ========== 表单切换 ==========
+  // ================================================================
+  //  表单间导航
+  // ================================================================
+
+  var showRegister = document.getElementById('show-register');
   if (showRegister) {
     showRegister.addEventListener('click', function (e) {
       e.preventDefault();
-      loginForm.style.display = 'none';
-      registerForm.style.display = 'block';
-      registerHint.style.display = 'none';
-      loginError.textContent = '';
+      showForm(registerForm);
     });
   }
 
+  var backToLogin = document.getElementById('back-to-login');
   if (backToLogin) {
     backToLogin.addEventListener('click', function (e) {
       e.preventDefault();
-      registerForm.style.display = 'none';
-      loginForm.style.display = 'block';
-      registerHint.style.display = currentRole === 'teacher' ? 'none' : 'block';
-      registerError.textContent = '';
+      showForm(loginForm);
     });
   }
 
-  // ========== 登录 ==========
+  var showForgot = document.getElementById('show-forgot');
+  if (showForgot) {
+    showForgot.addEventListener('click', function (e) {
+      e.preventDefault();
+      var loginEmail = document.getElementById('email').value.trim();
+      if (loginEmail) document.getElementById('forgot-email').value = loginEmail;
+      showForm(forgotForm);
+      if (currentRole === 'teacher') {
+        document.getElementById('forgot-desc').textContent = '教师账号请联系管理员重置密码';
+        var fbtn = document.getElementById('forgot-submit-btn');
+        if (fbtn) { fbtn.querySelector('.btn-text').textContent = '请联系管理员'; fbtn.disabled = true; fbtn.style.opacity = '0.6'; }
+      } else {
+        document.getElementById('forgot-desc').textContent = '输入您的邮箱，我们将发送重置链接';
+        var fbtn2 = document.getElementById('forgot-submit-btn');
+        if (fbtn2) { fbtn2.querySelector('.btn-text').textContent = '发送重置邮件'; fbtn2.disabled = false; fbtn2.style.opacity = ''; }
+      }
+    });
+  }
+
+  var backFromForgot = document.getElementById('back-from-forgot');
+  if (backFromForgot) {
+    backFromForgot.addEventListener('click', function (e) {
+      e.preventDefault();
+      showForm(loginForm);
+    });
+  }
+
+  // ================================================================
+  //  输入实时校验
+  // ================================================================
+
+  function validateEmail(email) {
+    if (!email) return '请输入邮箱地址';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return '邮箱格式不正确';
+    return '';
+  }
+
+  function validatePassword(pwd) {
+    if (!pwd) return '请输入密码';
+    if (pwd.length < 6) return '密码至少需要6位';
+    return '';
+  }
+
+  function validateRequired(val, label) {
+    if (!val || !val.trim()) return '请输入' + label;
+    return '';
+  }
+
+  function bindBlurValidation(inputId, hintId, validator) {
+    var input = document.getElementById(inputId);
+    var hint = document.getElementById(hintId);
+    if (!input || !hint) return;
+    input.addEventListener('blur', function () {
+      var msg = validator(input.value.trim());
+      hint.textContent = msg;
+      if (msg) { input.classList.add('input-error'); input.classList.remove('input-valid'); }
+      else if (input.value.trim()) { input.classList.remove('input-error'); input.classList.add('input-valid'); }
+      else { input.classList.remove('input-error', 'input-valid'); }
+    });
+    input.addEventListener('input', function () {
+      if (hint.textContent) { hint.textContent = ''; input.classList.remove('input-error', 'input-valid'); }
+    });
+  }
+
+  // 登录表单校验
+  bindBlurValidation('email', 'email-hint', validateEmail);
+  bindBlurValidation('password', 'password-hint', validatePassword);
+
+  // 注册表单校验
+  bindBlurValidation('reg-name', 'reg-name-hint', function (v) { return validateRequired(v, '家长姓名'); });
+  bindBlurValidation('reg-email', 'reg-email-hint', validateEmail);
+  bindBlurValidation('reg-email-code', 'reg-email-code-hint', function (v) {
+    if (!v) return '请输入验证码';
+    if (!/^\d{6}$/.test(v)) return '验证码为6位数字';
+    return '';
+  });
+  bindBlurValidation('reg-child', 'reg-child-hint', function (v) { return validateRequired(v, '孩子姓名'); });
+
+  // 忘记密码表单校验
+  bindBlurValidation('forgot-email', 'forgot-email-hint', validateEmail);
+
+  // ================================================================
+  //  登录提交
+  // ================================================================
+
   if (loginForm) {
     loginForm.addEventListener('submit', async function (e) {
       e.preventDefault();
 
       var email = document.getElementById('email').value.trim();
       var password = document.getElementById('password').value;
-      loginError.textContent = '登录中...';
+      var rememberMe = document.getElementById('remember-me').checked;
+      var submitBtn = document.getElementById('login-submit-btn');
+
+      var emailErr = validateEmail(email);
+      var pwdErr = validatePassword(password);
+      if (emailErr || pwdErr) { loginError.textContent = emailErr || pwdErr; return; }
+
+      loginError.textContent = '';
+      setBtnLoading(submitBtn, true);
 
       try {
-        var user = await Auth.login(email, password);
+        var user = await Auth.login(email, password, rememberMe);
 
-        // 检查角色是否匹配（admin 也是老师端）
         if (currentRole === 'teacher' && user.role === 'parent') {
           Auth.logout();
           loginError.textContent = '该账号不是老师，请使用家长端登录';
+          setBtnLoading(submitBtn, false);
           return;
         }
         if (currentRole === 'parent' && user.role !== 'parent') {
           Auth.logout();
           loginError.textContent = '该账号不是家长，请使用老师端登录';
+          setBtnLoading(submitBtn, false);
           return;
         }
 
-        // 跳转
         if (currentRole === 'teacher') {
           window.location.href = 'teacher-dashboard.html';
         } else {
@@ -99,32 +245,194 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } catch (err) {
         loginError.textContent = err.message;
+        setBtnLoading(submitBtn, false);
       }
     });
   }
 
-  // ========== 注册 ==========
+  // ================================================================
+  //  注册表单 - 发送验证码
+  // ================================================================
+
+  function updateRegCountdown() {
+    var btn = document.getElementById('reg-send-code-btn');
+    if (!btn) return;
+    if (regCountdown <= 0) {
+      btn.disabled = false;
+      btn.textContent = '获取验证码';
+      return;
+    }
+    btn.textContent = regCountdown + 's 后重发';
+    regCountdown--;
+    regTimer = setTimeout(updateRegCountdown, 1000);
+  }
+
+  var regSendBtn = document.getElementById('reg-send-code-btn');
+  if (regSendBtn) {
+    regSendBtn.addEventListener('click', async function () {
+      if (regCountdown > 0) return;
+
+      var email = document.getElementById('reg-email').value.trim();
+      var hint = document.getElementById('reg-email-hint');
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (hint) { hint.textContent = '请先输入正确的邮箱地址'; hint.style.color = '#e88'; }
+        return;
+      }
+      if (hint) { hint.textContent = ''; }
+
+      regSendBtn.disabled = true;
+      regSendBtn.textContent = '发送中...';
+
+      try {
+        var app = getApp();
+        if (!app) throw new Error('服务未就绪');
+
+        var result = await app.callFunction({
+          name: 'verify-code',
+          data: { action: 'send', email: email }
+        });
+
+        var resp = result.result || result || {};
+        if (resp.success) {
+          regCountdown = 60;
+          updateRegCountdown();
+          var codeHint = document.getElementById('reg-email-code-hint');
+          if (codeHint) { codeHint.textContent = '验证码已发送，请检查邮箱'; codeHint.style.color = '#5a9'; }
+        } else {
+          regSendBtn.disabled = false;
+          regSendBtn.textContent = '获取验证码';
+          if (hint) { hint.textContent = resp.message || '发送失败'; hint.style.color = '#e88'; }
+        }
+      } catch (err) {
+        regSendBtn.disabled = false;
+        regSendBtn.textContent = '获取验证码';
+        if (hint) { hint.textContent = '发送失败，请稍后再试'; hint.style.color = '#e88'; }
+        console.error('Email code send error:', err);
+      }
+    });
+  }
+
+  // ================================================================
+  //  注册提交
+  // ================================================================
+
   if (registerForm) {
     registerForm.addEventListener('submit', async function (e) {
       e.preventDefault();
 
-      var name = document.getElementById('reg-name').value.trim();
-      var email = document.getElementById('reg-email').value.trim();
-      var password = document.getElementById('reg-password').value;
+      var name      = document.getElementById('reg-name').value.trim();
+      var email     = document.getElementById('reg-email').value.trim();
+      var code      = document.getElementById('reg-email-code').value.trim();
+      var phone     = document.getElementById('reg-phone').value.trim();
       var childName = document.getElementById('reg-child').value.trim();
+      var submitBtn = document.getElementById('register-submit-btn');
 
-      if (password.length < 6) {
-        registerError.textContent = '密码至少需要 6 位';
+      if (!name)          { registerError.textContent = '请输入家长姓名'; return; }
+      if (!email)         { registerError.textContent = '请输入邮箱地址'; return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { registerError.textContent = '邮箱格式不正确'; return; }
+      if (!code)          { registerError.textContent = '请输入邮箱验证码'; return; }
+      if (!/^\d{6}$/.test(code)) { registerError.textContent = '验证码为6位数字'; return; }
+      if (!childName)     { registerError.textContent = '请输入孩子姓名'; return; }
+
+      registerError.textContent = '';
+      setBtnLoading(submitBtn, true);
+
+      try {
+        var app = getApp();
+        if (!app) throw new Error('服务未就绪');
+
+        // 1. 校验验证码
+        var verifyResult = await app.callFunction({
+          name: 'verify-code',
+          data: { action: 'verify', email: email, code: code }
+        });
+        var verifyResp = verifyResult.result || verifyResult || {};
+        if (!verifyResp.success) {
+          throw new Error(verifyResp.message || '验证码校验失败');
+        }
+
+        // 2. 创建家长账号（存入 parents 集合）
+        var db = getDB();
+        var doc = {
+          email: email,
+          name: name,
+          phone: phone || '',
+          childName: childName,
+          regMethod: 'email_code',
+          createdAt: new Date().toISOString()
+        };
+        var addResult = await db.collection('parents').add(doc);
+
+        // 3. 创建会话，跳转家长端
+        Auth._setSession({
+          uid: addResult.id || '',
+          email: email,
+          name: name,
+          childName: childName,
+          role: 'parent',
+          loginTime: new Date().toISOString()
+        }, true);
+
+        window.location.href = 'parent-dashboard.html';
+
+      } catch (err) {
+        registerError.textContent = err.message || '注册失败';
+        setBtnLoading(submitBtn, false);
+      }
+    });
+  }
+
+  // ================================================================
+  //  忘记密码提交
+  // ================================================================
+
+  if (forgotForm) {
+    forgotForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      if (currentRole === 'teacher') {
+        forgotError.textContent = '教师账号请联系管理员重置密码';
         return;
       }
 
-      registerError.textContent = '注册中...';
+      var email = document.getElementById('forgot-email').value.trim();
+      var submitBtn = document.getElementById('forgot-submit-btn');
+
+      var emailErr = validateEmail(email);
+      if (emailErr) { forgotError.textContent = emailErr; return; }
+
+      forgotError.textContent = '';
+      setBtnLoading(submitBtn, true);
 
       try {
-        await Auth.register(name, email, password, childName);
-        window.location.href = 'parent-dashboard.html';
+        var auth = getAuth();
+        if (!auth) throw new Error('认证服务未就绪');
+
+        if (typeof auth.sendPasswordResetEmail === 'function') {
+          await auth.sendPasswordResetEmail(email);
+        } else if (typeof auth.sendPasswordResetMail === 'function') {
+          await auth.sendPasswordResetMail(email);
+        } else {
+          throw new Error('当前版本不支持在线重置，请联系老师协助');
+        }
+
+        forgotError.style.color = '#5a9';
+        forgotError.textContent = '✅ 重置邮件已发送，请检查邮箱（含垃圾邮件箱）';
+        setBtnLoading(submitBtn, false);
+
+        setTimeout(function () {
+          if (forgotError.textContent.indexOf('✅') === 0) {
+            showForm(loginForm);
+            document.getElementById('email').value = email;
+            forgotError.textContent = '';
+            forgotError.style.color = '';
+          }
+        }, 4000);
+
       } catch (err) {
-        registerError.textContent = err.message;
+        forgotError.textContent = '发送失败：' + (err.message || '请稍后再试');
+        setBtnLoading(submitBtn, false);
       }
     });
   }

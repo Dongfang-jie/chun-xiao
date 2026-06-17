@@ -110,11 +110,14 @@ document.addEventListener('DOMContentLoaded', function () {
     userNameEl.innerHTML = icon + (user.name || user.email) + roleBadge;
   }
 
-  // 家长端：加载个人信息 + 画室通知 + 孩子作品
+  // 家长端：加载所有模块
   if (!isTeacher) {
     loadParentInfo(user);
+    loadParentOverview(user);
+    loadParentSchedule(user);
+    loadParentAttendance(user);
+    loadParentLessonLog(user);
     loadParentAnnouncements();
-    loadParentArtworks(user);
   }
 
   // 老师端：加载所有管理功能

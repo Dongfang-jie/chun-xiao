@@ -30,50 +30,121 @@
         <button class="login-tab" data-role="teacher">👩‍🏫 老师登录</button>
       </div>
 
-      <!-- 登录表单 -->
-      <form id="login-form" class="login-form">
-        <label for="email">📧 邮箱地址</label>
-        <input type="email" id="email" placeholder="请输入邮箱" required>
+      <!-- 表单区域（带动画容器） -->
+      <div class="login-form-stage">
 
-        <label for="password">🔒 密码</label>
-        <input type="password" id="password" placeholder="请输入密码" required minlength="6">
+        <!-- ===== 登录表单 ===== -->
+        <form id="login-form" class="login-form active">
+          <div class="form-group">
+            <label for="email">📧 邮箱地址</label>
+            <input type="email" id="email" placeholder="请输入邮箱" autocomplete="email">
+            <span class="field-hint" id="email-hint"></span>
+          </div>
 
-        <button type="submit" class="login-btn">登 录</button>
+          <div class="form-group">
+            <label for="password">🔒 密码</label>
+            <div class="input-wrap">
+              <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password">
+              <button type="button" class="pwd-toggle" id="pwd-toggle-login" tabindex="-1" title="显示/隐藏密码">
+                <span class="pwd-eye">👁️</span>
+              </button>
+            </div>
+            <span class="field-hint" id="password-hint"></span>
+          </div>
 
-        <!-- 错误提示 -->
-        <p id="login-error" class="login-error"></p>
-      </form>
+          <div class="form-options">
+            <label class="remember-wrap">
+              <input type="checkbox" id="remember-me">
+              <span>记住我，7天内免登录</span>
+            </label>
+            <a href="#" class="forgot-link" id="show-forgot">忘记密码?</a>
+          </div>
 
-      <!-- 注册链接（仅家长端显示） -->
-      <div id="register-hint" class="register-hint">
-        <p>还没有账号？<a href="#" id="show-register">点击注册</a></p>
+          <button type="submit" class="login-btn" id="login-submit-btn">
+            <span class="btn-text">登 录</span>
+            <span class="btn-spinner" style="display:none;"></span>
+          </button>
+
+          <p id="login-error" class="form-error"></p>
+          <p class="form-switch-link" id="login-register-hint">
+            还没有账号？<a href="#" id="show-register">点击注册</a>
+          </p>
+        </form>
+
+        <!-- ===== 注册表单 ===== -->
+        <form id="register-form" class="login-form">
+          <h3 class="form-title">📝 家长注册</h3>
+
+          <div class="form-group">
+            <label for="reg-name">👤 家长姓名</label>
+            <input type="text" id="reg-name" placeholder="请输入您的姓名" autocomplete="name">
+            <span class="field-hint" id="reg-name-hint"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email">📧 邮箱地址</label>
+            <input type="email" id="reg-email" placeholder="请输入邮箱" autocomplete="email">
+            <span class="field-hint" id="reg-email-hint"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-email-code">🔢 邮箱验证码</label>
+            <div class="sms-row">
+              <input type="text" id="reg-email-code" placeholder="6位验证码" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+              <button type="button" class="sms-send-btn" id="reg-send-code-btn">获取验证码</button>
+            </div>
+            <span class="field-hint" id="reg-email-code-hint"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-phone">📱 手机号</label>
+            <input type="tel" id="reg-phone" placeholder="请输入手机号（选填）" autocomplete="tel national">
+            <span class="field-hint" id="reg-phone-hint"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-child">👶 孩子姓名</label>
+            <input type="text" id="reg-child" placeholder="请输入孩子姓名" autocomplete="off">
+            <span class="field-hint" id="reg-child-hint"></span>
+          </div>
+
+          <button type="submit" class="login-btn" id="register-submit-btn">
+            <span class="btn-text">注 册</span>
+            <span class="btn-spinner" style="display:none;"></span>
+          </button>
+
+          <p id="register-error" class="form-error"></p>
+          <p class="form-switch-link"><a href="#" id="back-to-login">← 返回登录</a></p>
+        </form>
+
+        <!-- ===== 忘记密码表单 ===== -->
+        <form id="forgot-form" class="login-form">
+          <h3 class="form-title">🔑 重置密码</h3>
+          <p style="text-align:center; color:#888; font-size:0.9em; margin-bottom:16px;" id="forgot-desc">
+            输入您的邮箱，我们将发送重置链接
+          </p>
+
+          <div class="form-group">
+            <label for="forgot-email">📧 邮箱地址</label>
+            <input type="email" id="forgot-email" placeholder="请输入注册邮箱" autocomplete="email">
+            <span class="field-hint" id="forgot-email-hint"></span>
+          </div>
+
+          <button type="submit" class="login-btn" id="forgot-submit-btn">
+            <span class="btn-text">发送重置邮件</span>
+            <span class="btn-spinner" style="display:none;"></span>
+          </button>
+
+          <p id="forgot-error" class="form-error"></p>
+          <p class="form-switch-link"><a href="#" id="back-from-forgot">← 返回登录</a></p>
+        </form>
+
       </div>
-
-      <!-- 注册表单（默认隐藏） -->
-      <form id="register-form" class="login-form" style="display:none;">
-        <h3 style="text-align:center; color:#5d4037;">📝 家长注册</h3>
-        <label for="reg-name">👤 家长姓名</label>
-        <input type="text" id="reg-name" placeholder="请输入您的姓名" required>
-
-        <label for="reg-email">📧 邮箱地址</label>
-        <input type="email" id="reg-email" placeholder="请输入邮箱" required>
-
-        <label for="reg-password">🔒 密码（至少6位）</label>
-        <input type="password" id="reg-password" placeholder="请设置密码" required minlength="6">
-
-        <label for="reg-child">👶 孩子姓名</label>
-        <input type="text" id="reg-child" placeholder="请输入孩子姓名" required>
-
-        <button type="submit" class="login-btn">注 册</button>
-
-        <p id="register-error" class="login-error"></p>
-        <p style="text-align:center;"><a href="#" id="back-to-login">← 返回登录</a></p>
-      </form>
 
       <!-- 提示信息 -->
       <div class="login-info">
         <p>🔐 <strong>老师账号</strong>由画室管理员创建，如需开通请联系负责人。</p>
-        <p>👨‍👩‍👧 <strong>家长账号</strong>可自行注册，审核通过后即可查看孩子的作品和通知。</p>
+        <p>👨‍👩‍👧 <strong>家长账号</strong>可自行注册，即可查看孩子的作品和通知。</p>
       </div>
 
     </div>
