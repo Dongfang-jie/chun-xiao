@@ -4,7 +4,38 @@
   依赖 auth.js
 */
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+
+  // 初始化匿名登录（CloudBase callFunction 需要登录态）
+  if (typeof Auth !== 'undefined') {
+    try {
+      await Auth.initAnonymous();
+      console.log('Anonymous auth initialized for login page');
+    } catch (e) {
+      console.warn('Anonymous auth init failed (non-fatal):', e.message);
+    }
+  }
+
+  // ========== HTTP 调用 verify-code 云函数 ==========
+  // 绕过 SDK callFunction，直接用 fetch() 访问 HTTP 访问服务
+  var VERIFY_CODE_URL = 'https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/G:/Ruanjian/Git/verify-code';
+
+  async function callVerifyCode(data) {
+    var response = await fetch(VERIFY_CODE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+    }
+    var wrapper = await response.json();
+    // HTTP 服务包装格式: { statusCode, headers, body: "JSON字符串" }
+    if (wrapper && typeof wrapper.body === 'string') {
+      return JSON.parse(wrapper.body);
+    }
+    return wrapper;
+  }
 
   // ========== 页面元素 ==========
   var loginForm    = document.getElementById('login-form');
@@ -285,15 +316,8 @@ document.addEventListener('DOMContentLoaded', function () {
       regSendBtn.textContent = '发送中...';
 
       try {
-        var app = getApp();
-        if (!app) throw new Error('服务未就绪');
-
-        var result = await app.callFunction({
-          name: 'verify-code',
-          data: { action: 'send', email: email }
-        });
-
-        var resp = result.result || result || {};
+        // 通过 HTTP 直接调用云函数（绕过 SDK callFunction 的网络问题）
+        var resp = await callVerifyCode({ action: 'send', email: email });
         if (resp.success) {
           regCountdown = 60;
           updateRegCountdown();
@@ -307,7 +331,8 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (err) {
         regSendBtn.disabled = false;
         regSendBtn.textContent = '获取验证码';
-        if (hint) { hint.textContent = '发送失败，请稍后再试'; hint.style.color = '#e88'; }
+        var errMsg = (err && (err.message || err.code)) || '发送失败，请稍后再试';
+        if (hint) { hint.textContent = '发送失败：' + errMsg; hint.style.color = '#e88'; }
         console.error('Email code send error:', err);
       }
     });
@@ -339,15 +364,8 @@ document.addEventListener('DOMContentLoaded', function () {
       setBtnLoading(submitBtn, true);
 
       try {
-        var app = getApp();
-        if (!app) throw new Error('服务未就绪');
-
-        // 1. 校验验证码
-        var verifyResult = await app.callFunction({
-          name: 'verify-code',
-          data: { action: 'verify', email: email, code: code }
-        });
-        var verifyResp = verifyResult.result || verifyResult || {};
+        // 1. 校验验证码（通过 HTTP 调用云函数）
+        var verifyResp = await callVerifyCode({ action: 'verify', email: email, code: code });
         if (!verifyResp.success) {
           throw new Error(verifyResp.message || '验证码校验失败');
         }

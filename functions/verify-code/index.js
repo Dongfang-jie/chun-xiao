@@ -30,6 +30,9 @@ const SMTP = {
 const CODE_LENGTH = 6;
 const CODE_EXPIRY_MINUTES = 5;
 
+// 集合名称
+const COLLECTION = 'email_codes';
+
 // 懒加载 —— 首次发邮件时才创建 transporter
 var transporter = null;
 function getTransporter() {
@@ -45,6 +48,64 @@ function getTransporter() {
     });
   }
   return transporter;
+}
+
+// ================================================================
+//  确保 email_codes 集合存在（集合不会自动创建时兜底）
+// ================================================================
+
+var collectionEnsured = false;
+var collectionExists = null;  // null=未知, true=存在, false=不存在
+
+async function ensureCollection() {
+  if (collectionEnsured) return collectionExists;
+
+  // 1. 尝试查询（判断集合是否存在）
+  try {
+    await db.collection(COLLECTION).where({ email: '_init_' }).limit(1).get();
+    collectionExists = true;
+    collectionEnsured = true;
+    console.log('email_codes collection exists');
+    return true;
+  } catch (e) {
+    var msg = e.message || String(e);
+    if (msg.indexOf('ResourceNotFound') >= 0 || msg.indexOf('not exist') >= 0 || msg.indexOf('DATABASE_COLLECTION_NOT_EXIST') >= 0) {
+      console.warn('email_codes collection not found, attempting to create...');
+      collectionExists = false;
+    } else {
+      // 其他错误（权限等），假定存在
+      console.warn('ensureCollection query error (non-fatal):', msg);
+      collectionEnsured = true;
+      collectionExists = true;
+      return true;
+    }
+  }
+
+  // 2. 集合不存在，尝试插入一条初始化文档来创建集合
+  try {
+    var result = await db.collection(COLLECTION).add({
+      email: '_init_',
+      code: '000000',
+      ip: '0.0.0.0',
+      createdAt: 0,
+      attempts: 0
+    });
+    console.log('email_codes collection created via insert, id:', result.id);
+    // 清理初始化文档
+    try {
+      await db.collection(COLLECTION).doc(result.id).remove();
+    } catch (cleanupErr) {
+      console.warn('init doc cleanup failed (non-fatal):', cleanupErr.message);
+    }
+    collectionExists = true;
+    collectionEnsured = true;
+    return true;
+  } catch (createErr) {
+    console.error('Failed to create email_codes collection:', createErr.message || createErr);
+    collectionEnsured = true;  // 不再重试
+    collectionExists = false;
+    return false;
+  }
 }
 
 // ================================================================
@@ -106,37 +167,55 @@ async function sendVerifyEmail(to, code) {
 // ================================================================
 
 exports.main = async function (event, context) {
-  var action = event.action;
-  var email = (event.email || '').trim().toLowerCase();
+  // 兼容 HTTP 函数模式：body 是 JSON 字符串，需要解析
+  var body = event;
+  if (typeof event.body === 'string') {
+    try { body = JSON.parse(event.body); } catch (_) { body = event; }
+  }
+
+  var action = body.action;
+  var email = (body.email || '').trim().toLowerCase();
 
   if (!email && action !== 'ping') {
-    return { success: false, message: '邮箱不能为空' };
+    return wrapResponse({ success: false, message: '邮箱不能为空' });
   }
 
   try {
     if (action === 'ping') {
-      return { success: true, message: 'verify-code ok', config: {
+      return wrapResponse({ success: true, message: 'verify-code ok', config: {
         hasEmailUser: !!EMAIL_CONFIG.user,
         hasEmailPass: !!EMAIL_CONFIG.pass
-      }};
+      }});
     }
 
     if (action === 'send') {
-      return await handleSend(email, context);
+      return wrapResponse(await handleSend(email, context));
     }
 
     if (action === 'verify') {
-      var code = (event.code || '').trim();
-      if (!code) return { success: false, message: '验证码不能为空' };
-      return await handleVerify(email, code, context);
+      var code = (body.code || '').trim();
+      if (!code) return wrapResponse({ success: false, message: '验证码不能为空' });
+      return wrapResponse(await handleVerify(email, code, context));
     }
 
-    return { success: false, message: 'unknown action: ' + action };
+    return wrapResponse({ success: false, message: 'unknown action: ' + action });
   } catch (e) {
     console.error('verify-code error:', e);
-    return { success: false, message: e.message || '服务异常' };
+    return wrapResponse({ success: false, message: e.message || '服务异常' });
   }
 };
+
+// HTTP 模式 / Event 模式统一响应格式
+function wrapResponse(data) {
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify(data)
+  };
+}
 
 // ================================================================
 //  发送验证码
@@ -154,41 +233,52 @@ async function handleSend(email, context) {
 
   // --- 检查配置 ---
   if (!EMAIL_CONFIG.user || !EMAIL_CONFIG.pass) {
+    console.error('SMTP config missing: EMAIL_USER=' + !!EMAIL_CONFIG.user + ', EMAIL_PASS=' + !!EMAIL_CONFIG.pass);
     return { success: false, message: '邮件服务未配置，请联系管理员' };
   }
 
+  // --- 0. 确保 email_codes 集合存在 ---
+  var collReady = await ensureCollection();
+  if (!collReady) {
+    console.error('email_codes collection unavailable — cannot store or verify codes');
+  }
+
   // --- 1. 同一邮箱 60 秒限制 ---
-  try {
-    var recentQuery = await db.collection('email_codes')
-      .where({ email: email })
-      .orderBy('createdAt', 'desc')
-      .limit(1)
-      .get();
-    if (recentQuery.data && recentQuery.data.length > 0) {
-      var last = recentQuery.data[0];
-      if (now - last.createdAt < 60000) {
-        var waitSec = Math.ceil((60000 - (now - last.createdAt)) / 1000);
-        return { success: false, message: '请 ' + waitSec + ' 秒后再发送' };
+  if (collReady) {
+    try {
+      var recentQuery = await db.collection(COLLECTION)
+        .where({ email: email })
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
+      if (recentQuery.data && recentQuery.data.length > 0) {
+        var last = recentQuery.data[0];
+        if (now - last.createdAt < 60000) {
+          var waitSec = Math.ceil((60000 - (now - last.createdAt)) / 1000);
+          return { success: false, message: '请 ' + waitSec + ' 秒后再发送' };
+        }
       }
+    } catch (e) {
+      console.warn('rate limit check failed (non-fatal):', e.message);
     }
-  } catch (e) {
-    console.warn('rate limit check failed (non-fatal):', e.message);
   }
 
   // --- 2. 同一 IP 每小时 5 次限制 ---
-  try {
-    var oneHourAgo = now - 3600000;
-    var ipQuery = await db.collection('email_codes')
-      .where({ ip: ip })
-      .get();
-    if (ipQuery.data) {
-      var ipCount = ipQuery.data.filter(function (r) { return r.createdAt > oneHourAgo; }).length;
-      if (ipCount >= 5) {
-        return { success: false, message: '发送过于频繁，请1小时后再试' };
+  if (collReady) {
+    try {
+      var oneHourAgo = now - 3600000;
+      var ipQuery = await db.collection(COLLECTION)
+        .where({ ip: ip })
+        .get();
+      if (ipQuery.data) {
+        var ipCount = ipQuery.data.filter(function (r) { return r.createdAt > oneHourAgo; }).length;
+        if (ipCount >= 5) {
+          return { success: false, message: '发送过于频繁，请1小时后再试' };
+        }
       }
+    } catch (e) {
+      console.warn('IP rate check failed (non-fatal):', e.message);
     }
-  } catch (e) {
-    console.warn('IP rate check failed (non-fatal):', e.message);
   }
 
   // --- 3. 生成验证码 ---
@@ -199,21 +289,39 @@ async function handleSend(email, context) {
     await sendVerifyEmail(email, code);
     console.log('Verification email sent to', email);
   } catch (e) {
-    console.error('Email send error:', e.message);
-    return { success: false, message: '邮件发送失败，请稍后再试' };
+    // 输出完整错误信息，方便定位问题
+    console.error('Email send error:', e.message || e);
+    console.error('Error stack:', e.stack || 'no stack');
+    if (e.code) console.error('Error code:', e.code);
+    if (e.command) console.error('SMTP command:', e.command);
+    // 返回真实错误，帮助用户/管理员判断原因
+    var errMsg = e.message || String(e);
+    // 常见错误翻译
+    if (errMsg.indexOf('Invalid login') >= 0 || errMsg.indexOf('535') >= 0) {
+      errMsg = '邮箱授权码无效或已过期，请联系管理员更新';
+    } else if (errMsg.indexOf('connect') >= 0 || errMsg.indexOf('ETIMEDOUT') >= 0 || errMsg.indexOf('ENOTFOUND') >= 0) {
+      errMsg = '邮件服务器连接失败，请稍后再试';
+    } else if (errMsg.indexOf('rate') >= 0 || errMsg.indexOf('frequency') >= 0 || errMsg.indexOf('limit') >= 0) {
+      errMsg = '发送过于频繁，请稍后再试';
+    }
+    return { success: false, message: errMsg };
   }
 
   // --- 5. 存储验证码 ---
-  try {
-    await db.collection('email_codes').add({
-      email: email,
-      code: code,
-      ip: ip,
-      createdAt: now,
-      attempts: 0
-    });
-  } catch (e) {
-    console.warn('code storage failed (non-fatal):', e.message);
+  if (collReady) {
+    try {
+      await db.collection(COLLECTION).add({
+        email: email,
+        code: code,
+        ip: ip,
+        createdAt: now,
+        attempts: 0
+      });
+    } catch (e) {
+      console.warn('code storage failed (non-fatal):', e.message);
+    }
+  } else {
+    console.warn('code NOT stored — email_codes collection unavailable');
   }
 
   return { success: true, message: '验证码已发送，请检查邮箱' };
@@ -226,10 +334,13 @@ async function handleSend(email, context) {
 async function handleVerify(email, code, context) {
   var now = Date.now();
 
+  // --- 0. 确保集合存在 ---
+  await ensureCollection();
+
   // --- 1. 查找验证码记录 ---
   var query;
   try {
-    query = await db.collection('email_codes')
+    query = await db.collection(COLLECTION)
       .where({ email: email })
       .orderBy('createdAt', 'desc')
       .limit(1)
@@ -257,7 +368,7 @@ async function handleVerify(email, code, context) {
   // --- 4. 更新尝试次数 ---
   var newAttempts = record.attempts + 1;
   try {
-    await db.collection('email_codes').doc(record._id).update({ attempts: newAttempts });
+    await db.collection(COLLECTION).doc(record._id).update({ attempts: newAttempts });
   } catch (e) {
     console.warn('update attempts failed (non-fatal):', e.message);
   }
@@ -273,10 +384,84 @@ async function handleVerify(email, code, context) {
 
   // --- 6. 验证成功，删除已用验证码 ---
   try {
-    await db.collection('email_codes').doc(record._id).remove();
+    await db.collection(COLLECTION).doc(record._id).remove();
   } catch (e) {
     console.warn('remove used code failed (non-fatal):', e.message);
   }
 
   return { success: true, message: '验证通过' };
+}
+
+// ================================================================
+//  HTTP 服务器模式（Web 函数部署时自动启用）
+//  前端直接用 fetch() 调用，不依赖 CloudBase SDK 登录态
+// ================================================================
+
+var PORT = process.env.PORT || process.env.SCF_PORT || 8080;
+
+// 仅在直接运行时启动 HTTP 服务器（非 Event 函数 require 模式）
+// CloudBase Web 函数通过 scf_bootstrap 直接运行此文件
+var isMainModule = require.main === module;
+
+if (isMainModule) {
+  var http = require('http');
+
+  var server = http.createServer(async function (req, res) {
+    // CORS 预检
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      });
+      res.end();
+      return;
+    }
+
+    // 仅处理 POST
+    if (req.method !== 'POST') {
+      res.writeHead(200, corsHeaders());
+      res.end(JSON.stringify({ success: false, message: '请使用 POST 请求' }));
+      return;
+    }
+
+    // 收集请求体
+    var chunks = [];
+    req.on('data', function (chunk) { chunks.push(chunk); });
+    req.on('end', async function () {
+      var raw = Buffer.concat(chunks).toString('utf-8');
+      var body = {};
+      try { body = JSON.parse(raw); } catch (_) { /* 忽略解析错误 */ }
+
+      console.log('HTTP request:', body.action, body.email || '');
+
+      // 构造兼容 event 格式的上下文
+      var event = body;
+      var context = {
+        httpContext: { clientIp: req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0' }
+      };
+
+      var result = await exports.main(event, context);
+
+      // 从 wrapResponse 格式中提取 body
+      if (result && result.statusCode) {
+        res.writeHead(result.statusCode, result.headers || corsHeaders());
+        res.end(result.body || '{}');
+      } else {
+        res.writeHead(200, corsHeaders());
+        res.end(JSON.stringify(result));
+      }
+    });
+  });
+
+  server.listen(PORT, '0.0.0.0', function () {
+    console.log('verify-code HTTP server listening on port', PORT);
+  });
+}
+
+function corsHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*'
+  };
 }
