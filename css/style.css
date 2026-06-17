@@ -76,11 +76,11 @@ header .subtitle {
 }
 
 /* ========== 导航栏 ========== */
-nav {
+header nav {
   margin-top: 20px;
 }
 
-nav a {
+header nav a {
   display: inline-block;
   color: var(--color-primary);
   text-decoration: none;
@@ -91,12 +91,12 @@ nav a {
   transition: all var(--transition-normal);
 }
 
-nav a:hover {
+header nav a:hover {
   background-color: var(--color-primary);
   color: #fff;
 }
 
-nav a.nav-login {
+header nav a.nav-login {
   border: 2px solid var(--color-primary);
 }
 
@@ -293,7 +293,7 @@ section h3 {
   display: none;
 }
 
-.schedule-table {
+.course-schedule-table {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-bg-card);
@@ -302,18 +302,18 @@ section h3 {
   box-shadow: var(--shadow-light);
 }
 
-.schedule-table thead tr {
+.course-schedule-table thead tr {
   background: var(--color-primary);
   color: #fff;
 }
 
-.schedule-table th,
-.schedule-table td {
+.course-schedule-table th,
+.course-schedule-table td {
   padding: 14px;
   text-align: center;
 }
 
-.schedule-table tbody tr:nth-child(odd) {
+.course-schedule-table tbody tr:nth-child(odd) {
   background: #fdfaf5;
 }
 
@@ -530,12 +530,12 @@ body.dark-mode header .subtitle {
   color: #a08060;
 }
 
-body.dark-mode nav a {
+body.dark-mode header nav a {
   color: var(--color-accent);
   border-color: var(--color-accent);
 }
 
-body.dark-mode nav a:hover {
+body.dark-mode header nav a:hover {
   background-color: var(--color-accent);
   color: #1a1a1a;
 }
@@ -595,20 +595,20 @@ body.dark-mode .lightbox-caption {
   color: #ccc;
 }
 
-body.dark-mode .schedule-table thead tr {
+body.dark-mode .course-schedule-table thead tr {
   background: #3a3020;
 }
 
-body.dark-mode .schedule-table tbody tr {
+body.dark-mode .course-schedule-table tbody tr {
   background: #222;
 }
 
-body.dark-mode .schedule-table tbody tr:nth-child(odd) {
+body.dark-mode .course-schedule-table tbody tr:nth-child(odd) {
   background: #282828;
 }
 
-body.dark-mode .schedule-table td,
-body.dark-mode .schedule-table th {
+body.dark-mode .course-schedule-table td,
+body.dark-mode .course-schedule-table th {
   color: #ccc;
   border-color: #444;
 }
@@ -1039,14 +1039,14 @@ body.dark-mode .form-success h3 {
 
 /* ========== 手机端适配（≤640px） ========== */
 @media (max-width: 640px) {
-  nav {
+  header nav {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;
   }
 
-  nav a {
+  header nav a {
     padding: 8px 16px;
     font-size: 0.9em;
     margin: 0;
@@ -1244,17 +1244,17 @@ body.dark-mode .form-success h3 {
     border: 1px solid #ddd;
   }
 
-  .schedule-table {
+  .course-schedule-table {
     border: 1px solid #000;
   }
 
-  .schedule-table th,
-  .schedule-table td {
+  .course-schedule-table th,
+  .course-schedule-table td {
     border: 1px solid #ddd;
     padding: 8px;
   }
 
-  .schedule-table thead tr {
+  .course-schedule-table thead tr {
     background: #eee !important;
     color: #000 !important;
   }
