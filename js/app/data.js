@@ -1,16 +1,16 @@
 /*
   春晓画室 - 数据层
-  策略：localStorage 为主 + CloudBase 双向同步
-  - 每次页面加载从 CloudBase 拉取，比较时间戳决定用谁的
-  - 每次保存本地写 + 异步推 CloudBase + 记录同步时间
-  - 多设备切换时自动同步最新数据
+  策略：localStorage 为主 + CloudBase 双向同步（通过 dbProxy 云函数，管理员权限）
+  - 每次页面加载通过 dbProxy 从 CloudBase 拉取，比较时间戳决定用谁的
+  - 每次保存本地写 + 异步通过 dbProxy 推 CloudBase + 记录同步时间
+  - dbProxy 以管理员权限运行，完全绕过集合安全规则 → 多设备同步无障碍
 */
 
 var DataStore = {
   // ========== 从 CloudBase 拉取数据（每次加载都检查，比较时间戳） ==========
   pullFromCloud: async function () {
-    var db = getDB();
-    if (!db) return;
+    var app = getApp();
+    if (!app) return;
 
     try {
       var auth = getAuth();
@@ -40,47 +40,53 @@ var DataStore = {
       var localTime = localStorage.getItem(m.key + '_synced') || '';
 
       try {
-        var res = await db.collection(m.col).where({ _type: '_sync' }).get();
-        if (res.data && res.data.length > 0 && res.data[0].items) {
-          var cloudTime = res.data[0].updatedAt || '';
+        // 通过 dbProxy 云函数读取（管理员权限，不受安全规则限制）
+        var res = await app.callFunction({
+          name: 'dbProxy',
+          data: { action: 'read', collection: m.col }
+        });
 
-          // 云端比本地新 → 用云端数据（另一台设备改过）
-          if (!localTime || cloudTime > localTime) {
-            localStorage.setItem(m.key, JSON.stringify(res.data[0].items));
-            localStorage.setItem(m.key + '_synced', cloudTime);
-            console.log('☁️ 云端更新 → 本地:', m.col);
-          }
-          // 本地比云端新 → 推送本地到云端（本设备离线改过）
-          else if (localTime > cloudTime) {
-            console.log('📤 本地更新 → 云端:', m.col);
-            // 推送在下面统一处理
+        if (res.result && res.result.success && res.result.data && res.result.data.length > 0) {
+          var doc = res.result.data[0];
+          if (doc.items) {
+            var cloudTime = doc.updatedAt || '';
+
+            // 云端比本地新 → 用云端数据
+            if (!localTime || cloudTime > localTime) {
+              localStorage.setItem(m.key, JSON.stringify(doc.items));
+              localStorage.setItem(m.key + '_synced', cloudTime);
+              console.log('☁️ 云端更新 → 本地:', m.col);
+            }
           }
         }
       } catch (e) {
         console.warn('CloudBase 拉取失败:', m.col, e.message);
       }
 
-      // 如果本地有数据但云端没有（首次推送），则推送
+      // 如果本地有数据且比云端新（或云端为空），则推送
       var localData = localStorage.getItem(m.key);
       if (localData) {
         var localTime2 = localStorage.getItem(m.key + '_synced') || '';
         var shouldPush = false;
 
         try {
-          var checkRes = await db.collection(m.col).where({ _type: '_sync' }).get();
-          if (!checkRes.data || checkRes.data.length === 0) {
+          var checkRes = await app.callFunction({
+            name: 'dbProxy',
+            data: { action: 'read', collection: m.col }
+          });
+
+          if (!checkRes.result || !checkRes.result.success || !checkRes.result.data || checkRes.result.data.length === 0) {
             // 云端没有数据 → 推送
             shouldPush = true;
           } else {
-            var ct = checkRes.data[0].updatedAt || '';
-            // 本地比云端新（或云端没有时间戳）→ 推送
+            var ct = checkRes.result.data[0].updatedAt || '';
             if (localTime2 && (!ct || localTime2 > ct)) {
               shouldPush = true;
             }
           }
         } catch (e) {
-          // 查询失败也尝试推送
-          shouldPush = !!localData;
+          // 查询失败，有本地数据就尝试推送
+          shouldPush = true;
         }
 
         if (shouldPush) {
@@ -94,30 +100,27 @@ var DataStore = {
     }
   },
 
-  // ========== 直接推送到 CloudBase（内部方法，pull时也会调用） ==========
+  // ========== 通过 dbProxy 云函数推送到 CloudBase ==========
   _pushToCloudDirect: async function (collection, key, rawData) {
-    var db = getDB();
-    if (!db) return;
+    var app = getApp();
+    if (!app) return;
     var list = JSON.parse(rawData || localStorage.getItem(key) || '[]');
     var now = new Date().toISOString();
 
     try {
-      // 删旧写新
-      var old = await db.collection(collection).where({ _type: '_sync' }).get();
-      if (old.data) {
-        for (var i = 0; i < old.data.length; i++) {
-          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch (e) {}
-        }
-      }
-      await db.collection(collection).add({
-        _type: '_sync',
-        items: list,
-        updatedAt: now
+      var res = await app.callFunction({
+        name: 'dbProxy',
+        data: { action: 'write', collection: collection, items: list }
       });
-      // 记录同步时间戳，下次拉取时比较
-      localStorage.setItem(key + '_synced', now);
+
+      if (res.result && res.result.success) {
+        localStorage.setItem(key + '_synced', now);
+        console.log('📤 已推送:', collection, list.length + '条');
+      } else {
+        console.warn('CloudBase 推送失败:', collection, (res.result && res.result.message) || '未知错误');
+      }
     } catch (e) {
-      console.warn('CloudBase 推送失败:', collection, e.message);
+      console.warn('CloudBase 推送异常:', collection, e.message);
     }
   },
 
