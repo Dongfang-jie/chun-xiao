@@ -110,22 +110,28 @@ document.addEventListener('DOMContentLoaded', function () {
     userNameEl.innerHTML = icon + (user.name || user.email) + roleBadge;
   }
 
-  // 家长端：加载所有模块
-  if (!isTeacher) {
-    loadParentInfo(user);
-    loadParentOverview(user);
-    loadParentSchedule(user);
-    loadParentAttendance(user);
-    loadParentLessonLog(user);
-    loadParentAnnouncements();
+  // 老师端：先绑定事件（不依赖数据），再等 CloudBase 同步后渲染
+  if (isTeacher) {
+    initStudentSubTabs();
+    loadStudents();
+    loadClasses();
+    loadSchedule();
+    loadAttendance();
+    loadRecords();
+    loadLessonLog();
+    loadArtworks();
+    loadAnnouncements();
+    loadCourses();
+    loadInquiries();
+    updateOverview();
   }
 
-  // 老师端：加载所有管理功能
-  if (isTeacher) {
-    // 从 CloudBase 拉取数据（本地已有则跳过）
-    DataStore.pullFromCloud().then(function() {
-      console.log('✅ CloudBase 同步完成');
-      // 同步后刷新界面
+  // ===== 核心：从 CloudBase 同步数据（每次加载都检查时间戳），再刷新界面 =====
+  DataStore.pullFromCloud().then(function() {
+    console.log('✅ CloudBase 双向同步完成');
+
+    if (isTeacher) {
+      // 同步后刷新所有界面（用云端最新数据）
       renderStudents();
       renderClasses();
       renderAttendanceHistory();
@@ -138,21 +144,16 @@ document.addEventListener('DOMContentLoaded', function () {
       renderAnnouncements();
       renderCourses();
       updateOverview();
-    });
-
-    loadInquiries();
-    initStudentSubTabs();
-    loadStudents();
-    loadClasses();
-    loadSchedule();
-    loadAttendance();
-    loadRecords();
-    loadLessonLog();
-    loadArtworks();
-    loadAnnouncements();
-    loadCourses();
-    updateOverview();
-  }
+    } else {
+      // 家长端：同步后加载所有模块
+      loadParentInfo(user);
+      loadParentOverview(user);
+      loadParentSchedule(user);
+      loadParentAttendance(user);
+      loadParentLessonLog(user);
+      loadParentAnnouncements();
+    }
+  });
 
   // ==========================================================
   //  侧边栏导航切换
