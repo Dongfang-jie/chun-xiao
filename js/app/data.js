@@ -7,6 +7,61 @@
 */
 
 var DataStore = {
+  // ========== 通过云函数 dbProxy 访问数据库（绕过安全规则） ==========
+  // 优先尝试 SDK callFunction，失败则回退到 HTTP fetch
+  _callDbProxy: async function (action, collection, items) {
+    // 方式1：SDK callFunction
+    var app = getApp();
+    if (app) {
+      try {
+        var data = { action: action, collection: collection };
+        if (action === 'write' && items) { data.items = items; }
+        var result = await app.callFunction({
+          name: 'dbProxy',
+          data: data
+        });
+        if (result && result.result) {
+          console.log('🔧 dbProxy(callFunction) ' + action + ' 成功:', collection);
+          return result.result;
+        }
+        if (result) console.warn('⚠️ dbProxy callFunction 返回异常:', collection, JSON.stringify(result).substring(0, 200));
+      } catch (e) {
+        console.warn('dbProxy callFunction 失败:', collection, e.message);
+      }
+    }
+
+    // 方式2：HTTP fetch 回退（绕过 SDK callFunction 的网络问题）
+    var url = CLOUDBASE_CONFIG.dbProxyUrl;
+    if (!url) return null;
+
+    try {
+      var httpData = { action: action, collection: collection };
+      if (action === 'write' && items) { httpData.items = items; }
+
+      var response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(httpData)
+      });
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+      var wrapper = await response.json();
+      // CloudBase HTTP 服务包装格式: { statusCode, headers, body: "JSON字符串" }
+      var parsed;
+      if (wrapper && typeof wrapper.body === 'string') {
+        parsed = JSON.parse(wrapper.body);
+      } else {
+        parsed = wrapper;
+      }
+      console.log('🔧 dbProxy(HTTP) ' + action + ' 成功:', collection);
+      return parsed;
+    } catch (e) {
+      console.warn('dbProxy HTTP 调用失败:', collection, e.message);
+      return null;
+    }
+  },
+
   // ========== 从 CloudBase 拉取数据（每次加载都检查，比较时间戳） ==========
   pullFromCloud: async function () {
     var app = getApp();
@@ -49,7 +104,9 @@ var DataStore = {
       var m = map[i];
       var localTime = localStorage.getItem(m.key + '_synced') || '';
       var localHasData = !!localStorage.getItem(m.key);
+      var directDbFailed = false;
 
+      // 尝试直接数据库读取
       try {
         var res = await db.collection(m.col).where({ _type: '_sync' }).get();
 
@@ -67,6 +124,7 @@ var DataStore = {
                 localStorage.setItem(m.key, JSON.stringify(doc.items));
                 localStorage.setItem(m.key + '_synced', cloudTime);
                 console.log('☁️ 云端更新 → 本地:', m.col);
+                if (typeof SyncBubble !== 'undefined') SyncBubble.pullOk(m.col, doc.items.length);
               }
             } else {
               // 旧数据迁移：标记本地时间，触发下方推送（上传到云端）
@@ -75,7 +133,31 @@ var DataStore = {
           }
         }
       } catch (e) {
-        console.warn('CloudBase 拉取失败:', m.col, e.message);
+        directDbFailed = true;
+        console.warn('⚠️ 直接数据库读取失败 (' + m.col + '):', e.message);
+
+        // 回退到 dbProxy 云函数读取（绕过安全规则）
+        console.log('🔄 尝试 dbProxy 云函数拉取:', m.col);
+        try {
+          var fnRes = await DataStore._callDbProxy('read', m.col);
+          if (fnRes && fnRes.success && fnRes.data && fnRes.data.length > 0) {
+            var fnDoc = fnRes.data[0];
+            if (fnDoc.items) {
+              var fnCloudTime = fnDoc.updatedAt || '';
+              var isLegacyData = localHasData && !localTime;
+              if (!isLegacyData) {
+                if (!localTime || fnCloudTime > localTime) {
+                  localStorage.setItem(m.key, JSON.stringify(fnDoc.items));
+                  localStorage.setItem(m.key + '_synced', fnCloudTime);
+                  console.log('☁️ 云端更新 → 本地(via dbProxy):', m.col);
+                  if (typeof SyncBubble !== 'undefined') SyncBubble.pullOk(m.col, fnDoc.items.length);
+                }
+              }
+            }
+          }
+        } catch (e2) {
+          console.warn('CloudBase 拉取失败(dbProxy) :', m.col, e2.message);
+        }
       }
 
       // 本地有数据且比云端新 → 推送本地到云端
@@ -83,32 +165,39 @@ var DataStore = {
       if (localData) {
         var localTime2 = localStorage.getItem(m.key + '_synced') || '';
         var shouldPush = false;
+        var shouldPushViaFn = false;
 
-        try {
-          var checkRes = await db.collection(m.col).where({ _type: '_sync' }).get();
+        if (!directDbFailed) {
+          try {
+            var checkRes = await db.collection(m.col).where({ _type: '_sync' }).get();
 
-          if (!checkRes.data || checkRes.data.length === 0) {
-            // 云端没有数据 → 推送
-            shouldPush = true;
-          } else {
-            var ct = checkRes.data[0].updatedAt || '';
-            // 本地 _synced 比云端 updatedAt 新 → 推送
-            // 或者本地有数据但无 _synced（旧数据迁移）→ 推送
-            if (!localTime2 || localTime2 > ct) {
+            if (!checkRes.data || checkRes.data.length === 0) {
+              // 云端没有数据 → 推送
               shouldPush = true;
+            } else {
+              var ct = checkRes.data[0].updatedAt || '';
+              if (!localTime2 || localTime2 > ct) {
+                shouldPush = true;
+              }
             }
+          } catch (e) {
+            // 查询失败，回退到云函数
+            shouldPushViaFn = true;
           }
-        } catch (e) {
-          // 查询失败，有本地数据就尝试推送
-          shouldPush = true;
+        } else {
+          // 直接数据库已经失败，用云函数检查
+          shouldPushViaFn = true;
         }
 
         if (shouldPush) {
-          try {
-            await DataStore._pushToCloudDirect(m.col, m.key, localData);
-          } catch (e) {
-            console.warn('CloudBase 自动推送失败:', m.col, e.message);
+          var directOk = await DataStore._pushToCloudDirect(m.col, m.key, localData);
+          if (!directOk) {
+            // 直接数据库推送失败 → 回退到云函数
+            console.log('🔄 直接推送失败，尝试 dbProxy 云函数:', m.col);
+            await DataStore._pushToCloudViaFn(m.col, m.key, localData);
           }
+        } else if (shouldPushViaFn) {
+          await DataStore._pushToCloudViaFn(m.col, m.key, localData);
         }
       }
     }
@@ -138,9 +227,34 @@ var DataStore = {
       // 推送成功：_synced 更新为推送完成时间
       localStorage.setItem(key + '_synced', now);
       console.log('📤 已推送:', collection, list.length + '条');
+      if (typeof SyncBubble !== 'undefined') SyncBubble.pushOk(collection, list.length);
       return true;
     } catch (e) {
-      console.warn('CloudBase 推送失败:', collection, e.message);
+      console.warn('⚠️ 直接数据库推送失败 (' + collection + '):', e.message);
+      return false;
+    }
+  },
+
+  // ========== 通过 dbProxy 云函数推送（绕过安全规则，回退方案） ==========
+  _pushToCloudViaFn: async function (collection, key, rawData) {
+    var list = JSON.parse(rawData || localStorage.getItem(key) || '[]');
+    var now = new Date().toISOString();
+
+    console.log('🔄 通过 dbProxy 云函数推送:', collection);
+    try {
+      var result = await DataStore._callDbProxy('write', collection, list);
+      if (result && result.success) {
+        localStorage.setItem(key + '_synced', now);
+        console.log('📤 已推送(via dbProxy):', collection, list.length + '条');
+        if (typeof SyncBubble !== 'undefined') SyncBubble.pushOk(collection, list.length);
+        return true;
+      } else {
+        console.warn('❌ dbProxy 推送失败:', collection, result ? result.message : '无响应');
+        if (typeof SyncBubble !== 'undefined') SyncBubble.pushFail(collection, result ? result.message : '无响应');
+        return false;
+      }
+    } catch (e) {
+      console.warn('❌ dbProxy 推送异常:', collection, e.message);
       return false;
     }
   },
@@ -152,6 +266,10 @@ var DataStore = {
     if (!rawData) return;
 
     var ok = await DataStore._pushToCloudDirect(collection, key, rawData);
+    if (!ok) {
+      // 直接数据库失败 → 尝试云函数
+      ok = await DataStore._pushToCloudViaFn(collection, key, rawData);
+    }
     if (!ok && attempt < 2) {
       console.warn('🔄 推送失败，3秒后重试 (' + (attempt + 1) + '/2):', collection);
       setTimeout(function () {

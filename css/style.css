@@ -1280,6 +1280,104 @@ body.dark-mode .form-success h3 {
 /* ============================================================
    无障碍与动效偏好
    ============================================================ */
+/* ============================================================
+   同步状态气泡（右下角）
+   ============================================================ */
+#sync-bubble {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  pointer-events: none;
+}
+
+.sync-bubble-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-radius: 28px;
+  padding: 10px 18px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  max-width: 360px;
+}
+
+.sync-bubble-inner.sync-hidden {
+  transform: translateY(80px);
+  opacity: 0;
+}
+
+.sync-bubble-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: background 0.3s, transform 0.3s;
+}
+
+.sync-bubble-icon.idle     { background: #e8e8e8; }
+.sync-bubble-icon.pushing  { background: #e3f2fd; transform: scale(1.1); }
+.sync-bubble-icon.pulling  { background: #f3e5f5; transform: scale(1.1); }
+.sync-bubble-icon.success  { background: #e8f5e9; }
+.sync-bubble-icon.error    { background: #ffebee; }
+
+.sync-bubble-body {
+  font-size: 0.82em;
+  color: #555;
+  line-height: 1.4;
+  min-width: 0;
+}
+
+.sync-bubble-body strong {
+  color: #333;
+}
+
+.sync-bubble-count {
+  background: #5d4037;
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.7em;
+  font-weight: 700;
+  margin-left: 4px;
+  white-space: nowrap;
+}
+
+.sync-bubble-count.warn { background: #e8a040; }
+
+/* 动画 */
+@keyframes sync-pulse {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05); }
+  50%       { box-shadow: 0 4px 28px rgba(93,64,55,0.3), 0 0 0 3px rgba(93,64,55,0.08); }
+}
+
+.sync-bubble-inner.pulse {
+  animation: sync-pulse 1.2s ease-in-out 3;
+}
+
+/* 深色模式 */
+body.dark-mode #sync-bubble .sync-bubble-inner {
+  background: #333;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+}
+body.dark-mode .sync-bubble-icon.idle     { background: #444; }
+body.dark-mode .sync-bubble-icon.pushing  { background: #1a237e; }
+body.dark-mode .sync-bubble-icon.pulling  { background: #4a148c; }
+body.dark-mode .sync-bubble-icon.success  { background: #1b5e20; }
+body.dark-mode .sync-bubble-icon.error    { background: #b71c1c; }
+body.dark-mode .sync-bubble-body          { color: #ccc; }
+body.dark-mode .sync-bubble-body strong   { color: #fff; }
+body.dark-mode .sync-bubble-count         { background: #d7a86e; color: #333; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

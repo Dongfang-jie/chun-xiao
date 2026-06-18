@@ -5,6 +5,10 @@
 
 var CLOUDBASE_CONFIG = {
   env: 'chunxiao-d8ghfaw3y0781da11',
+  // 云函数 HTTP 访问地址（绕过 SDK callFunction 的网络问题）
+  // 路径格式与 login.js 中 verify-code 一致，仅末尾函数名不同
+  // 如果 404，请到 CloudBase 控制台 → HTTP 访问服务 → 查看 dbProxy 的实际路径并更新此处
+  dbProxyUrl: 'https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/G:/Ruanjian/Git/dbProxy',
   // 数据集合名（跟 localStorage key 对应）
   collections: {
     students: 'students',

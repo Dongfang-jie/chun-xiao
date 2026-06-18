@@ -134,12 +134,19 @@ document.addEventListener('DOMContentLoaded', function () {
       // 同步后刷新所有界面（用云端最新数据）
       renderStudents();
       renderClasses();
+      renderSchedule();
+      // 刷新点名页：每日点名表 + 历史 + 统计
+      var attDateNav = document.getElementById('att-date-nav');
+      if (attDateNav) renderDailyAttendanceTable(attDateNav.value);
       renderAttendanceHistory();
       renderAttendanceStats();
+      refreshRecordSelects();
       renderRecordsList();
+      refreshLogStudentSelects();
       renderLessonLog();
       updateLessonLogSummary();
       renderLowLessonAlerts();
+      refreshClassStudentCheckboxes();
       renderArtworks();
       renderAnnouncements();
       renderCourses();
