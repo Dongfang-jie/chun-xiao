@@ -5,10 +5,14 @@
 */
 const cloudbase = require('@cloudbase/node-sdk');
 
-// 使用 SYMBOL_CURRENT_ENV 获取云函数自动注入的管理员权限
-// 显式 env ID 字符串无法获得 admin 权限，导致数据库操作 PERMISSION_DENIED
+// 使用云函数环境注入的临时凭证（TENCENTCLOUD_SECRETID/KEY/SESSIONTOKEN）
+// 这些凭证具有管理员权限，可以完全绕过数据库安全规则
+// SYMBOL_CURRENT_ENV 不会自动绑定凭证，需显式传入
 const app = cloudbase.init({
-  env: cloudbase.SYMBOL_CURRENT_ENV
+  env: 'chunxiao-d8ghfaw3y0781da11',
+  secretId: process.env.TENCENTCLOUD_SECRETID,
+  secretKey: process.env.TENCENTCLOUD_SECRETKEY,
+  sessionToken: process.env.TENCENTCLOUD_SESSIONTOKEN
 });
 
 const db = app.database();
@@ -18,12 +22,18 @@ exports.main = async (event, context) => {
 
   try {
     if (action === 'ping') {
-      // 最简单的数据库连通性测试
+      // 诊断：检查凭证和数据库连通性
+      var hasSecretId = !!process.env.TENCENTCLOUD_SECRETID;
+      var hasSecretKey = !!process.env.TENCENTCLOUD_SECRETKEY;
+      var hasToken = !!process.env.TENCENTCLOUD_SESSIONTOKEN;
+      var dbResult = 'unknown';
       try {
-        const cnt = await db.collection('students').count();
-        return { success: true, count: cnt.total };
+        var cnt = await db.collection('students').count();
+        dbResult = 'ok, count=' + cnt.total;
+        return { success: true, dbResult: dbResult, hasCredentials: hasSecretId && hasSecretKey };
       } catch (e) {
-        return { success: false, message: 'db access denied: ' + (e.message || String(e)) };
+        dbResult = 'denied: ' + (e.message || String(e));
+        return { success: false, message: dbResult, hasCredentials: hasSecretId && hasSecretKey, hasToken: hasToken };
       }
     }
 

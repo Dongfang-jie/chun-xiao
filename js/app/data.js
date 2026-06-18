@@ -25,6 +25,21 @@ var DataStore = {
     }
 
     var _ = CLOUDBASE_CONFIG.collections;
+    // 诊断 ping：检查 dbProxy 云函数与数据库连通性
+    try {
+      var pingRes = await app.callFunction({
+        name: 'dbProxy',
+        data: { action: 'ping' }
+      });
+      if (pingRes.result && pingRes.result.success) {
+        console.log('🔍 dbProxy 诊断:', pingRes.result.dbResult, '| 凭证:', pingRes.result.hasCredentials ? '✅' : '❌');
+      } else {
+        console.error('🔍 dbProxy 诊断失败:', (pingRes.result && pingRes.result.message) || '未知错误', '| 凭证:', (pingRes.result && pingRes.result.hasCredentials) ? '✅' : '❌');
+      }
+    } catch (e) {
+      console.error('🔍 dbProxy ping 异常:', e.message);
+    }
+
     var map = [
       { key: 'chunxiao-students',           col: _.students },
       { key: 'chunxiao-classes',            col: _.classes },
