@@ -346,20 +346,60 @@
       <!-- 作品管理 -->
       <section id="page-artworks" class="dash-page">
         <h2>🖼️ 作品管理</h2>
-        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+
+        <!-- 工具栏 -->
+        <div class="artwork-toolbar">
           <button id="add-artwork-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 添加作品</button>
-          <span style="color:#888; font-size:0.9em;">共 <strong id="artwork-count">0</strong> 件作品</span>
+          <span style="color:#888; font-size:0.9em;">共 <strong id="artwork-count">0</strong> 件</span>
+          <span id="artwork-filter-result" style="display:none; color:#d7a86e; font-size:0.85em;"></span>
+          <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+            <button id="export-artworks-btn" class="logout-btn" style="padding:8px 16px;">📥 导出CSV</button>
+            <div class="view-toggle">
+              <button class="view-btn active" data-view="card" id="view-card-btn">📱 卡片</button>
+              <button class="view-btn" data-view="table" id="view-table-btn">📋 列表</button>
+            </div>
+          </div>
         </div>
+
+        <!-- 筛选栏 -->
+        <div class="artwork-filter-bar">
+          <input type="text" id="aw-search" placeholder="🔍 搜索作品名称或学生...">
+          <select id="aw-filter-type">
+            <option value="">全部类型</option>
+            <option value="美术">美术</option>
+            <option value="书法">书法</option>
+          </select>
+          <select id="aw-filter-student">
+            <option value="">全部学生</option>
+          </select>
+          <select id="aw-filter-sort">
+            <option value="newest">最新在前</option>
+            <option value="oldest">最旧在前</option>
+            <option value="student">按学生排序</option>
+          </select>
+        </div>
+
+        <!-- 批量操作栏 -->
+        <div id="artwork-batch-bar" class="batch-bar" style="display:none;">
+          <span>已选 <strong id="batch-count">0</strong> 件</span>
+          <button id="batch-delete-btn" class="logout-btn" style="padding:6px 16px;">🗑️ 批量删除</button>
+          <button id="batch-clear-btn" style="padding:6px 12px; background:none; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-size:0.85em;">取消选择</button>
+        </div>
+
+        <!-- 表单（添加/编辑共用） -->
         <div id="artwork-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
           <h4 id="artwork-form-title">添加作品</h4>
+          <input type="hidden" id="aw-edit-id" value="">
           <div style="display:flex; gap:12px; flex-wrap:wrap;">
             <input type="text" id="a-title" placeholder="作品名称" style="flex:2; min-width:150px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-            <input type="text" id="a-student" placeholder="学生姓名" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <input type="text" id="a-student" list="student-list" placeholder="学生姓名（输入或选择）" autocomplete="off" style="flex:1.5; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <datalist id="student-list"></datalist>
+            <input type="hidden" id="a-student-id" value="">
             <select id="a-type" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
               <option value="美术">美术</option><option value="书法">书法</option>
             </select>
           </div>
-          <!-- 图片：手机拍照/选图 或 填链接 -->
+          <!-- 图片上传 -->
           <div style="margin-top:12px;">
             <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:6px;">📷 作品照片</label>
             <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
@@ -370,6 +410,8 @@
               <span style="color:#888; font-size:0.85em;">或</span>
               <input type="url" id="a-image" placeholder="粘贴图片链接（可选）" style="flex:1; min-width:200px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
             </div>
+            <!-- 上传进度 -->
+            <div id="artwork-upload-progress" style="display:none; margin-top:8px; color:#d7a86e; font-size:0.85em;">⏳ 正在上传到云端...</div>
             <!-- 预览区 -->
             <div id="artwork-preview-wrap" style="display:none; margin-top:10px; position:relative; max-width:300px;">
               <img id="artwork-preview-img" src="" style="width:100%; border-radius:8px; border:2px solid #d7a86e;">
@@ -382,7 +424,9 @@
             <button id="artwork-cancel-btn" class="logout-btn">取消</button>
           </div>
         </div>
-        <div id="artworks-list" class="card-container" style="justify-content:flex-start;">
+
+        <!-- 内容区（卡片/表格动态渲染） -->
+        <div id="artworks-list">
           <p style="text-align:center; color:#999; padding:40px; width:100%;">暂无作品，点击"+ 添加作品"开始</p>
         </div>
       </section>
@@ -436,6 +480,7 @@
   <script src="js/app/config.js?v=20260618b"></script>
   <script src="js/app/auth.js?v=20260618b"></script>
   <script src="js/app/data.js?v=20260618c"></script>
+  <script src="js/app/storage.js?v=20260618a"></script>
   <script src="js/app/sync-status.js?v=20260618c"></script>
   <script src="js/dashboard/core.js?v=20260618c"></script>
   <script src="js/dashboard/overview.js?v=20260618b"></script>
@@ -446,7 +491,7 @@
   <script src="js/dashboard/attendance-stats.js?v=20260618b"></script>
   <script src="js/dashboard/records.js?v=20260618b"></script>
   <script src="js/dashboard/lesson-log.js?v=20260618b"></script>
-  <script src="js/dashboard/artworks.js?v=20260618b"></script>
+  <script src="js/dashboard/artworks.js?v=20260618d"></script>
   <script src="js/dashboard/announcements.js?v=20260618b"></script>
   <script src="js/dashboard/inquiries.js?v=20260618b"></script>
   <script src="js/dashboard/courses.js?v=20260618b"></script>

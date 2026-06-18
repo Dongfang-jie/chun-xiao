@@ -460,15 +460,33 @@ function renderParentLessonLog(studentId) {
 }
 
 // ============================================================
-//  5. 孩子作品（已有，保留逻辑）
+//  5. 孩子作品（支持 studentId 匹配 + cloud:// 云存储图片）
 // ============================================================
+
+var _parentArtworkUrlCache = {};  // { fileID: tempURL }
 
 function loadParentArtworks(user) {
   var childName = user.childName;
   if (!childName) return;
 
-  var allArtworks = JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
-  var childWorks = allArtworks.filter(function (a) { return a.student === childName; });
+  var allArtworks = getArtworks();
+  var students = getStudents();
+
+  // 尝试找到关联的学员记录
+  var matchedStudent = null;
+  for (var i = 0; i < students.length; i++) {
+    if (students[i].name === childName || students[i].parent === user.name) {
+      matchedStudent = students[i];
+      break;
+    }
+  }
+
+  // 筛选：优先 studentId 匹配，fallback 到 student 名匹配
+  var childWorks = allArtworks.filter(function (a) {
+    if (matchedStudent && a.studentId && a.studentId === matchedStudent.id) return true;
+    if (a.student === childName) return true;
+    return false;
+  });
 
   var statEl = document.getElementById('ov-works');
   if (statEl) statEl.textContent = childWorks.length;
@@ -496,17 +514,88 @@ function loadParentArtworks(user) {
       worksContainer.innerHTML = allHtml;
     }
   }
+
+  // 异步解析 cloud:// 图片
+  resolveParentArtworkCloudUrls(childWorks);
 }
 
 function buildParentArtworkCard(a) {
+  var displayUrl = a.image || '';
+  if (displayUrl.indexOf('cloud://') === 0) {
+    if (_parentArtworkUrlCache[displayUrl]) {
+      displayUrl = _parentArtworkUrlCache[displayUrl];
+    } else {
+      displayUrl = 'https://placehold.co/400x300/e8d8c8/5d4037?text=' + encodeURIComponent('加载中');
+    }
+  }
+  if (!displayUrl) {
+    displayUrl = 'https://placehold.co/400x300/e8d8c8/5d4037?text=' + encodeURIComponent(a.title || '作品');
+  }
+
   return [
     '<div class="card">',
-    '<img src="' + a.image + '" alt="' + a.title + '" class="card-img" onerror="this.src=\'https://placehold.co/400x300/e8d8c8/5d4037?text=作品\'">',
+    '<img src="' + displayUrl + '" alt="' + a.title + '" class="card-img parent-artwork-img" data-fileid="' + (a.image || '') + '" onerror="this.src=\'https://placehold.co/400x300/e8d8c8/5d4037?text=作品\'">',
     '<div class="card-body">',
     '<h4>' + a.title + '</h4>',
     '<p>' + a.type + (a.addedAt ? ' | ' + new Date(a.addedAt).toLocaleDateString('zh-CN') : '') + '</p>',
     '</div></div>'
   ].join('');
+}
+
+async function resolveParentArtworkCloudUrls(list) {
+  if (!list || !list.length) return;
+
+  var cloudIDs = [];
+  list.forEach(function (a) {
+    if (a.image && a.image.indexOf('cloud://') === 0 && !_parentArtworkUrlCache[a.image]) {
+      cloudIDs.push(a.image);
+    }
+  });
+  if (!cloudIDs.length) return;
+
+  var urlMap = {};
+  if (typeof ArtworkStorage !== 'undefined' && ArtworkStorage.getUrls) {
+    urlMap = await ArtworkStorage.getUrls(cloudIDs);
+  } else {
+    // fallback: 直接调 CloudBase SDK
+    try {
+      var app = getApp();
+      if (app) {
+        var auth = getAuth();
+        if (auth) {
+          var loginState = await auth.getLoginState();
+          if (!loginState) await auth.signInAnonymously();
+        }
+        var fileList = cloudIDs.map(function (id) {
+          return { fileID: id, maxAge: 86400 };
+        });
+        var res = await app.getTempFileURL({ fileList: fileList });
+        if (res && res.fileList) {
+          res.fileList.forEach(function (f) {
+            if (f.tempFileURL) urlMap[f.fileID] = f.tempFileURL;
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('家长端解析图片URL失败:', e.message);
+    }
+  }
+
+  // 合并缓存
+  for (var key in urlMap) {
+    if (urlMap.hasOwnProperty(key)) {
+      _parentArtworkUrlCache[key] = urlMap[key];
+    }
+  }
+
+  // 更新 DOM
+  var imgs = document.querySelectorAll('.parent-artwork-img');
+  imgs.forEach(function (img) {
+    var fid = img.dataset.fileid;
+    if (fid && _parentArtworkUrlCache[fid]) {
+      img.src = _parentArtworkUrlCache[fid];
+    }
+  });
 }
 
 // ============================================================
