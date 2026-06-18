@@ -5,8 +5,10 @@
 */
 const cloudbase = require('@cloudbase/node-sdk');
 
+// 使用 SYMBOL_CURRENT_ENV 获取云函数自动注入的管理员权限
+// 显式 env ID 字符串无法获得 admin 权限，导致数据库操作 PERMISSION_DENIED
 const app = cloudbase.init({
-  env: 'chunxiao-d8ghfaw3y0781da11'
+  env: cloudbase.SYMBOL_CURRENT_ENV
 });
 
 const db = app.database();
