@@ -3,12 +3,12 @@
 */
 
 var DEFAULT_COURSES = [
-  { name: '儿童创意画', age: '4-7岁', duration: '90分钟', time: '周六 9:00 / 周日 14:00', capacity: '0/8' },
-  { name: '素描基础',   age: '8-12岁', duration: '120分钟', time: '周六 14:00 / 周日 9:00', capacity: '0/8' },
-  { name: '水彩入门',   age: '8+岁', duration: '120分钟', time: '周日 14:00', capacity: '0/8' },
-  { name: '动漫插画',   age: '10+岁', duration: '120分钟', time: '周六 16:00', capacity: '0/8' },
-  { name: '硬笔书法',   age: '6+岁', duration: '90分钟', time: '周六 9:00 / 周日 9:00', capacity: '0/8' },
-  { name: '软笔书法',   age: '8+岁', duration: '120分钟', time: '周六 14:00', capacity: '0/8' }
+  { name: '儿童创意画', age: '4岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '中国画',     age: '8岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '素描',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '色彩',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '硬笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '软笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' }
 ];
 
 function getCourses() {

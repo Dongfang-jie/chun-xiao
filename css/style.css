@@ -278,6 +278,20 @@ section h3 {
   color: var(--color-accent-light);
 }
 
+/* 竖向排列课程卡片（无侧图） */
+.course-detail-vertical {
+  display: block;
+}
+
+.course-detail-vertical .course-detail-text {
+  min-width: 0;
+}
+
+.course-detail-vertical h3 {
+  font-size: 1.3em;
+  margin-bottom: 12px;
+}
+
 .course-detail-image.map-placeholder {
   font-size: 4em;
 }
