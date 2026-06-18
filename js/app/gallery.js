@@ -88,23 +88,35 @@ async function resolveGalleryCloudUrls(list) {
   });
 }
 
-// 画廊页：按类型分组展示
+// 画廊页：按类型分组展示（美术 / 书法 / 课堂剪影）
 async function renderGalleryArtworks() {
   var artContainer = document.getElementById('artwork-art-list');
   var calligraphyContainer = document.getElementById('artwork-calligraphy-list');
-  if (!artContainer && !calligraphyContainer) return;
+  var classroomContainer = document.getElementById('artwork-classroom-list');
+  if (!artContainer && !calligraphyContainer && !classroomContainer) return;
 
   await DataStore.pullFromCloud();
   var list = getArtworks();
 
   var artHtml = '';
   var calHtml = '';
+  var clsHtml = '';
   var artList = [];
   var calList = [];
+  var clsList = [];
   list.forEach(function(a) {
     var card = buildArtworkCard(a);
-    if (a.type === '书法') { calHtml += card; calList.push(a); }
-    else { artHtml += card; artList.push(a); }
+    if (a.type === '书法') {
+      calHtml += card;
+      calList.push(a);
+    } else if (a.type === '课堂剪影') {
+      clsHtml += card;
+      clsList.push(a);
+    } else {
+      // 美术 + 旧数据兼容（无 type 或 type='美术' 等）
+      artHtml += card;
+      artList.push(a);
+    }
   });
 
   if (artContainer) {
@@ -113,26 +125,12 @@ async function renderGalleryArtworks() {
   if (calligraphyContainer) {
     calligraphyContainer.innerHTML = calHtml || '<p style="text-align:center; color:#999; padding:40px; width:100%;">暂无书法作品，老师端添加后自动展示</p>';
   }
+  if (classroomContainer) {
+    classroomContainer.innerHTML = clsHtml || '<p style="text-align:center; color:#999; padding:40px; width:100%;">暂无课堂剪影，老师端添加后自动展示</p>';
+  }
 
   // 异步解析 cloud:// 图片
-  await resolveGalleryCloudUrls(artList.concat(calList));
-}
-
-// 首页：展示最新 N 件作品
-async function renderLatestArtworks(containerId, count) {
-  var container = document.getElementById(containerId);
-  if (!container) return;
-
-  var list = getArtworks();
-  var latest = list.slice(0, count || 4);
-  var html = '';
-  latest.forEach(function(a) {
-    html += buildArtworkCard(a);
-  });
-  container.innerHTML = html || '<p style="text-align:center; color:#999; padding:40px; width:100%;">暂无作品，老师端添加后自动展示</p>';
-
-  // 异步解析 cloud:// 图片
-  await resolveGalleryCloudUrls(latest);
+  await resolveGalleryCloudUrls(artList.concat(calList).concat(clsList));
 }
 
 // 页面加载时初始化
@@ -141,5 +139,4 @@ document.addEventListener('DOMContentLoaded', async function() {
     await Auth.initAnonymous();
   }
   await renderGalleryArtworks();
-  await renderLatestArtworks('home-artworks', 4);
 });
