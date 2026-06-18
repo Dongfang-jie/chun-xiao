@@ -114,9 +114,10 @@ var DataStore = {
   },
 
   // ========== 通过 dbProxy 云函数推送到 CloudBase ==========
+  // 返回 true=成功, false=失败（调用方可据此决定是否重试）
   _pushToCloudDirect: async function (collection, key, rawData) {
     var app = getApp();
-    if (!app) return;
+    if (!app) return false;
     var list = JSON.parse(rawData || localStorage.getItem(key) || '[]');
     var now = new Date().toISOString();
 
@@ -130,19 +131,30 @@ var DataStore = {
         // 推送成功：_synced 更新为推送完成时间
         localStorage.setItem(key + '_synced', now);
         console.log('📤 已推送:', collection, list.length + '条');
+        return true;
       } else {
         console.warn('CloudBase 推送失败:', collection, (res.result && res.result.message) || '未知错误');
+        return false;
       }
     } catch (e) {
       console.warn('CloudBase 推送异常:', collection, e.message);
+      return false;
     }
   },
 
-  // ========== 单个集合推送到 CloudBase ==========
-  _pushToCloud: async function (collection, key) {
+  // ========== 单个集合推送到 CloudBase（带自动重试） ==========
+  _pushToCloud: async function (collection, key, attempt) {
+    attempt = attempt || 0;
     var rawData = localStorage.getItem(key);
     if (!rawData) return;
-    await DataStore._pushToCloudDirect(collection, key, rawData);
+
+    var ok = await DataStore._pushToCloudDirect(collection, key, rawData);
+    if (!ok && attempt < 2) {
+      console.warn('🔄 推送失败，3秒后重试 (' + (attempt + 1) + '/2):', collection);
+      setTimeout(function () {
+        DataStore._pushToCloud(collection, key, attempt + 1);
+      }, 3000);
+    }
   }
 };
 
