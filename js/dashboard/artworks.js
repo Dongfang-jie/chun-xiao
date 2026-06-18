@@ -218,13 +218,15 @@ function applyArtworkFilters(list) {
     });
   }
 
-  // 排序
+  // 排序（默认 newest: id 降序；oldest: id 升序；student: 学生名拼音）
   if (f.sort === 'oldest') {
     filtered.sort(function (a, b) { return a.id - b.id; });
   } else if (f.sort === 'student') {
     filtered.sort(function (a, b) { return a.student.localeCompare(b.student, 'zh'); });
+  } else {
+    // newest：显式按 id 降序，防止云端数据乱序
+    filtered.sort(function (a, b) { return b.id - a.id; });
   }
-  // newest 保持默认（已按 id 倒序）
 
   return filtered;
 }
@@ -486,6 +488,9 @@ function resetArtworkForm() {
 //  压缩图片 + 预览
 // ============================================================
 function compressAndPreviewImage(file) {
+  var saveBtn = document.getElementById('artwork-save-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ 压缩中...'; }
+
   var reader = new FileReader();
   reader.onload = function (e) {
     var img = new Image();
@@ -504,19 +509,20 @@ function compressAndPreviewImage(file) {
       var previewWrap = document.getElementById('artwork-preview-wrap');
       var previewImg = document.getElementById('artwork-preview-img');
       var previewSize = document.getElementById('artwork-preview-size');
-      previewImg.src = dataUrl;
-      previewWrap.style.display = 'block';
-
-      var sizeKB = Math.round(dataUrl.length * 3 / 4 / 1024);
-      previewSize.textContent = '已压缩至 ' + w + '×' + h + ' · ≈' + sizeKB + 'KB';
+      if (previewImg) previewImg.src = dataUrl;
+      if (previewWrap) previewWrap.style.display = 'block';
+      if (previewSize) previewSize.textContent = '已压缩至 ' + w + '×' + h + ' · ≈' + Math.round(dataUrl.length * 3 / 4 / 1024) + 'KB';
 
       // 异步生成 Blob 供上传
       canvas.toBlob(function (blob) {
         _pendingImageBlob = blob;
+        // 压缩完成，恢复保存按钮
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 保存'; }
       }, 'image/jpeg', 0.75);
 
       // 选了新文件就清掉 URL 输入（优先文件上传）
-      document.getElementById('a-image').value = '';
+      var urlInput = document.getElementById('a-image');
+      if (urlInput) urlInput.value = '';
     };
     img.src = e.target.result;
   };
@@ -561,7 +567,7 @@ async function saveArtwork() {
         finalImage = result.fileID;
         // 编辑模式下，旧图片如果是 cloud:// 则删除
         if (editId && _editingImageValue && _editingImageValue.indexOf('cloud://') === 0) {
-          ArtworkStorage.remove([_editingImageValue]);
+          await ArtworkStorage.remove([_editingImageValue]);
         }
       } else {
         // 上传失败 → 回退到 base64
@@ -705,7 +711,7 @@ async function deleteArtworks(ids) {
     }
   });
   if (cloudIDs.length > 0) {
-    ArtworkStorage.remove(cloudIDs);
+    await ArtworkStorage.remove(cloudIDs);
   }
 
   // 清除选中状态
