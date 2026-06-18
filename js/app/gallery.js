@@ -98,6 +98,9 @@ async function renderGalleryArtworks() {
   await DataStore.pullFromCloud();
   var list = getArtworks();
 
+  // 过滤：家长端作品不对外展示
+  list = list.filter(function(a) { return a.type !== '家长端'; });
+
   var artHtml = '';
   var calHtml = '';
   var clsHtml = '';
