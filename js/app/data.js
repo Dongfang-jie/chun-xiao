@@ -80,31 +80,16 @@ var DataStore = {
       return;
     }
 
-    // 诊断：测试数据库直连 + dbProxy 云函数连通性
-    var dbDirectOk = false;
+    // 诊断：测试数据库直连
     try {
       var pingRes = await db.collection('students').where({ _type: '_sync' }).get();
-      dbDirectOk = true;
-      console.log('🔍 数据库直连:', dbDirectOk ? '✅ 可读' : '⚠️ 无数据');
+      console.log('🔍 数据库直连: ✅ 可读');
     } catch (e) {
       console.warn('🔍 数据库直连失败:', e.message);
     }
 
-    // 测试 dbProxy 云函数（用于绕过安全规则的后备通道）
+    // dbProxy 后备通道（仅直接数据库失败时才触发，不提前测试）
     var dbProxyOk = false;
-    try {
-      var proxyPing = await DataStore._callDbProxy('ping', 'students');
-      dbProxyOk = !!(proxyPing && proxyPing.success);
-      console.log('🔧 dbProxy 云函数:', dbProxyOk ? '✅ 可达' : '⚠️ 异常 (' + (proxyPing ? proxyPing.message || JSON.stringify(proxyPing).substring(0, 100) : '无响应') + ')');
-      if (typeof SyncBubble !== 'undefined' && !dbProxyOk) {
-        SyncBubble.show('<strong>⚠️ dbProxy 云函数不可达</strong>，非学员数据无法同步', 'error');
-      }
-    } catch (e) {
-      console.error('🔧 dbProxy 云函数测试失败:', e.message);
-      if (typeof SyncBubble !== 'undefined') {
-        SyncBubble.show('<strong>⚠️ dbProxy 异常</strong>: ' + e.message, 'error');
-      }
-    }
 
     var _ = CLOUDBASE_CONFIG.collections;
     var map = [
