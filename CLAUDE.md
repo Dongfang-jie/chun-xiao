@@ -19,7 +19,7 @@
 ├── index.html / login.html / parent-dashboard.html / teacher-dashboard.html
 ├── css/  → style.css / login.css / dashboard.css
 ├── js/
-│   ├── app/ → config.js / auth.js / data.js / ui.js / gallery.js / sync-status.js
+│   ├── app/ → config.js / auth.js / data.js / storage.js / ui.js / gallery.js / sync-status.js
 │   ├── dashboard/ → core.js / parent.js / overview.js / students.js / classes.js / schedule.js / attendance.js / attendance-stats.js / records.js / lesson-log.js / artworks.js / announcements.js / courses.js / inquiries.js
 │   ├── login.js / contact.js
 ├── functions/
@@ -42,8 +42,9 @@
 - 公开页: 首页/画廊/课程/联系预约(ServerChan微信通知)
 - 登录: 邮箱密码 + 邮箱验证码注册(5字段) + 忘记密码 + 记住我(sessionStorage)
 - 家长端7模块: 总览/我的课程(周课表)/上课记录(考勤统计)/课时明细(消课日志)/孩子作品/画室通知/个人信息+改密码
-- 教师端: 总览/学生管理(学员/班级/课表/点名/上课记录)/课消日志/作品管理/预约查询/发布通知/课程管理
+- 教师端: 总览/学生管理(学员/班级/课表/点名/上课记录)/课消日志/作品管理(完整CRUD+云存储+筛选+批量+导出)/预约查询/发布通知/课程管理
 - 全局: 深色模式/图片灯箱/回到顶部/响应式/同步状态气泡
+- 云存储: CloudBase Storage `app.storage.from().upload()` / `app.getTempFileURL()` / `remove()`，图片存 cloud:// fileID，渲染时异步解析临时URL
 
 ## Agent skills
 
@@ -70,3 +71,11 @@ GitHub Issues，通过 `gh` CLI 操作。See `docs/agents/issue-tracker.md`.
 | email_codes | `"doc._openid == auth.uid"` | `"doc._openid == auth.uid"` | 邮箱验证码，仅 owner |
 
 **不要开放 parents 和 email_codes** — 它们存敏感数据。如双端同步出 PERMISSION_DENIED，检查对应集合安全规则是否配置。
+
+## 作品管理要点
+
+- 图片存储: 优先 CloudBase Storage (`cloud://` fileID)，上传失败回退 base64 data URL
+- 画廊分区: `gallery.js` 按 `type` 字段分流：`'书法'` → 书法区 / `'课堂剪影'` → 课堂剪影区 / 其他 → 美术区；`'家长端'` 类型**不出现在公开画廊**
+- 作品 `type` 可选值: 美术 / 书法 / 课堂剪影 / 家长端
+- 数据模型: `id/title/student/studentId/type/image/addedAt/addedBy/lastModifiedAt/lastModifiedBy`
+- 家长端匹配: 优先 `studentId` 关联 students 表，fallback `student === childName`
