@@ -80,12 +80,30 @@ var DataStore = {
       return;
     }
 
-    // 诊断：测试数据库直连
+    // 诊断：测试数据库直连 + dbProxy 云函数连通性
+    var dbDirectOk = false;
     try {
       var pingRes = await db.collection('students').where({ _type: '_sync' }).get();
-      console.log('🔍 数据库直连测试:', pingRes.data && pingRes.data.length > 0 ? '✅ 可读' : '⚠️ 无数据');
+      dbDirectOk = true;
+      console.log('🔍 数据库直连:', dbDirectOk ? '✅ 可读' : '⚠️ 无数据');
     } catch (e) {
-      console.error('🔍 数据库直连失败:', e.message);
+      console.warn('🔍 数据库直连失败:', e.message);
+    }
+
+    // 测试 dbProxy 云函数（用于绕过安全规则的后备通道）
+    var dbProxyOk = false;
+    try {
+      var proxyPing = await DataStore._callDbProxy('ping', 'students');
+      dbProxyOk = !!(proxyPing && proxyPing.success);
+      console.log('🔧 dbProxy 云函数:', dbProxyOk ? '✅ 可达' : '⚠️ 异常 (' + (proxyPing ? proxyPing.message || JSON.stringify(proxyPing).substring(0, 100) : '无响应') + ')');
+      if (typeof SyncBubble !== 'undefined' && !dbProxyOk) {
+        SyncBubble.show('<strong>⚠️ dbProxy 云函数不可达</strong>，非学员数据无法同步', 'error');
+      }
+    } catch (e) {
+      console.error('🔧 dbProxy 云函数测试失败:', e.message);
+      if (typeof SyncBubble !== 'undefined') {
+        SyncBubble.show('<strong>⚠️ dbProxy 异常</strong>: ' + e.message, 'error');
+      }
     }
 
     var _ = CLOUDBASE_CONFIG.collections;
@@ -105,6 +123,7 @@ var DataStore = {
       var localTime = localStorage.getItem(m.key + '_synced') || '';
       var localHasData = !!localStorage.getItem(m.key);
       var directDbFailed = false;
+      var cloudDataNewer = false;  // 标记：云端数据是否比本地新（已更新 localStorage）
 
       // 尝试直接数据库读取
       try {
@@ -123,11 +142,11 @@ var DataStore = {
               if (!localTime || cloudTime > localTime) {
                 localStorage.setItem(m.key, JSON.stringify(doc.items));
                 localStorage.setItem(m.key + '_synced', cloudTime);
+                cloudDataNewer = true;
                 console.log('☁️ 云端更新 → 本地:', m.col);
                 if (typeof SyncBubble !== 'undefined') SyncBubble.pullOk(m.col, doc.items.length);
               }
             } else {
-              // 旧数据迁移：标记本地时间，触发下方推送（上传到云端）
               console.log('📦 检测到旧版本数据，本地优先 → 将推送至云端:', m.col);
             }
           }
@@ -137,26 +156,29 @@ var DataStore = {
         console.warn('⚠️ 直接数据库读取失败 (' + m.col + '):', e.message);
 
         // 回退到 dbProxy 云函数读取（绕过安全规则）
-        console.log('🔄 尝试 dbProxy 云函数拉取:', m.col);
-        try {
-          var fnRes = await DataStore._callDbProxy('read', m.col);
-          if (fnRes && fnRes.success && fnRes.data && fnRes.data.length > 0) {
-            var fnDoc = fnRes.data[0];
-            if (fnDoc.items) {
-              var fnCloudTime = fnDoc.updatedAt || '';
-              var isLegacyData = localHasData && !localTime;
-              if (!isLegacyData) {
-                if (!localTime || fnCloudTime > localTime) {
-                  localStorage.setItem(m.key, JSON.stringify(fnDoc.items));
-                  localStorage.setItem(m.key + '_synced', fnCloudTime);
-                  console.log('☁️ 云端更新 → 本地(via dbProxy):', m.col);
-                  if (typeof SyncBubble !== 'undefined') SyncBubble.pullOk(m.col, fnDoc.items.length);
+        if (dbProxyOk) {
+          console.log('🔄 尝试 dbProxy 云函数拉取:', m.col);
+          try {
+            var fnRes = await DataStore._callDbProxy('read', m.col);
+            if (fnRes && fnRes.success && fnRes.data && fnRes.data.length > 0) {
+              var fnDoc = fnRes.data[0];
+              if (fnDoc.items) {
+                var fnCloudTime = fnDoc.updatedAt || '';
+                var isLegacyData = localHasData && !localTime;
+                if (!isLegacyData) {
+                  if (!localTime || fnCloudTime > localTime) {
+                    localStorage.setItem(m.key, JSON.stringify(fnDoc.items));
+                    localStorage.setItem(m.key + '_synced', fnCloudTime);
+                    cloudDataNewer = true;
+                    console.log('☁️ 云端更新 → 本地(via dbProxy):', m.col);
+                    if (typeof SyncBubble !== 'undefined') SyncBubble.pullOk(m.col, fnDoc.items.length);
+                  }
                 }
               }
             }
+          } catch (e2) {
+            console.warn('CloudBase 拉取失败(dbProxy):', m.col, e2.message);
           }
-        } catch (e2) {
-          console.warn('CloudBase 拉取失败(dbProxy) :', m.col, e2.message);
         }
       }
 
@@ -168,33 +190,42 @@ var DataStore = {
         var shouldPushViaFn = false;
 
         if (!directDbFailed) {
+          // 直接数据库可用：查询云端时间戳做对比
           try {
             var checkRes = await db.collection(m.col).where({ _type: '_sync' }).get();
 
             if (!checkRes.data || checkRes.data.length === 0) {
-              // 云端没有数据 → 推送
-              shouldPush = true;
+              shouldPush = true;  // 云端无数据 → 推送
             } else {
               var ct = checkRes.data[0].updatedAt || '';
               if (!localTime2 || localTime2 > ct) {
-                shouldPush = true;
+                shouldPush = true;  // 本地更新 → 推送
               }
             }
           } catch (e) {
-            // 查询失败，回退到云函数
-            shouldPushViaFn = true;
+            // 查询失败 → 有 dbProxy 就通过它推送
+            shouldPushViaFn = dbProxyOk;
+            if (!dbProxyOk) console.warn('⚠️ 无法检查云端时间戳且 dbProxy 不可达:', m.col);
           }
         } else {
-          // 直接数据库已经失败，用云函数检查
-          shouldPushViaFn = true;
+          // 直接数据库已失败，需通过云函数
+          // 关键：如果 dbProxy 拉取时发现云端更新（cloudDataNewer=true），则不推送
+          if (cloudDataNewer) {
+            // 云端数据已更新到本地，无需再推送
+            console.log('⏭️ 云端数据更新，跳过推送:', m.col);
+          } else if (dbProxyOk) {
+            // 云端无数据或本地更新 → 推送
+            shouldPushViaFn = true;
+          } else {
+            console.warn('⚠️ 直接数据库不可用且 dbProxy 不可达，无法推送:', m.col);
+          }
         }
 
         if (shouldPush) {
           var directOk = await DataStore._pushToCloudDirect(m.col, m.key, localData);
           if (!directOk) {
-            // 直接数据库推送失败 → 回退到云函数
             console.log('🔄 直接推送失败，尝试 dbProxy 云函数:', m.col);
-            await DataStore._pushToCloudViaFn(m.col, m.key, localData);
+            if (dbProxyOk) await DataStore._pushToCloudViaFn(m.col, m.key, localData);
           }
         } else if (shouldPushViaFn) {
           await DataStore._pushToCloudViaFn(m.col, m.key, localData);
@@ -267,7 +298,6 @@ var DataStore = {
 
     var ok = await DataStore._pushToCloudDirect(collection, key, rawData);
     if (!ok) {
-      // 直接数据库失败 → 尝试云函数
       ok = await DataStore._pushToCloudViaFn(collection, key, rawData);
     }
     if (!ok && attempt < 2) {
@@ -275,6 +305,13 @@ var DataStore = {
       setTimeout(function () {
         DataStore._pushToCloud(collection, key, attempt + 1);
       }, 3000);
+    }
+    if (!ok && attempt >= 2) {
+      console.error('❌ 推送最终失败（3次重试耗尽）:', collection);
+      if (typeof SyncBubble !== 'undefined') {
+        var label = (typeof collectionMap === 'function') ? collectionMap(collection) : collection;
+        SyncBubble.show('<strong>推送失败</strong> ' + (label || collection) + '（3次重试耗尽，下次页面加载时自动重试）', 'error');
+      }
     }
   }
 };
