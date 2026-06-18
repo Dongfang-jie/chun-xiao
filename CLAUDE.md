@@ -19,9 +19,9 @@
 ├── index.html / login.html / parent-dashboard.html / teacher-dashboard.html
 ├── css/  → style.css / login.css / dashboard.css
 ├── js/
-│   ├── app/ → config.js / auth.js / data.js / ui.js
-│   ├── dashboard/ → core.js / parent.js / students.js / classes.js / schedule.js / attendance.js / records.js / lessonlog.js / artworks.js / announcements.js / courses.js / inquiries.js
-│   ├── login.js / contact.js / gallery.js
+│   ├── app/ → config.js / auth.js / data.js / ui.js / gallery.js / sync-status.js
+│   ├── dashboard/ → core.js / parent.js / overview.js / students.js / classes.js / schedule.js / attendance.js / attendance-stats.js / records.js / lesson-log.js / artworks.js / announcements.js / courses.js / inquiries.js
+│   ├── login.js / contact.js
 ├── functions/
 │   ├── dbProxy/ (数据库代理，读写权限)
 │   └── verify-code/ (QQ SMTP 发邮箱验证码，nodemailer)
@@ -29,7 +29,10 @@
 ```
 
 ## 关键约定
-- 数据流: localStorage 读写 → 异步推 CloudBase；初始加载从 CloudBase 拉（仅本地为空时）
+- 数据流: localStorage 读写 → 异步推 CloudBase；每次加载从 CloudBase 拉取比较时间戳
+- 同步通道: CloudBase Web SDK 直接数据库访问（匿名登录），**不经过云函数**
+- 依赖 CloudBase 数据库安全规则对所有业务集合开放 `read: true, write: "auth != null"`
+- parents / email_codes 集合保持仅 owner 可读写（保护隐私）
 - 8 个数据集合: students / classes / attendance / records / corrections / artworks / announcements / inquiries + email_codes(验证码) / parents(家长)
 - 认证: 教师硬编码(AUTH_CONFIG.teachers) / 家长 CloudBase 邮箱登录 或 邮箱验证码注册
 - 权限: admin(张校长 756924037@qq.com) / teacher(郑校长 953034984@qq.com) / parent
@@ -40,4 +43,30 @@
 - 登录: 邮箱密码 + 邮箱验证码注册(5字段) + 忘记密码 + 记住我(sessionStorage)
 - 家长端7模块: 总览/我的课程(周课表)/上课记录(考勤统计)/课时明细(消课日志)/孩子作品/画室通知/个人信息+改密码
 - 教师端: 总览/学生管理(学员/班级/课表/点名/上课记录)/课消日志/作品管理/预约查询/发布通知/课程管理
-- 全局: 深色模式/图片灯箱/回到顶部/响应式
+- 全局: 深色模式/图片灯箱/回到顶部/响应式/同步状态气泡
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues，通过 `gh` CLI 操作。See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+使用默认标签名：`needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`。See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+单上下文（single-context）：根目录 `CONTEXT.md` + `docs/adr/`。See `docs/agents/domain.md`.
+
+## CloudBase 安全规则
+
+数据同步依赖 CloudBase Web SDK 直接访问数据库（匿名登录 `signInAnonymously()`）。以下集合需在控制台设置安全规则：
+
+| 集合 | read | write | 说明 |
+|------|------|-------|------|
+| students / classes / attendance / records / corrections / artworks / announcements / inquiries | `true` | `"auth != null"` | 业务数据，双端同步 |
+| parents | `"doc._openid == auth.uid"` | `"doc._openid == auth.uid"` | 家长密码，仅 owner |
+| email_codes | `"doc._openid == auth.uid"` | `"doc._openid == auth.uid"` | 邮箱验证码，仅 owner |
+
+**不要开放 parents 和 email_codes** — 它们存敏感数据。如双端同步出 PERMISSION_DENIED，检查对应集合安全规则是否配置。
