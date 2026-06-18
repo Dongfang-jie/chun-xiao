@@ -1,10 +1,9 @@
 /*
   春晓画室 - 数据层
-  策略：localStorage 为主 + CloudBase 双向同步（通过 dbProxy 云函数，管理员权限）
-  - 每次页面加载通过 dbProxy 从 CloudBase 拉取，比较时间戳决定用谁的
+  策略：localStorage 为主 + CloudBase 双向同步（直接数据库访问，匿名登录）
+  - 每次页面加载从 CloudBase 拉取，比较时间戳决定用谁的
   - 每次保存本地写 + 标记 _synced + 异步推 CloudBase
   - 推送失败 _synced 已标记 → 下次 pullFromCloud 检测到本地更新 → 自动重试
-  - dbProxy 以管理员权限运行，完全绕过集合安全规则 → 多设备同步无障碍
 */
 
 var DataStore = {
@@ -12,6 +11,8 @@ var DataStore = {
   pullFromCloud: async function () {
     var app = getApp();
     if (!app) return;
+    var db = getDB();
+    if (!db) return;
 
     try {
       var auth = getAuth();
@@ -24,22 +25,15 @@ var DataStore = {
       return;
     }
 
-    var _ = CLOUDBASE_CONFIG.collections;
-    // 诊断 ping：检查 dbProxy 云函数与数据库连通性
+    // 诊断：测试数据库直连
     try {
-      var pingRes = await app.callFunction({
-        name: 'dbProxy',
-        data: { action: 'ping' }
-      });
-      if (pingRes.result && pingRes.result.success) {
-        console.log('🔍 dbProxy 诊断:', pingRes.result.dbResult, '| 凭证:', pingRes.result.hasCredentials ? '✅' : '❌');
-      } else {
-        console.error('🔍 dbProxy 诊断失败:', (pingRes.result && pingRes.result.message) || '未知错误', '| 凭证:', (pingRes.result && pingRes.result.hasCredentials) ? '✅' : '❌');
-      }
+      var pingRes = await db.collection('students').where({ _type: '_sync' }).get();
+      console.log('🔍 数据库直连测试:', pingRes.data && pingRes.data.length > 0 ? '✅ 可读' : '⚠️ 无数据');
     } catch (e) {
-      console.error('🔍 dbProxy ping 异常:', e.message);
+      console.error('🔍 数据库直连失败:', e.message);
     }
 
+    var _ = CLOUDBASE_CONFIG.collections;
     var map = [
       { key: 'chunxiao-students',           col: _.students },
       { key: 'chunxiao-classes',            col: _.classes },
@@ -57,13 +51,10 @@ var DataStore = {
       var localHasData = !!localStorage.getItem(m.key);
 
       try {
-        var res = await app.callFunction({
-          name: 'dbProxy',
-          data: { action: 'read', collection: m.col }
-        });
+        var res = await db.collection(m.col).where({ _type: '_sync' }).get();
 
-        if (res.result && res.result.success && res.result.data && res.result.data.length > 0) {
-          var doc = res.result.data[0];
+        if (res.data && res.data.length > 0) {
+          var doc = res.data[0];
           if (doc.items) {
             var cloudTime = doc.updatedAt || '';
 
@@ -80,7 +71,6 @@ var DataStore = {
             } else {
               // 旧数据迁移：标记本地时间，触发下方推送（上传到云端）
               console.log('📦 检测到旧版本数据，本地优先 → 将推送至云端:', m.col);
-              // localTime 保持空，下方 shouldPush 逻辑会触发
             }
           }
         }
@@ -95,17 +85,13 @@ var DataStore = {
         var shouldPush = false;
 
         try {
-          var checkRes = await app.callFunction({
-            name: 'dbProxy',
-            data: { action: 'read', collection: m.col }
-          });
+          var checkRes = await db.collection(m.col).where({ _type: '_sync' }).get();
 
-          if (!checkRes.result || !checkRes.result.success ||
-              !checkRes.result.data || checkRes.result.data.length === 0) {
+          if (!checkRes.data || checkRes.data.length === 0) {
             // 云端没有数据 → 推送
             shouldPush = true;
           } else {
-            var ct = checkRes.result.data[0].updatedAt || '';
+            var ct = checkRes.data[0].updatedAt || '';
             // 本地 _synced 比云端 updatedAt 新 → 推送
             // 或者本地有数据但无 _synced（旧数据迁移）→ 推送
             if (!localTime2 || localTime2 > ct) {
@@ -128,31 +114,33 @@ var DataStore = {
     }
   },
 
-  // ========== 通过 dbProxy 云函数推送到 CloudBase ==========
+  // ========== 直接推送到 CloudBase（内部方法，pull时也会调用） ==========
   // 返回 true=成功, false=失败（调用方可据此决定是否重试）
   _pushToCloudDirect: async function (collection, key, rawData) {
-    var app = getApp();
-    if (!app) return false;
+    var db = getDB();
+    if (!db) return false;
     var list = JSON.parse(rawData || localStorage.getItem(key) || '[]');
     var now = new Date().toISOString();
 
     try {
-      var res = await app.callFunction({
-        name: 'dbProxy',
-        data: { action: 'write', collection: collection, items: list }
-      });
-
-      if (res.result && res.result.success) {
-        // 推送成功：_synced 更新为推送完成时间
-        localStorage.setItem(key + '_synced', now);
-        console.log('📤 已推送:', collection, list.length + '条');
-        return true;
-      } else {
-        console.warn('CloudBase 推送失败:', collection, (res.result && res.result.message) || '未知错误');
-        return false;
+      // 删旧写新
+      var old = await db.collection(collection).where({ _type: '_sync' }).get();
+      if (old.data) {
+        for (var i = 0; i < old.data.length; i++) {
+          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch (e) {}
+        }
       }
+      await db.collection(collection).add({
+        _type: '_sync',
+        items: list,
+        updatedAt: now
+      });
+      // 推送成功：_synced 更新为推送完成时间
+      localStorage.setItem(key + '_synced', now);
+      console.log('📤 已推送:', collection, list.length + '条');
+      return true;
     } catch (e) {
-      console.warn('CloudBase 推送异常:', collection, e.message);
+      console.warn('CloudBase 推送失败:', collection, e.message);
       return false;
     }
   },
