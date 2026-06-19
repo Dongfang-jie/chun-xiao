@@ -9,9 +9,32 @@
 
 /** 根据家长的 childName 找到对应学生记录 */
 function findChildStudent(user) {
-  if (!user || !user.childName) return null;
+  if (!user || !user.children || !user.children.length) return null;
+  var idx = user.activeChildIndex || 0;
+  var child = user.children[idx] || user.children[0];
+  if (!child) return null;
   var students = getStudents();
-  return students.find(function (s) { return s.name === user.childName; }) || null;
+  // 优先 studentId 精确匹配
+  if (child.studentId) {
+    var byId = students.find(function (s) { return s.id === child.studentId; });
+    if (byId) return byId;
+  }
+  // Fallback: name 匹配
+  return students.find(function (s) { return s.name === child.name; }) || null;
+}
+
+// 刷新所有家长端模块
+function refreshAllParentModules() {
+  var user = Auth.currentUser();
+  if (!user) return;
+  initParentHeader(user);
+  loadParentInfo(user);
+  loadChildManagement(user);
+  loadParentOverview(user);
+  loadParentSchedule(user);
+  loadParentAttendance(user);
+  loadParentLessonLog(user);
+  loadParentArtworks(user);
 }
 
 /** 获取学生所在的所有班级 */
@@ -466,20 +489,12 @@ function renderParentLessonLog(studentId) {
 var _parentArtworkUrlCache = {};  // { fileID: tempURL }
 
 function loadParentArtworks(user) {
-  var childName = user.childName;
-  if (!childName) return;
+  var currentChild = Auth.currentChild();
+  if (!currentChild) return;
+  var childName = currentChild.name;
+  var matchedStudent = findChildStudent(user);
 
   var allArtworks = getArtworks();
-  var students = getStudents();
-
-  // 尝试找到关联的学员记录
-  var matchedStudent = null;
-  for (var i = 0; i < students.length; i++) {
-    if (students[i].name === childName || students[i].parent === user.name) {
-      matchedStudent = students[i];
-      break;
-    }
-  }
 
   // 筛选：优先 studentId 匹配，fallback 到 student 名匹配
   var childWorks = allArtworks.filter(function (a) {
@@ -637,11 +652,15 @@ function loadParentInfo(user) {
   if (!infoEl) return;
 
   var student = findChildStudent(user);
+  var currentChild = Auth.currentChild();
 
   var html = '';
   html += '<p><strong>👤 家长姓名：</strong>' + (user.name || '--') + '</p>';
   html += '<p><strong>📧 邮箱：</strong>' + (user.email || '--') + '</p>';
-  html += '<p><strong>👶 孩子姓名：</strong>' + (user.childName || '--') + '</p>';
+  html += '<p><strong>👶 当前孩子：</strong>' + (currentChild ? currentChild.name : '--') + '</p>';
+  if (user.children && user.children.length > 1) {
+    html += '<p style="font-size:0.85em; color:#999;">共 ' + user.children.length + ' 个孩子</p>';
+  }
 
   if (student) {
     html += '<hr style="border:none; border-top:1px solid #e8d4c8; margin:16px 0;">';
@@ -650,6 +669,9 @@ function loadParentInfo(user) {
     html += '<p><strong>📚 总课次：</strong>' + (student.totalLessons || 0) + '</p>';
     html += '<p><strong>✅ 已消耗：</strong>' + (student.consumedLessons || 0) + '</p>';
     html += '<p><strong>⭐ 剩余：</strong>' + ((student.totalLessons || 0) - (student.consumedLessons || 0)) + '</p>';
+  } else if (currentChild) {
+    html += '<hr style="border:none; border-top:1px solid #e8d4c8; margin:16px 0;">';
+    html += '<p style="color:#e8a040;">⚠️ 未关联学生，请在下方关联或等待老师添加</p>';
   }
 
   html += '<hr style="border:none; border-top:1px solid #e8d4c8; margin:16px 0;">';
@@ -724,5 +746,228 @@ async function changePassword() {
   } catch (err) {
     msgEl.textContent = '⚠️ 修改失败：' + (err.message || '请重新登录后再试');
     msgEl.style.color = '#e88';
+  }
+}
+
+// ============================================================
+//  8. 孩子管理（多孩子支持）
+// ============================================================
+
+/** 渲染孩子管理列表 */
+function loadChildManagement(user) {
+  var listEl = document.getElementById('child-list');
+  if (!listEl) return;
+  if (!user || !user.children) return;
+
+  var students = getStudents();
+  var activeIdx = user.activeChildIndex || 0;
+
+  var html = '';
+  user.children.forEach(function (child, i) {
+    var student = null;
+    if (child.studentId) {
+      student = students.find(function (s) { return s.id === child.studentId; });
+    }
+    if (!student) {
+      student = students.find(function (s) { return s.name === child.name; });
+    }
+    var isActive = i === activeIdx;
+    var linked = !!student;
+
+    html += '<div class="child-row' + (isActive ? ' active' : '') + '">';
+    html += '<span class="child-row-name">👶 ' + child.name + '</span>';
+    html += '<span class="child-row-badge ' + (linked ? 'linked' : 'unlinked') + '">' + (linked ? '已关联 ' + student.name : '未关联学生') + '</span>';
+    if (!isActive) {
+      html += '<button class="child-row-switch" data-index="' + i + '">设为当前</button>';
+    } else {
+      html += '<span style="font-size:0.8em; color:#d7a86e;">当前</span>';
+    }
+    if (user.children.length > 1) {
+      html += '<button class="child-row-remove" data-index="' + i + '" title="删除">✕</button>';
+    }
+    html += '</div>';
+  });
+  listEl.innerHTML = html;
+
+  // 绑定切换按钮事件
+  listEl.querySelectorAll('.child-row-switch').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var idx = parseInt(this.dataset.index);
+      switchActiveChild(idx);
+    });
+  });
+
+  // 绑定删除按钮事件
+  listEl.querySelectorAll('.child-row-remove').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var idx = parseInt(this.dataset.index);
+      removeChild(idx);
+    });
+  });
+
+  // 添加孩子按钮
+  var addBtn = document.getElementById('add-child-btn');
+  if (addBtn) {
+    addBtn.onclick = showAddChildForm;
+  }
+
+  // 确认添加
+  var confirmBtn = document.getElementById('confirm-add-child-btn');
+  if (confirmBtn) {
+    confirmBtn.onclick = addChild;
+  }
+
+  // 取消添加
+  var cancelBtn = document.getElementById('cancel-add-child-btn');
+  if (cancelBtn) {
+    cancelBtn.onclick = hideAddChildForm;
+  }
+
+  // 更新顶栏切换器
+  updateChildSwitcher(user);
+}
+
+/** 更新顶栏孩子切换器 */
+function updateChildSwitcher(user) {
+  var wrap = document.getElementById('child-switcher-wrap');
+  var nameSpan = document.getElementById('active-child-name');
+  var switchBtn = document.getElementById('child-switch-btn');
+  if (!wrap || !nameSpan) return;
+
+  var child = Auth.currentChild();
+  if (child && child.name) {
+    wrap.style.display = '';
+    nameSpan.textContent = child.name;
+    if (user.children && user.children.length > 1) {
+      switchBtn.style.display = '';
+    } else {
+      switchBtn.style.display = 'none';
+    }
+    // 渲染下拉
+    renderChildDropdown(user);
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+/** 渲染顶栏孩子下拉菜单 */
+function renderChildDropdown(user) {
+  var dropdown = document.getElementById('child-dropdown');
+  var switchBtn = document.getElementById('child-switch-btn');
+  if (!dropdown || !switchBtn || !user.children) return;
+
+  var activeIdx = user.activeChildIndex || 0;
+  var html = '';
+  user.children.forEach(function (child, i) {
+    html += '<div class="child-dropdown-item' + (i === activeIdx ? ' active' : '') + '" data-index="' + i + '">👶 ' + child.name + '</div>';
+  });
+  dropdown.innerHTML = html;
+
+  // 绑定点击
+  dropdown.querySelectorAll('.child-dropdown-item').forEach(function (item) {
+    item.addEventListener('click', function () {
+      var idx = parseInt(this.dataset.index);
+      switchActiveChild(idx);
+      dropdown.style.display = 'none';
+    });
+  });
+
+  // 切换下拉显示
+  switchBtn.onclick = function (e) {
+    e.stopPropagation();
+    dropdown.style.display = dropdown.style.display === 'none' ? '' : 'none';
+  };
+
+  // 点击其他地方关闭
+  document.addEventListener('click', function () {
+    dropdown.style.display = 'none';
+  });
+}
+
+/** 切换当前孩子 */
+async function switchActiveChild(index) {
+  var user = Auth.currentUser();
+  if (!user || !user.children || index >= user.children.length) return;
+  await Auth.updateChildren(user.children, index);
+  refreshAllParentModules();
+}
+
+/** 删除孩子 */
+async function removeChild(index) {
+  var user = Auth.currentUser();
+  if (!user || !user.children) return;
+  if (user.children.length <= 1) {
+    alert('至少保留一个孩子信息');
+    return;
+  }
+  var child = user.children[index];
+  if (!confirm('确定删除「' + child.name + '」吗？\n\n删除后不会影响孩子的上课记录，你仍然可以重新添加。')) return;
+
+  var newChildren = user.children.filter(function (_, i) { return i !== index; });
+  var newIndex = user.activeChildIndex;
+  if (index < newIndex || (index === newIndex && newIndex >= newChildren.length)) {
+    newIndex = Math.max(0, newIndex - 1);
+  }
+  await Auth.updateChildren(newChildren, newIndex);
+  refreshAllParentModules();
+}
+
+/** 显示添加孩子表单 */
+function showAddChildForm() {
+  var form = document.getElementById('add-child-form-wrap');
+  var btn = document.getElementById('add-child-btn');
+  if (form) form.style.display = '';
+  if (btn) btn.style.display = 'none';
+
+  // 填充可选学生下拉
+  var select = document.getElementById('new-child-link-student');
+  if (select) {
+    select.innerHTML = '<option value="">不关联（等待老师添加）</option>';
+    var students = getStudents();
+    students.forEach(function (s) {
+      select.innerHTML += '<option value="' + s.id + '">' + s.name + (s.course ? '（' + s.course + '）' : '') + '</option>';
+    });
+  }
+
+  var nameInput = document.getElementById('new-child-name');
+  if (nameInput) { nameInput.value = ''; nameInput.focus(); }
+  var msg = document.getElementById('add-child-msg');
+  if (msg) msg.textContent = '';
+}
+
+/** 隐藏添加孩子表单 */
+function hideAddChildForm() {
+  var form = document.getElementById('add-child-form-wrap');
+  var btn = document.getElementById('add-child-btn');
+  if (form) form.style.display = 'none';
+  if (btn) btn.style.display = '';
+}
+
+/** 确认添加孩子 */
+async function addChild() {
+  var nameInput = document.getElementById('new-child-name');
+  var select = document.getElementById('new-child-link-student');
+  var msg = document.getElementById('add-child-msg');
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!name) {
+    if (msg) { msg.textContent = '⚠️ 请输入孩子姓名'; msg.style.color = '#e88'; }
+    return;
+  }
+  var studentId = null;
+  if (select && select.value) {
+    studentId = parseInt(select.value);
+  }
+
+  var user = Auth.currentUser();
+  if (!user) return;
+  var children = (user.children || []).slice();
+  children.push({ name: name, studentId: studentId || null });
+
+  try {
+    await Auth.updateChildren(children, user.activeChildIndex || 0);
+    hideAddChildForm();
+    refreshAllParentModules();
+  } catch (err) {
+    if (msg) { msg.textContent = '⚠️ 添加失败：' + (err.message || '请稍后再试'); msg.style.color = '#e88'; }
   }
 }

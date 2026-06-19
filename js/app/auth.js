@@ -84,11 +84,23 @@ var Auth = {
       if (!Auth.verifyPassword(password, p.passwordHash)) {
         throw new Error('邮箱或密码错误');
       }
+      // 自动迁移旧格式
+      var children = p.children;
+      if (!children && p.childName) {
+        children = [{ name: p.childName, studentId: null }];
+        // 异步更新 CloudBase doc（不阻塞登录）
+        try {
+          db.collection(CLOUDBASE_CONFIG.collections.parents).doc(p._id).update({
+            children: children, activeChildIndex: 0
+          });
+        } catch (migErr) { console.warn('迁移 children 失败:', migErr.message); }
+      }
       var parentUser = {
         uid: p._id,
         email: p.email,
         name: p.name,
-        childName: p.childName,
+        children: children || [{ name: '孩子', studentId: null }],
+        activeChildIndex: typeof p.activeChildIndex === 'number' ? p.activeChildIndex : 0,
         role: 'parent',
         loginTime: new Date().toISOString()
       };
@@ -156,11 +168,18 @@ var Auth = {
     } catch (e) { /* 忽略 */ }
   },
 
-  // 获取当前用户
+  // 获取当前用户（自动迁移旧 childName 格式）
   currentUser: function () {
     var data = localStorage.getItem(AUTH_CONFIG.sessionKey) || sessionStorage.getItem(AUTH_CONFIG.sessionKey);
     if (!data) return null;
-    try { return JSON.parse(data); } catch (e) { return null; }
+    try {
+      var user = JSON.parse(data);
+      if (!user.children && user.childName) {
+        user.children = [{ name: user.childName, studentId: null }];
+        user.activeChildIndex = 0;
+      }
+      return user;
+    } catch (e) { return null; }
   },
 
   _setSession: function (user) {
@@ -168,12 +187,44 @@ var Auth = {
       uid: user.uid,
       email: user.email,
       name: user.name,
-      childName: user.childName,
+      children: user.children || (user.childName ? [{ name: user.childName, studentId: null }] : []),
+      activeChildIndex: typeof user.activeChildIndex === 'number' ? user.activeChildIndex : 0,
       role: user.role,
       loginTime: new Date().toISOString()
     };
     var data = JSON.stringify(session);
     localStorage.setItem(AUTH_CONFIG.sessionKey, data);
+  },
+
+  // 获取当前孩子对象
+  currentChild: function () {
+    var user = Auth.currentUser();
+    if (!user || !user.children || !user.children.length) return null;
+    var idx = user.activeChildIndex || 0;
+    return user.children[idx] || user.children[0] || null;
+  },
+
+  // 更新孩子列表并同步 CloudBase
+  updateChildren: async function (children, activeChildIndex) {
+    var user = Auth.currentUser();
+    if (!user) throw new Error('未登录');
+    user.children = children;
+    user.activeChildIndex = activeChildIndex;
+    Auth._setSession(user);
+    var db = getDB();
+    if (db) {
+      try {
+        var res = await db.collection(CLOUDBASE_CONFIG.collections.parents)
+          .where({ email: user.email }).get();
+        if (res.data && res.data.length > 0) {
+          await db.collection(CLOUDBASE_CONFIG.collections.parents)
+            .doc(res.data[0]._id).update({
+              children: children,
+              activeChildIndex: activeChildIndex
+            });
+        }
+      } catch (e) { console.warn('同步 children 失败:', e.message); }
+    }
   },
 
   // 密码哈希（简单但有效的 ES5 兼容哈希）

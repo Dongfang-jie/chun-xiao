@@ -396,6 +396,8 @@ document.addEventListener('DOMContentLoaded', async function () {
           passwordHash: passwordHash,
           phone: phone || '',
           childName: childName,
+          children: [{ name: childName, studentId: null }],
+          activeChildIndex: 0,
           regMethod: 'email_code',
           createdAt: new Date().toISOString()
         };
@@ -406,7 +408,8 @@ document.addEventListener('DOMContentLoaded', async function () {
           uid: addResult.id,
           email: email,
           name: name,
-          childName: childName,
+          children: [{ name: childName, studentId: null }],
+          activeChildIndex: 0,
           role: 'parent',
           loginTime: new Date().toISOString()
         });

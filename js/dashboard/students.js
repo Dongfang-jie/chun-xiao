@@ -130,6 +130,8 @@ function loadStudents() {
       document.getElementById('s-age').value = '';
       document.getElementById('s-parent').value = '';
       document.getElementById('s-phone').value = '';
+      var sParentEmail = document.getElementById('s-parentEmail');
+      if (sParentEmail) sParentEmail.value = '';
       document.getElementById('s-status').value = '在读';
       renderEnrollmentRows([{ course: '', totalLessons: 0, consumedLessons: 0 }]);
     };
@@ -202,6 +204,7 @@ function loadStudents() {
         course: courseStr || '--',
         parent: document.getElementById('s-parent').value.trim() || '--',
         phone: document.getElementById('s-phone').value.trim() || '--',
+        parentEmail: (document.getElementById('s-parentEmail') ? document.getElementById('s-parentEmail').value.trim() : '') || '',
         status: document.getElementById('s-status').value,
         totalLessons: totalLessons,
         consumedLessons: consumedLessons,
@@ -379,6 +382,8 @@ function renderStudents() {
       document.getElementById('s-age').value = s.age;
       document.getElementById('s-parent').value = s.parent;
       document.getElementById('s-phone').value = s.phone;
+      var sParentEmail2 = document.getElementById('s-parentEmail');
+      if (sParentEmail2) sParentEmail2.value = s.parentEmail || '';
       document.getElementById('s-status').value = s.status;
       normalizeStudentEnrollments(s);
       renderEnrollmentRows(s.enrollments);

@@ -7,6 +7,20 @@
 // ============================================================
 //  工具函数
 // ============================================================
+
+/** 初始化家长端顶栏（用户名 + 孩子切换器） */
+function initParentHeader(user) {
+  if (!user) return;
+  var nameEl = document.getElementById('parent-name');
+  if (nameEl) {
+    nameEl.innerHTML = '👨‍👩‍👧 ' + (user.name || user.email);
+  }
+  // 更新孩子切换器
+  if (typeof updateChildSwitcher === 'function') {
+    updateChildSwitcher(user);
+  }
+}
+
 function getOperatorName() {
   var user = Auth.currentUser();
   return user ? (user.name || user.email) : '未知';
@@ -153,7 +167,9 @@ document.addEventListener('DOMContentLoaded', function () {
       updateOverview();
     } else {
       // 家长端：同步后加载所有模块
+      initParentHeader(user);
       loadParentInfo(user);
+      loadChildManagement(user);
       loadParentOverview(user);
       loadParentSchedule(user);
       loadParentAttendance(user);

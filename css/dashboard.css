@@ -1909,3 +1909,199 @@ body.dark-mode .artwork-card .card-actions .edit-link {
 body.dark-mode .artwork-card .card-actions .edit-link:hover {
   color: #e0b878;
 }
+
+/* ========== 家长端：孩子切换器（顶栏） ========== */
+.child-switcher-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  font-size: 0.9em;
+}
+
+#active-child-name {
+  font-weight: bold;
+  color: #5d4037;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.child-switch-btn {
+  border: none;
+  background: none;
+  color: #8d6e63;
+  cursor: pointer;
+  font-size: 0.65em;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.child-switch-btn:hover { background: #f0e6d8; color: #5d4037; }
+
+.child-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e8d4c8;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  z-index: 100;
+  min-width: 200px;
+  padding: 4px 0;
+  margin-top: 4px;
+}
+
+.child-dropdown-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #5d4037;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f5ede0;
+  transition: background 0.1s;
+}
+
+.child-dropdown-item:last-child { border-bottom: none; }
+.child-dropdown-item:hover { background: #faf7f2; }
+.child-dropdown-item.active { background: #f0e8d8; font-weight: bold; }
+.child-dropdown-item.active::before { content: '✓'; color: #5a9; font-weight: bold; }
+
+/* ========== 家长端：孩子管理（个人信息页） ========== */
+.child-manage-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.child-add-btn {
+  padding: 8px 16px;
+  background: #5d4037;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: bold;
+  transition: background 0.15s;
+}
+
+.child-add-btn:hover { background: #6d4c41; }
+
+.child-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #faf7f2;
+  border-radius: 8px;
+  border: 1px solid #f0e8d8;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.child-row.active {
+  border-color: #d7a86e;
+  background: #fff9f0;
+}
+
+.child-row-name {
+  font-weight: bold;
+  color: #5d4037;
+  flex: 1;
+}
+
+.child-row-badge {
+  font-size: 0.75em;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.child-row-badge.linked { background: #e8f5e9; color: #4a8; }
+.child-row-badge.unlinked { background: #fff3e0; color: #e8a040; }
+
+.child-row-switch {
+  padding: 4px 14px;
+  border: 1px solid #d7a86e;
+  background: #fff;
+  color: #8d6e63;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8em;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.child-row-switch:hover { background: #d7a86e; color: #fff; }
+.child-row.active .child-row-switch { display: none; }
+
+.child-row-remove {
+  padding: 2px 8px;
+  border: none;
+  background: none;
+  color: #e88;
+  cursor: pointer;
+  font-size: 1.2em;
+  line-height: 1;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.child-row-remove:hover { color: #c55; background: #fdf0f0; }
+
+.child-form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+  font-size: 0.95em;
+  box-sizing: border-box;
+  background: #fff;
+  color: #333;
+}
+
+.child-form-input:focus {
+  border-color: #d7a86e;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(215, 168, 110, 0.15);
+}
+
+.child-cancel-btn {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #999;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.child-cancel-btn:hover { color: #666; border-color: #999; }
+
+/* 深色模式 */
+body.dark-mode .child-switcher-wrap { color: #d7a86e; }
+body.dark-mode #active-child-name { color: #d7a86e; }
+body.dark-mode .child-dropdown { background: #2a2a2a; border-color: #555; }
+body.dark-mode .child-dropdown-item { color: #ddd; border-color: #444; }
+body.dark-mode .child-dropdown-item:hover { background: #333; }
+body.dark-mode .child-dropdown-item.active { background: #3a3528; }
+body.dark-mode .child-manage-section { background: #2a2a2a; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+body.dark-mode .child-row { background: #2a2a2a; border-color: #444; }
+body.dark-mode .child-row.active { border-color: #d7a86e; background: #332e24; }
+body.dark-mode .child-row-name { color: #d7a86e; }
+body.dark-mode .child-row-switch { background: #333; border-color: #666; color: #ddd; }
+body.dark-mode .child-row-switch:hover { background: #d7a86e; color: #1a1a1a; }
+body.dark-mode #add-child-form-wrap { background: #2a2a2a; border-color: #555; }
+body.dark-mode .child-form-input { background: #333; border-color: #555; color: #ddd; }
+body.dark-mode .child-form-input:focus { border-color: #d7a86e; }
+body.dark-mode .child-cancel-btn { background: #333; color: #999; border-color: #555; }
+body.dark-mode .child-cancel-btn:hover { color: #ddd; border-color: #888; }
+body.dark-mode .child-add-btn { background: #d7a86e; color: #1a1a1a; }
+body.dark-mode .child-add-btn:hover { background: #e0b878; }

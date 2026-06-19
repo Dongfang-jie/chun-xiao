@@ -19,6 +19,11 @@
     <div class="dash-header-right">
       <a href="contact.html" style="color:#5d4037; text-decoration:none; margin-right:12px; font-size:0.9em;">📞 联系我们</a>
       <span id="parent-name" class="user-name">👨‍👩‍👧 家长</span>
+      <span class="child-switcher-wrap" id="child-switcher-wrap" style="display:none;">
+        👶 <span id="active-child-name"></span>
+        <button id="child-switch-btn" class="child-switch-btn" title="切换孩子" style="display:none;">▼</button>
+        <div class="child-dropdown" id="child-dropdown" style="display:none;"></div>
+      </span>
       <button id="logout-btn" class="logout-btn">🚪 退出登录</button>
     </div>
   </header>
@@ -158,6 +163,35 @@
               <button id="pwd-change-btn" class="login-btn" style="width:100%;">🔒 修改密码</button>
               <span id="pwd-msg" style="display:block; margin-top:8px; font-size:0.9em;"></span>
             </div>
+          </div>
+        </div>
+
+        <!-- 孩子管理 -->
+        <div class="child-manage-section" style="margin-top:24px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; color:#5d4037;">👶 我的孩子</h3>
+            <button id="add-child-btn" class="child-add-btn">+ 添加孩子</button>
+          </div>
+          <div id="child-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+          <div id="add-child-form-wrap" style="display:none; margin-top:16px; padding:16px; background:#faf7f2; border-radius:10px; border:2px dashed #e8d4c8;">
+            <h4 style="margin:0 0 12px; color:#8d6e63;">新增孩子</h4>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
+              <div style="flex:1; min-width:150px;">
+                <label style="display:block; font-size:0.85em; color:#888; margin-bottom:4px;">孩子姓名 *</label>
+                <input type="text" id="new-child-name" class="child-form-input" placeholder="输入孩子姓名">
+              </div>
+              <div style="flex:1; min-width:150px;">
+                <label style="display:block; font-size:0.85em; color:#888; margin-bottom:4px;">关联已有学生（可选）</label>
+                <select id="new-child-link-student" class="child-form-input">
+                  <option value="">不关联（等待老师添加）</option>
+                </select>
+              </div>
+              <div style="display:flex; gap:8px; align-items:flex-end;">
+                <button id="confirm-add-child-btn" class="login-btn" style="padding:10px 20px; width:auto;">确认添加</button>
+                <button id="cancel-add-child-btn" class="child-cancel-btn">取消</button>
+              </div>
+            </div>
+            <span id="add-child-msg" style="display:block; margin-top:8px; font-size:0.9em;"></span>
           </div>
         </div>
       </section>
