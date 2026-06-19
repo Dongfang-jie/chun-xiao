@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // ========== HTTP 调用 verify-code 云函数 ==========
   // 绕过 SDK callFunction，直接用 fetch() 访问 HTTP 访问服务
-  var VERIFY_CODE_URL = 'https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/G:/Ruanjian/Git/verify-code';
+  var VERIFY_CODE_URL = 'https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/verify-code';
 
   async function callVerifyCode(data) {
     var response = await fetch(VERIFY_CODE_URL, {
