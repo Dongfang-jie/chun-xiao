@@ -388,27 +388,43 @@ document.addEventListener('DOMContentLoaded', async function () {
           console.warn('检查重复邮箱失败（非致命）:', checkErr.message);
         }
 
-        // 3. 创建家长账号（存入 parents 集合，密码哈希存储）
+        // 3. 尝试自动匹配学生（注册时按姓名匹配，自动关联）
+        var matchedStudentId = null;
+        try {
+          // 从 localStorage 读取学生列表（注册时 CloudBase 可能还没同步）
+          var localStudents = JSON.parse(localStorage.getItem('chunxiao-students') || '[]');
+          var matched = localStudents.find(function (s) { return s.name === childName; });
+          if (matched) {
+            matchedStudentId = matched.id;
+            console.log('注册自动匹配学生:', childName, 'id:', matched.id);
+            // 更新学生的 parentEmail
+            matched.parentEmail = email;
+            localStorage.setItem('chunxiao-students', JSON.stringify(localStudents));
+          }
+        } catch (matchErr) { console.warn('自动匹配学生失败:', matchErr.message); }
+
+        // 4. 创建家长账号（存入 parents 集合，密码哈希存储）
         var passwordHash = Auth.hashPassword(password);
+        var children = [{ name: childName, studentId: matchedStudentId }];
         var doc = {
           email: email,
           name: name,
           passwordHash: passwordHash,
           phone: phone || '',
           childName: childName,
-          children: [{ name: childName, studentId: null }],
+          children: children,
           activeChildIndex: 0,
           regMethod: 'email_code',
           createdAt: new Date().toISOString()
         };
         var addResult = await db.collection('parents').add(doc);
 
-        // 4. 创建会话，跳转家长端
+        // 5. 创建会话，跳转家长端
         Auth._setSession({
           uid: addResult.id,
           email: email,
           name: name,
-          children: [{ name: childName, studentId: null }],
+          children: children,
           activeChildIndex: 0,
           role: 'parent',
           loginTime: new Date().toISOString()

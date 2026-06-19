@@ -919,18 +919,8 @@ function showAddChildForm() {
   if (form) form.style.display = '';
   if (btn) btn.style.display = 'none';
 
-  // 填充可选学生下拉
-  var select = document.getElementById('new-child-link-student');
-  if (select) {
-    select.innerHTML = '<option value="">不关联（等待老师添加）</option>';
-    var students = getStudents();
-    students.forEach(function (s) {
-      select.innerHTML += '<option value="' + s.id + '">' + s.name + (s.course ? '（' + s.course + '）' : '') + '</option>';
-    });
-  }
-
-  var nameInput = document.getElementById('new-child-name');
-  if (nameInput) { nameInput.value = ''; nameInput.focus(); }
+  var searchInput = document.getElementById('new-child-name-search');
+  if (searchInput) { searchInput.value = ''; searchInput.focus(); }
   var msg = document.getElementById('add-child-msg');
   if (msg) msg.textContent = '';
 }
@@ -943,31 +933,61 @@ function hideAddChildForm() {
   if (btn) btn.style.display = '';
 }
 
-/** 确认添加孩子 */
+/** 确认添加孩子（搜索匹配 → 发送关联请求给教师审批） */
 async function addChild() {
-  var nameInput = document.getElementById('new-child-name');
-  var select = document.getElementById('new-child-link-student');
+  var searchInput = document.getElementById('new-child-name-search');
   var msg = document.getElementById('add-child-msg');
-  var name = nameInput ? nameInput.value.trim() : '';
-  if (!name) {
+  var searchName = searchInput ? searchInput.value.trim() : '';
+  if (!searchName) {
     if (msg) { msg.textContent = '⚠️ 请输入孩子姓名'; msg.style.color = '#e88'; }
     return;
   }
-  var studentId = null;
-  if (select && select.value) {
-    studentId = parseInt(select.value);
+
+  // 精确匹配学生
+  var students = getStudents();
+  var matched = students.find(function (s) { return s.name === searchName; });
+  if (!matched) {
+    if (msg) { msg.textContent = '⚠️ 没有此孩子「' + searchName + '」，请确认姓名正确或联系老师先添加学生档案'; msg.style.color = '#e88'; }
+    return;
   }
 
   var user = Auth.currentUser();
   if (!user) return;
-  var children = (user.children || []).slice();
-  children.push({ name: name, studentId: studentId || null });
 
+  // 检查是否已经添加过
+  if (user.children && user.children.some(function (c) { return c.studentId === matched.id || c.name === matched.name; })) {
+    if (msg) { msg.textContent = '⚠️ 该孩子已在你的列表中'; msg.style.color = '#e8a040'; }
+    return;
+  }
+
+  // 创建关联请求（inquiry type=link_request）
   try {
-    await Auth.updateChildren(children, user.activeChildIndex || 0);
-    hideAddChildForm();
-    refreshAllParentModules();
+    var inquiries = (typeof getInquiries === 'function') ? getInquiries() : [];
+    var now = new Date();
+    var timeStr = now.getFullYear() + '/' + (now.getMonth() + 1) + '/' + now.getDate() + ' ' +
+      String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+
+    inquiries.push({
+      id: Date.now(),
+      type: 'link_request',
+      parentEmail: user.email,
+      parentName: user.name || '',
+      childName: searchName,
+      studentId: matched.id,
+      studentName: matched.name,
+      status: 'pending',
+      time: timeStr,
+      read: false
+    });
+
+    if (typeof saveInquiries === 'function') {
+      saveInquiries(inquiries);
+    }
+    if (msg) { msg.textContent = '✅ 已发送关联请求，等待老师审批'; msg.style.color = '#5a9'; }
+
+    // 2 秒后关闭表单
+    setTimeout(function () { hideAddChildForm(); }, 2000);
   } catch (err) {
-    if (msg) { msg.textContent = '⚠️ 添加失败：' + (err.message || '请稍后再试'); msg.style.color = '#e88'; }
+    if (msg) { msg.textContent = '⚠️ 发送失败：' + (err.message || '请稍后再试'); msg.style.color = '#e88'; }
   }
 }

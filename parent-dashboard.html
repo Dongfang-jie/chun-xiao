@@ -176,15 +176,9 @@
           <div id="add-child-form-wrap" style="display:none; margin-top:16px; padding:16px; background:#faf7f2; border-radius:10px; border:2px dashed #e8d4c8;">
             <h4 style="margin:0 0 12px; color:#8d6e63;">新增孩子</h4>
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
-              <div style="flex:1; min-width:150px;">
-                <label style="display:block; font-size:0.85em; color:#888; margin-bottom:4px;">孩子姓名 *</label>
-                <input type="text" id="new-child-name" class="child-form-input" placeholder="输入孩子姓名">
-              </div>
-              <div style="flex:1; min-width:150px;">
-                <label style="display:block; font-size:0.85em; color:#888; margin-bottom:4px;">关联已有学生（可选）</label>
-                <select id="new-child-link-student" class="child-form-input">
-                  <option value="">不关联（等待老师添加）</option>
-                </select>
+              <div style="flex:2; min-width:200px;">
+                <label style="display:block; font-size:0.85em; color:#888; margin-bottom:4px;">输入孩子姓名（需与老师登记的一致）</label>
+                <input type="text" id="new-child-name-search" class="child-form-input" placeholder="输入老师登记的学生姓名进行匹配">
               </div>
               <div style="display:flex; gap:8px; align-items:flex-end;">
                 <button id="confirm-add-child-btn" class="login-btn" style="padding:10px 20px; width:auto;">确认添加</button>
