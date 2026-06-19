@@ -119,7 +119,7 @@ function loadParentOverview(user) {
       var total = student.totalLessons || 0;
       var consumed = student.consumedLessons || 0;
       var remaining = total - consumed;
-      var color = remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9';
+      var color = remaining <= 4 ? '#e88' : remaining <= 8 ? '#e8a040' : '#5a9';
       elRemaining.innerHTML = '<span style=\"color:' + color + ';\">' + remaining + '</span><span style=\"font-size:0.4em; color:#999;\"> / ' + total + '</span>';
     }
   }
@@ -396,7 +396,7 @@ function renderLessonProgress(student) {
   var consumed = student.consumedLessons || 0;
   var remaining = total - consumed;
   var pct = total > 0 ? Math.round(consumed / total * 100) : 0;
-  var barColor = remaining <= 2 ? 'warning' : '';
+  var barColor = remaining <= 4 ? 'warning' : '';
 
   var html = '<div class="student-lesson-bar-wrap">';
   html += '<div class="student-lesson-bar-header">';
@@ -409,10 +409,10 @@ function renderLessonProgress(student) {
   html += '<div class="student-lesson-legend">';
   html += '<span>总课次 <strong>' + total + '</strong></span>';
   html += '<span>已消耗 <strong style="color:#e88;">' + consumed + '</strong></span>';
-  html += '<span>剩余 <strong style="color:' + (remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9') + ';">' + remaining + '</strong></span>';
+  html += '<span>剩余 <strong style="color:' + (remaining <= 4 ? '#e88' : remaining <= 8 ? '#e8a040' : '#5a9') + ';">' + remaining + '</strong></span>';
   html += '</div>';
 
-  if (remaining <= 2 && remaining > 0) {
+  if (remaining <= 4 && remaining > 0) {
     html += '<p class="parent-lesson-warning">⚠️ 剩余课次不足，请及时续费</p>';
   } else if (remaining <= 0) {
     html += '<p class="parent-lesson-warning">⚠️ 课次已用完，请联系老师续费</p>';

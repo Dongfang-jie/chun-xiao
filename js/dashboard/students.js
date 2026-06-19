@@ -270,7 +270,7 @@ function applyStudentFilters(list) {
     filtered = filtered.filter(function(s) { return s.status === '休学'; });
   } else if (f.chip === 'low') {
     filtered = filtered.filter(function(s) {
-      return s.status === '在读' && (s.totalLessons - (s.consumedLessons || 0)) <= 2;
+      return s.status === '在读' && (s.totalLessons - (s.consumedLessons || 0)) <= 4;
     });
   }
 
@@ -350,7 +350,7 @@ function renderStudents() {
     var total = s.totalLessons || 0;
     var consumed = s.consumedLessons || 0;
     var remaining = total - consumed;
-    var remainColor = remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9';
+    var remainColor = remaining <= 4 ? '#e88' : remaining <= 8 ? '#e8a040' : '#5a9';
     var statusColor = s.status === '在读' ? '#5a9' : s.status === '休学' ? '#e88' : '#999';
     html += '<tr>';
     html += '<td><a href="#" class="view-student-detail" data-sid="' + s.id + '">' + s.name + '</a></td>';
@@ -473,7 +473,7 @@ function showStudentDetail(studentId) {
   var consumed = s.consumedLessons || 0;
   var remaining = total - consumed;
   var progressPercent = total > 0 ? Math.min(100, Math.round(consumed / total * 100)) : 0;
-  var barClass = remaining <= 2 ? ' warning' : '';
+  var barClass = remaining <= 4 ? ' warning' : '';
   var statusColor = s.status === '在读' ? '#5a9' : s.status === '休学' ? '#e88' : '#999';
 
   var html = '';
@@ -487,7 +487,7 @@ function showStudentDetail(studentId) {
 
   // 课次进度条（总览）
   html += '<div class="student-lesson-bar-wrap">';
-  html += '<div class="student-lesson-bar-header"><span>📊 课次进度（总计）</span><strong>' + (remaining <= 2 ? '⚠️ ' : '') + '剩余 ' + remaining + ' / 总 ' + total + ' 课次</strong></div>';
+  html += '<div class="student-lesson-bar-header"><span>📊 课次进度（总计）</span><strong>' + (remaining <= 4 ? '⚠️ ' : '') + '剩余 ' + remaining + ' / 总 ' + total + ' 课次</strong></div>';
   html += '<div class="student-lesson-bar"><div class="student-lesson-bar-fill' + barClass + '" style="width:' + progressPercent + '%;"></div></div>';
   html += '<div class="student-lesson-legend"><span>已消耗：<strong>' + consumed + '</strong> 课次</span><span>进度：<strong>' + progressPercent + '%</strong></span></div>';
   html += '</div>';
@@ -500,8 +500,8 @@ function showStudentDetail(studentId) {
       var eConsumed = enr.consumedLessons || 0;
       var eRemaining = eTotal - eConsumed;
       var ePercent = eTotal > 0 ? Math.min(100, Math.round(eConsumed / eTotal * 100)) : 0;
-      var eBarClass = eRemaining <= 2 ? ' warning' : '';
-      var eRemainColor = eRemaining <= 2 ? '#e88' : eRemaining <= 5 ? '#e8a040' : '#5a9';
+      var eBarClass = eRemaining <= 4 ? ' warning' : '';
+      var eRemainColor = eRemaining <= 4 ? '#e88' : eRemaining <= 8 ? '#e8a040' : '#5a9';
       html += '<div style="margin-bottom:12px;">';
       html += '<div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.9em;">';
       html += '<span><strong>' + enr.course + '</strong></span>';

@@ -157,7 +157,7 @@ function startAttendanceForClass(classId, date) {
     var total = enrollment ? (enrollment.totalLessons || 0) : (s.totalLessons || 0);
     var consumed = enrollment ? (enrollment.consumedLessons || 0) : (s.consumedLessons || 0);
     var remaining = total - consumed;
-    var remainColor = remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9';
+    var remainColor = remaining <= 4 ? '#e88' : remaining <= 8 ? '#e8a040' : '#5a9';
     var lastDate = getLastDeductDate(s.id);
     var lastDateDisplay = lastDate ? lastDate : '<span style="color:#ccc;">无记录</span>';
     // 多课程时显示课程名

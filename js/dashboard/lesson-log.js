@@ -1,4 +1,4 @@
-﻿/*
+/*
   春晓画室 - 管理端课消日志模块（日志 + 手动调整 + 低课次告警）
 */
 
@@ -41,7 +41,6 @@ function loadLessonLog() {
 
 function refreshLogStudentSelects() {
   var students = getStudents();
-  // 标准化 enrollments（兼容旧数据）
   students.forEach(function(s) { normalizeStudentEnrollments(s); });
 
   var html = '<option value="">全部学员</option>' +
@@ -56,7 +55,6 @@ function refreshLogStudentSelects() {
         var remaining = (s.totalLessons || 0) - (s.consumedLessons || 0);
         return '<option value="' + s.id + '">' + s.name + '（剩' + remaining + '节）</option>';
       }).join('');
-    // 选择学员时更新课程下拉
     manualSel.onchange = function() {
       var sid = parseInt(manualSel.value);
       var courseSel = document.getElementById('log-manual-course');
@@ -72,7 +70,6 @@ function refreshLogStudentSelects() {
         return '<option value="' + e.course + '">' + e.course + '（剩' + eRemaining + '节）</option>';
       }).join('');
     };
-    // 初始触发一次（如果已有选中值）
     if (manualSel.value) manualSel.onchange();
   }
 }
@@ -141,7 +138,8 @@ function renderLessonLog() {
   log.forEach(function(l) {
     var amountColor = l.type === '手动调整' && l.amount < 0 ? '#5a9' : '#e88';
     var amountText = l.amount > 0 ? '-' + l.amount : ('+' + Math.abs(l.amount));
-    html += '<tr>';
+    var corrId = l.id.replace('corr-', '');
+    html += '<tr id="log-row-' + l.id + '">';
     html += '<td>' + l.date + '</td>';
     html += '<td><a href="#" class="log-student-link" data-sid="' + l.studentId + '">' + l.studentName + '</a></td>';
     html += '<td>' + l.className + '</td>';
@@ -149,19 +147,37 @@ function renderLessonLog() {
     html += '<td style="font-weight:bold; color:' + amountColor + ';">' + amountText + '</td>';
     var reasonText = l.course ? '[' + l.course + '] ' + l.reason : l.reason;
     html += '<td style="font-size:0.85em; color:#888;">' + reasonText + (l.operator ? ' <span style="color:#bbb; font-size:0.85em;">· ' + l.operator + '</span>' : '') + '</td>';
-    var actionCell = '<span style="color:#ccc; font-size:0.85em;">自动</span>';
+    html += '<td>';
     if (l.type === '手动调整' && hasAdminPermission()) {
-      actionCell = '<a href="#" class="del-correction" data-id="' + l.id.replace('corr-', '') + '" style="color:#e88; font-size:0.85em;">删除</a>';
+      html += '<a href="#" class="edit-correction" data-id="' + corrId + '" style="color:#d7a86e; margin-right:8px;">✏️修改</a>';
+      html += '<a href="#" class="undo-correction" data-id="' + corrId + '" style="color:#e88;">↩撤销</a>';
     } else if (l.type === '手动调整') {
-      actionCell = '<span style="color:#ccc; font-size:0.85em;">手动</span>';
+      html += '<span style="color:#ccc; font-size:0.85em;">手动</span>';
+    } else {
+      html += '<span style="color:#ccc; font-size:0.85em;">自动</span>';
     }
-    html += '<td>' + actionCell + '</td>';
+    html += '</td>';
     html += '</tr>';
+
+    // 编辑行（默认隐藏）
+    if (l.type === '手动调整' && hasAdminPermission()) {
+      html += '<tr id="log-edit-row-' + corrId + '" style="display:none; background:#fdf6f0;">';
+      html += '<td colspan="7" style="padding:12px 16px;">';
+      html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end;">';
+      html += '<div><label style="display:block; font-size:0.8em; color:#5d4037; margin-bottom:2px;">课程</label><select id="edit-corr-course-' + corrId + '" style="padding:6px 8px; border:2px solid #e8d4c8; border-radius:4px; font-size:0.85em;"></select></div>';
+      html += '<div><label style="display:block; font-size:0.8em; color:#5d4037; margin-bottom:2px;">日期</label><input type="date" id="edit-corr-date-' + corrId + '" value="' + l.date + '" style="padding:6px 8px; border:2px solid #e8d4c8; border-radius:4px; font-size:0.85em; width:130px;"></div>';
+      html += '<div><label style="display:block; font-size:0.8em; color:#5d4037; margin-bottom:2px;">数量</label><input type="number" id="edit-corr-amount-' + corrId + '" value="' + l.amount + '" style="padding:6px 8px; border:2px solid #e8d4c8; border-radius:4px; font-size:0.85em; width:80px;"></div>';
+      html += '<div><label style="display:block; font-size:0.8em; color:#5d4037; margin-bottom:2px;">原因</label><input type="text" id="edit-corr-reason-' + corrId + '" value="' + (l.reason || '') + '" style="padding:6px 8px; border:2px solid #e8d4c8; border-radius:4px; font-size:0.85em; min-width:160px;"></div>';
+      html += '<button class="save-edit-correction login-btn" data-id="' + corrId + '" style="width:auto; padding:6px 14px; font-size:0.85em;">💾 保存</button>';
+      html += '<button class="cancel-edit-correction logout-btn" data-id="' + corrId + '" style="font-size:0.85em;">取消</button>';
+      html += '</div></td></tr>';
+    }
   });
 
   html += '</tbody></table>';
   container.innerHTML = html;
 
+  // 绑定学生链接
   container.querySelectorAll('.log-student-link').forEach(function(link) {
     link.addEventListener('click', function(e) {
       e.preventDefault();
@@ -169,14 +185,151 @@ function renderLessonLog() {
     });
   });
 
-  container.querySelectorAll('.del-correction').forEach(function(btn) {
+  // 绑定撤销按钮
+  container.querySelectorAll('.undo-correction').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
       var id = parseInt(btn.dataset.id);
-      if (!confirm('删除该手动调整记录？将撤销对应的课次变动。')) return;
-      deleteManualCorrection(id);
+      if (!confirm('确定撤销该手动调整？将恢复对应的课次变动并删除记录。')) return;
+      undoManualCorrection(id);
     });
   });
+
+  // 绑定修改按钮
+  container.querySelectorAll('.edit-correction').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var id = parseInt(btn.dataset.id);
+      toggleEditCorrection(id);
+    });
+  });
+
+  // 绑定编辑行保存/取消
+  container.querySelectorAll('.save-edit-correction').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      saveEditCorrection(parseInt(btn.dataset.id));
+    });
+  });
+  container.querySelectorAll('.cancel-edit-correction').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      toggleEditCorrection(parseInt(btn.dataset.id));
+    });
+  });
+}
+
+// 切换编辑行显示
+function toggleEditCorrection(corrId) {
+  var editRow = document.getElementById('log-edit-row-' + corrId);
+  var viewRow = document.getElementById('log-row-corr-' + corrId);
+  if (!editRow || !viewRow) return;
+
+  if (editRow.style.display === 'none') {
+    // 显示编辑行，填充课程下拉
+    editRow.style.display = '';
+    viewRow.style.opacity = '0.5';
+    var corrections = getLessonCorrections();
+    var c = corrections.find(function(x) { return x.id === corrId; });
+    if (!c) return;
+
+    // 填充课程下拉
+    var students = getStudents();
+    var s = students.find(function(x) { return x.id === c.studentId; });
+    var courseSel = document.getElementById('edit-corr-course-' + corrId);
+    if (courseSel && s) {
+      normalizeStudentEnrollments(s);
+      courseSel.innerHTML = (s.enrollments || []).map(function(e) {
+        var sel = e.course === c.course ? ' selected' : '';
+        return '<option value="' + e.course + '"' + sel + '>' + e.course + '</option>';
+      }).join('');
+    }
+  } else {
+    editRow.style.display = 'none';
+    viewRow.style.opacity = '1';
+  }
+}
+
+// 保存编辑后的手动调整
+function saveEditCorrection(corrId) {
+  var corrections = getLessonCorrections();
+  var c = corrections.find(function(x) { return x.id === corrId; });
+  if (!c) return;
+
+  var newCourse = document.getElementById('edit-corr-course-' + corrId).value;
+  var newDate = document.getElementById('edit-corr-date-' + corrId).value;
+  var newAmount = parseInt(document.getElementById('edit-corr-amount-' + corrId).value) || 0;
+  var newReason = document.getElementById('edit-corr-reason-' + corrId).value.trim();
+
+  if (!newCourse || !newDate || newAmount === 0) { alert('请填写完整的修改信息'); return; }
+  if (!newReason) { alert('请填写调整原因'); return; }
+
+  // 1. 撤销旧调整对学员课次的影响
+  var students = getStudents();
+  var s = students.find(function(x) { return x.id === c.studentId; });
+  if (s) {
+    normalizeStudentEnrollments(s);
+    var oldEnr = (s.enrollments || []).find(function(e) { return e.course === c.course; });
+    if (oldEnr) {
+      oldEnr.consumedLessons = (oldEnr.consumedLessons || 0) - c.amount;
+    }
+  }
+
+  // 2. 应用新调整
+  var newEnr = (s.enrollments || []).find(function(e) { return e.course === newCourse; });
+  if (!newEnr) {
+    // 新课程不存在，创建
+    s.enrollments.push({ course: newCourse, totalLessons: 0, consumedLessons: newAmount });
+  } else {
+    newEnr.consumedLessons = (newEnr.consumedLessons || 0) + newAmount;
+  }
+
+  normalizeStudentEnrollments(s);
+  saveStudents(students);
+
+  // 3. 更新修正记录
+  c.course = newCourse;
+  c.date = newDate;
+  c.amount = newAmount;
+  c.reason = newReason;
+  c.operator = getOperatorName();
+  saveLessonCorrections(corrections);
+
+  renderLessonLog();
+  updateLessonLogSummary();
+  renderLowLessonAlerts();
+  renderStudents();
+  updateOverview();
+}
+
+// 撤销手动调整（恢复课次 + 删除记录）
+function undoManualCorrection(id) {
+  var corrections = getLessonCorrections();
+  var c = corrections.find(function(x) { return x.id === id; });
+  if (!c) return;
+
+  // 撤销课次变动
+  var students = getStudents();
+  var s = students.find(function(x) { return x.id === c.studentId; });
+  if (s) {
+    normalizeStudentEnrollments(s);
+    var enr = c.course ? (s.enrollments || []).find(function(e) { return e.course === c.course; }) : (s.enrollments && s.enrollments[0]);
+    if (enr) {
+      enr.consumedLessons = (enr.consumedLessons || 0) - c.amount;
+    }
+    normalizeStudentEnrollments(s);
+    saveStudents(students);
+  }
+
+  // 删除记录
+  corrections = corrections.filter(function(x) { return x.id !== id; });
+  saveLessonCorrections(corrections);
+
+  renderLessonLog();
+  updateLessonLogSummary();
+  renderLowLessonAlerts();
+  renderStudents();
+  updateOverview();
 }
 
 function saveManualCorrection() {
@@ -200,6 +353,7 @@ function saveManualCorrection() {
     msgEl.style.color = '#e88'; return;
   }
 
+  // 重新获取最新数据，确保同步一致
   var students = getStudents();
   var s = students.find(function(x) { return x.id === studentId; });
   if (!s) { msgEl.textContent = '⚠️ 学员不存在'; msgEl.style.color = '#e88'; return; }
@@ -208,16 +362,20 @@ function saveManualCorrection() {
   var enr = (s.enrollments || []).find(function(e) { return e.course === course; });
   if (!enr) { msgEl.textContent = '⚠️ 未找到对应课程报名记录'; msgEl.style.color = '#e88'; return; }
 
-  var newConsumed = (enr.consumedLessons || 0) + amount;
-  if (newConsumed < 0) newConsumed = 0;
-  if (newConsumed > enr.totalLessons && amount > 0) {
-    if (!confirm('该操作将使' + course + '已消耗(' + newConsumed + ')超过总课次(' + enr.totalLessons + ')，确定继续？')) return;
+  // 直接更新 consumedLessons（允许为负值，不再 clamp 到 0）
+  enr.consumedLessons = (enr.consumedLessons || 0) + amount;
+
+  if ((enr.consumedLessons || 0) > (enr.totalLessons || 0) && amount > 0) {
+    if (!confirm('该操作将使' + course + '已消耗(' + enr.consumedLessons + ')超过总课次(' + enr.totalLessons + ')，确定继续？')) return;
   }
-  enr.consumedLessons = newConsumed;
-  // 同步顶层字段
+
+  // 重新计算顶层字段
   normalizeStudentEnrollments(s);
+
+  // 立即同步保存到 localStorage
   saveStudents(students);
 
+  // 保存修正记录
   var corrections = getLessonCorrections();
   corrections.unshift({
     id: Date.now(), studentId: studentId, date: date,
@@ -231,30 +389,8 @@ function saveManualCorrection() {
   msgEl.textContent = '✅ 已保存（' + (amount > 0 ? '扣' + amount + '课次' : '退' + Math.abs(amount) + '课次') + ' · ' + course + '）';
   msgEl.style.color = '#5a9';
   document.getElementById('log-manual-form').style.display = 'none';
-  renderLessonLog();
-  updateLessonLogSummary();
-  renderLowLessonAlerts();
-  renderStudents();
-  updateOverview();
-}
 
-function deleteManualCorrection(id) {
-  var corrections = getLessonCorrections();
-  var c = corrections.find(function(x) { return x.id === id; });
-  if (!c) return;
-
-  var students = getStudents();
-  var s = students.find(function(x) { return x.id === c.studentId; });
-  if (s) {
-    normalizeStudentEnrollments(s);
-    var enr = c.course ? (s.enrollments || []).find(function(e) { return e.course === c.course; }) : (s.enrollments && s.enrollments[0]);
-    if (enr) { enr.consumedLessons = Math.max(0, (enr.consumedLessons || 0) - c.amount); }
-    normalizeStudentEnrollments(s);
-    saveStudents(students);
-  }
-
-  corrections = corrections.filter(function(x) { return x.id !== id; });
-  saveLessonCorrections(corrections);
+  // 刷新界面
   renderLessonLog();
   updateLessonLogSummary();
   renderLowLessonAlerts();
@@ -282,7 +418,7 @@ function updateLessonLogSummary() {
     if (s.status !== '在读') return;
     normalizeStudentEnrollments(s);
     (s.enrollments || []).forEach(function(enr) {
-      if ((enr.totalLessons || 0) - (enr.consumedLessons || 0) <= 2) lowCount++;
+      if ((enr.totalLessons || 0) - (enr.consumedLessons || 0) <= 4) lowCount++;
     });
   });
 
@@ -308,7 +444,7 @@ function renderLowLessonAlerts() {
     normalizeStudentEnrollments(s);
     (s.enrollments || []).forEach(function(enr) {
       var remaining = (enr.totalLessons || 0) - (enr.consumedLessons || 0);
-      if (remaining <= 2) {
+      if (remaining <= 4) {
         alerts.push({ name: s.name, course: enr.course, total: enr.totalLessons || 0, consumed: enr.consumedLessons || 0, remaining: remaining });
       }
     });
@@ -321,7 +457,7 @@ function renderLowLessonAlerts() {
 
   var html = '<div style="display:flex; flex-wrap:wrap; gap:12px;">';
   alerts.forEach(function(a) {
-    var severity = a.remaining <= 0 ? '#e88' : '#e8a040';
+    var severity = a.remaining <= 0 ? '#e88' : a.remaining <= 4 ? '#e8a040' : '#d7a86e';
     html += '<div style="flex:1 1 260px; min-width:220px; background:#fff; border-radius:10px; padding:14px 18px; box-shadow:0 1px 6px rgba(0,0,0,0.05); border-left:4px solid ' + severity + ';">';
     html += '<div style="display:flex; justify-content:space-between; align-items:center;">';
     html += '<strong style="color:#5d4037;">' + a.name + '</strong>';
