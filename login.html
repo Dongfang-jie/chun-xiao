@@ -46,17 +46,14 @@
             <div class="input-wrap">
               <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password">
               <button type="button" class="pwd-toggle" id="pwd-toggle-login" tabindex="-1" title="显示/隐藏密码">
-                <span class="pwd-eye">👁️</span>
+                <svg class="pwd-icon pwd-icon-show" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="pwd-icon pwd-icon-hide" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
               </button>
             </div>
             <span class="field-hint" id="password-hint"></span>
           </div>
 
           <div class="form-options">
-            <label class="remember-wrap">
-              <input type="checkbox" id="remember-me">
-              <span>记住我，7天内免登录</span>
-            </label>
             <a href="#" class="forgot-link" id="show-forgot">忘记密码?</a>
           </div>
 
@@ -94,6 +91,18 @@
               <button type="button" class="sms-send-btn" id="reg-send-code-btn">获取验证码</button>
             </div>
             <span class="field-hint" id="reg-email-code-hint"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="reg-password">🔒 设置密码</label>
+            <div class="input-wrap">
+              <input type="password" id="reg-password" placeholder="至少6位密码" autocomplete="new-password">
+              <button type="button" class="pwd-toggle" id="pwd-toggle-reg" tabindex="-1" title="显示/隐藏密码">
+                <svg class="pwd-icon pwd-icon-show" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="pwd-icon pwd-icon-hide" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
+            </div>
+            <span class="field-hint" id="reg-password-hint"></span>
           </div>
 
           <div class="form-group">

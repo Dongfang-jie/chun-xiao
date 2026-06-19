@@ -239,12 +239,14 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px 10px;
-  font-size: 1.1em;
+  padding: 6px 8px;
   line-height: 1;
   border-radius: 6px;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s;
   color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pwd-toggle:hover {
@@ -256,8 +258,9 @@
   background: #e8d4c8;
 }
 
-.pwd-eye {
+.pwd-icon {
   pointer-events: none;
+  display: block;
 }
 
 /* ========== 字段即时提示 ========== */
@@ -270,37 +273,13 @@
   line-height: 1.3;
 }
 
-/* ========== 记住我 + 忘记密码行 ========== */
+/* ========== 忘记密码行 ========== */
 .form-options {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin: 6px 0 0;
   font-size: 0.9em;
-}
-
-.remember-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  color: #888;
-  user-select: none;
-  font-weight: normal;
-  margin: 0;
-}
-
-.remember-wrap input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #d7a86e;
-  cursor: pointer;
-  margin: 0;
-  padding: 0;
-}
-
-.remember-wrap:hover {
-  color: #5d4037;
 }
 
 .forgot-link {
@@ -484,14 +463,6 @@ body.dark-mode .pwd-toggle {
 
 body.dark-mode .pwd-toggle:hover {
   background: #333;
-  color: #d7a86e;
-}
-
-body.dark-mode .remember-wrap {
-  color: #888;
-}
-
-body.dark-mode .remember-wrap:hover {
   color: #d7a86e;
 }
 

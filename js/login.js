@@ -1,6 +1,6 @@
 /*
   春晓画室 - 登录页逻辑
-  功能：角色切换 / 邮箱密码登录 / 邮箱验证码注册 / 忘记密码 / 密码可见 / 记住我 / 实时校验
+  功能：角色切换 / 邮箱密码登录 / 邮箱验证码注册 / 忘记密码 / 密码可见 / 实时校验
   依赖 auth.js
 */
 
@@ -96,26 +96,25 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   }
 
-  function getEyeText(input) {
-    return input.type === 'password' ? '👁️' : '🙈';
-  }
-
   // ================================================================
-  //  密码可见切换
+  //  密码可见切换（SVG 图标）
   // ================================================================
 
   function initPwdToggle(toggleBtnId, inputId) {
     var btn = document.getElementById(toggleBtnId);
     var input = document.getElementById(inputId);
     if (!btn || !input) return;
+    var iconShow = btn.querySelector('.pwd-icon-show');
+    var iconHide = btn.querySelector('.pwd-icon-hide');
     btn.addEventListener('click', function () {
       var isPassword = input.type === 'password';
       input.type = isPassword ? 'text' : 'password';
-      var eye = btn.querySelector('.pwd-eye');
-      if (eye) eye.textContent = getEyeText(input);
+      if (iconShow) iconShow.style.display = isPassword ? 'none' : '';
+      if (iconHide) iconHide.style.display = isPassword ? '' : 'none';
     });
   }
   initPwdToggle('pwd-toggle-login', 'password');
+  initPwdToggle('pwd-toggle-reg', 'reg-password');
 
   // ================================================================
   //  角色标签切换
@@ -123,12 +122,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   var currentRole = 'parent';
 
+  var loginRegisterHint = document.getElementById('login-register-hint');
+
   document.querySelectorAll('.login-tab').forEach(function (tab) {
     tab.addEventListener('click', function () {
       document.querySelectorAll('.login-tab').forEach(function (t) { t.classList.remove('active'); });
       tab.classList.add('active');
       currentRole = tab.dataset.role;
       showForm(loginForm);
+      // 老师端隐藏注册入口
+      if (loginRegisterHint) {
+        loginRegisterHint.style.display = currentRole === 'teacher' ? 'none' : '';
+      }
     });
   });
 
@@ -228,6 +233,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     if (!/^\d{6}$/.test(v)) return '验证码为6位数字';
     return '';
   });
+  bindBlurValidation('reg-password', 'reg-password-hint', function (v) {
+    if (!v) return '请设置登录密码';
+    if (v.length < 6) return '密码至少需要6位';
+    return '';
+  });
   bindBlurValidation('reg-child', 'reg-child-hint', function (v) { return validateRequired(v, '孩子姓名'); });
 
   // 忘记密码表单校验
@@ -243,7 +253,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       var email = document.getElementById('email').value.trim();
       var password = document.getElementById('password').value;
-      var rememberMe = document.getElementById('remember-me').checked;
       var submitBtn = document.getElementById('login-submit-btn');
 
       var emailErr = validateEmail(email);
@@ -254,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       setBtnLoading(submitBtn, true);
 
       try {
-        var user = await Auth.login(email, password, rememberMe);
+        var user = await Auth.login(email, password);
 
         if (currentRole === 'teacher' && user.role === 'parent') {
           Auth.logout();
@@ -349,6 +358,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       var name      = document.getElementById('reg-name').value.trim();
       var email     = document.getElementById('reg-email').value.trim();
       var code      = document.getElementById('reg-email-code').value.trim();
+      var password  = document.getElementById('reg-password').value;
       var phone     = document.getElementById('reg-phone').value.trim();
       var childName = document.getElementById('reg-child').value.trim();
       var submitBtn = document.getElementById('register-submit-btn');
@@ -358,6 +368,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { registerError.textContent = '邮箱格式不正确'; return; }
       if (!code)          { registerError.textContent = '请输入邮箱验证码'; return; }
       if (!/^\d{6}$/.test(code)) { registerError.textContent = '验证码为6位数字'; return; }
+      if (!password || password.length < 6) { registerError.textContent = '请设置密码（至少6位）'; return; }
       if (!childName)     { registerError.textContent = '请输入孩子姓名'; return; }
 
       registerError.textContent = '';
@@ -370,9 +381,23 @@ document.addEventListener('DOMContentLoaded', async function () {
           throw new Error(verifyResp.message || '验证码校验失败');
         }
 
-        // 2. 创建家长账号（存入 parents 集合）
+        // 2. 创建 CloudBase 认证账户（邮箱+密码）
+        var auth = getAuth();
+        if (!auth) throw new Error('认证服务未就绪');
+        var signUpResult;
+        try {
+          signUpResult = await auth.signUpWithEmailAndPassword(email, password);
+        } catch (signUpErr) {
+          if (signUpErr.code === 'EMAIL_ALREADY_EXISTS' || (signUpErr.message && signUpErr.message.indexOf('已存在') >= 0)) {
+            throw new Error('该邮箱已被注册，请直接登录');
+          }
+          throw new Error('注册失败：' + (signUpErr.message || '请稍后再试'));
+        }
+
+        // 3. 创建家长账号（存入 parents 集合）
         var db = getDB();
         var doc = {
+          uid: signUpResult.user.uid,
           email: email,
           name: name,
           phone: phone || '',
@@ -380,17 +405,17 @@ document.addEventListener('DOMContentLoaded', async function () {
           regMethod: 'email_code',
           createdAt: new Date().toISOString()
         };
-        var addResult = await db.collection('parents').add(doc);
+        await db.collection('parents').add(doc);
 
-        // 3. 创建会话，跳转家长端
+        // 4. 创建会话，跳转家长端
         Auth._setSession({
-          uid: addResult.id || '',
+          uid: signUpResult.user.uid,
           email: email,
           name: name,
           childName: childName,
           role: 'parent',
           loginTime: new Date().toISOString()
-        }, true);
+        });
 
         window.location.href = 'parent-dashboard.html';
 

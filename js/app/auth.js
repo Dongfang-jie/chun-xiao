@@ -1,4 +1,4 @@
-/*
+﻿/*
   春晓画室 - 认证模块
   教师走本地密码 + CloudBase 同步
   家长走 CloudBase 邮箱密码登录
@@ -39,7 +39,7 @@ var Auth = {
   },
 
   // 登录（老师 + 家长通用）
-  login: async function (email, password, rememberMe) {
+  login: async function (email, password) {
     var teacher = getTeacherByEmail(email);
     if (teacher) {
       // 老师：本地密码校验优先
@@ -66,7 +66,7 @@ var Auth = {
         role: teacher.role,
         loginTime: new Date().toISOString()
       };
-      Auth._setSession(teacherUser, rememberMe);
+      Auth._setSession(teacherUser);
       return teacherUser;
     }
 
@@ -91,7 +91,7 @@ var Auth = {
               role: 'parent',
               loginTime: new Date().toISOString()
             };
-            Auth._setSession(parentUser, rememberMe);
+            Auth._setSession(parentUser);
             return parentUser;
           }
         } catch (dbErr) {
@@ -146,7 +146,7 @@ var Auth = {
       role: 'parent',
       loginTime: new Date().toISOString()
     };
-    Auth._setSession(sessionUser, true);  // 注册默认记住
+    Auth._setSession(sessionUser)
     return sessionUser;
   },
 
@@ -167,7 +167,7 @@ var Auth = {
     try { return JSON.parse(data); } catch (e) { return null; }
   },
 
-  _setSession: function (user, rememberMe) {
+  _setSession: function (user) {
     var session = {
       uid: user.uid,
       email: user.email,
@@ -177,13 +177,6 @@ var Auth = {
       loginTime: new Date().toISOString()
     };
     var data = JSON.stringify(session);
-    // 记住我：存 localStorage（持久化）；否则存 sessionStorage（关闭浏览器后清除）
-    if (rememberMe) {
-      localStorage.setItem(AUTH_CONFIG.sessionKey, data);
-      sessionStorage.removeItem(AUTH_CONFIG.sessionKey);
-    } else {
-      sessionStorage.setItem(AUTH_CONFIG.sessionKey, data);
-      localStorage.removeItem(AUTH_CONFIG.sessionKey);
-    }
+    localStorage.setItem(AUTH_CONFIG.sessionKey, data);
   }
 };
