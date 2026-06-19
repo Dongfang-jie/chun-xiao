@@ -16,25 +16,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   }
 
-  // ========== HTTP 调用 verify-code 云函数 ==========
-  // 绕过 SDK callFunction，直接用 fetch() 访问 HTTP 访问服务
-  var VERIFY_CODE_URL = 'https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/verify-code';
+  // ========== 调用 verify-code 云函数（通过 SDK，自动处理 CORS） ==========
 
   async function callVerifyCode(data) {
-    var response = await fetch(VERIFY_CODE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) {
-      throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-    }
-    var wrapper = await response.json();
-    // HTTP 服务包装格式: { statusCode, headers, body: "JSON字符串" }
-    if (wrapper && typeof wrapper.body === 'string') {
-      return JSON.parse(wrapper.body);
-    }
-    return wrapper;
+    var app = getApp();
+    if (!app) throw new Error('CloudBase 未初始化');
+    var result = await app.callFunction({ name: 'verify-code', data: data });
+    return result.result;
   }
 
   // ========== 页面元素 ==========
