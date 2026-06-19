@@ -142,7 +142,7 @@ function startAttendanceForClass(classId, date) {
   students.forEach(function(s) {
     var rec = existingRecords.find(function(r) { return r.studentId == s.id; });
     var status = rec ? rec.status : 'present';
-    var deducted = rec ? (rec.deducted || 0) : 0;
+    var deducted = rec ? (rec.deducted || 0) : 1;
     // 匹配该班级课程的 enrollment
     normalizeStudentEnrollments(s);
     var enrollment = (s.enrollments || []).find(function(e) { return e.course === cls.course; }) || (s.enrollments && s.enrollments[0]);
@@ -252,6 +252,11 @@ function startAttendanceForClass(classId, date) {
       var row = btn.parentElement.parentElement;
       row.querySelectorAll('.att-btn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
+      // 自动设扣课次：出勤=1，请假/缺勤=0
+      var deductInput = row.querySelector('.att-deduct');
+      if (deductInput) {
+        deductInput.value = (btn.dataset.st === 'present') ? 1 : 0;
+      }
     });
   });
 
