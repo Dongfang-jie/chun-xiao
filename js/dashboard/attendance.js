@@ -106,8 +106,16 @@ function startAttendanceForClass(classId, date) {
   var cls = getClasses().find(function(c) { return c.id == classId; });
   if (!cls) { area.innerHTML = '<p style="color:#e88;">班级不存在</p>'; return; }
 
-  var students = getStudents().filter(function(s) { return cls.studentIds.indexOf(s.id) !== -1; });
-  if (students.length === 0) { area.innerHTML = '<p style="color:#e88; text-align:center;">该班级没有学员，请先在「班级」中分配学员</p>'; return; }
+  var students = getStudents().filter(function(s) {
+    for (var i = 0; i < (cls.studentIds || []).length; i++) {
+      if (cls.studentIds[i] == s.id) return true;
+    }
+    return false;
+  });
+  if (students.length === 0) {
+    console.log('⚠️ 点名失败: 班级「' + cls.name + '」studentIds=' + JSON.stringify(cls.studentIds) + ', 学生总数=' + getStudents().length);
+    area.innerHTML = '<p style="color:#e88; text-align:center;">该班级没有学员，请先在「班级」中分配学员</p><p style="color:#999; font-size:0.8em;">班级studentIds: ' + JSON.stringify(cls.studentIds) + '<br>学生库共 ' + getStudents().length + ' 人</p>'; return;
+  }
 
   var existing = getAttendance().find(function(a) { return a.classId == classId && a.date == date; });
   var existingRecords = existing ? existing.records : [];
