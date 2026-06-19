@@ -16,13 +16,19 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
   }
 
-  // ========== 调用 verify-code 云函数（通过 SDK，自动处理 CORS） ==========
+  // ========== HTTP 调用 verify-code Web 函数（内置 CORS 处理） ==========
+  var VERIFY_CODE_URL = 'https://chunxiao-d8ghfaw3y0781da11.service.tcloudbase.com/verify-code';
 
   async function callVerifyCode(data) {
-    var app = getApp();
-    if (!app) throw new Error('CloudBase 未初始化');
-    var result = await app.callFunction({ name: 'verify-code', data: data });
-    return result.result;
+    var response = await fetch(VERIFY_CODE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+    }
+    return response.json();
   }
 
   // ========== 页面元素 ==========
