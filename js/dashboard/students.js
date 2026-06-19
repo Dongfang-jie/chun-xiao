@@ -362,6 +362,7 @@ function renderStudents() {
     html += '<td><span style="color:' + statusColor + '; font-weight:bold;">' + s.status + '</span></td>';
     html += '<td>';
     html += '<a href="#" class="edit-student" data-id="' + s.id + '">✏️</a> ';
+    if (s.status === '在读') html += '<a href="#" class="renew-student" data-id="' + s.id + '" style="color:#d7a86e; font-weight:bold;">💰</a> ';
     if (hasAdminPermission()) html += '<a href="#" class="del-student" data-id="' + s.id + '" style="color:#e88;">🗑️</a>';
     html += '</td></tr>';
   });
@@ -387,6 +388,15 @@ function renderStudents() {
       document.getElementById('s-status').value = s.status;
       normalizeStudentEnrollments(s);
       renderEnrollmentRows(s.enrollments);
+    });
+  });
+
+  // 绑定续费按钮（快速入口）
+  container.querySelectorAll('.renew-student').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var id = parseInt(btn.dataset.id);
+      quickRenewal(id, '');
     });
   });
 
@@ -546,6 +556,22 @@ function showStudentDetail(studentId) {
     html += '<p style="color:#999; font-size:0.9em; text-align:center; padding:16px;">暂无课消记录</p>';
   }
 
+  // 续费记录
+  var allRenewals = getRenewals ? getRenewals() : [];
+  var studentRenewals = allRenewals.filter(function(r) { return r.studentId === studentId; });
+  studentRenewals.sort(function(a, b) { return b.date.localeCompare(a.date); });
+  var totalRenewedLessons = studentRenewals.reduce(function(sum, r) { return sum + r.addedLessons; }, 0);
+  html += '<div class="detail-section-title">💰 续费记录 <span class="count-badge">(' + studentRenewals.length + '笔 · +' + totalRenewedLessons + '节)</span></div>';
+  if (studentRenewals.length > 0) {
+    html += '<table class="detail-log-table"><thead><tr><th>日期</th><th>课程</th><th>续费课次</th><th>备注</th><th>操作人</th></tr></thead><tbody>';
+    studentRenewals.forEach(function(r) {
+      html += '<tr><td>' + r.date + '</td><td>' + r.course + '</td><td style="font-weight:bold; color:#5a9;">+' + r.addedLessons + ' 课次</td><td style="font-size:0.85em; color:#888;">' + (r.note || '--') + '</td><td style="font-size:0.85em; color:#bbb;">' + (r.operator || '') + '</td></tr>';
+    });
+    html += '</tbody></table>';
+  } else {
+    html += '<p style="color:#999; font-size:0.9em; text-align:center; padding:16px;">暂无续费记录，<a href="#" class="goto-renewal-detail" data-sid="' + s.id + '" style="color:#d7a86e;">去续费 →</a></p>';
+  }
+
   // 上课记录
   html += '<div class="detail-section-title">📝 上课记录 <span class="count-badge">(' + classRecords.length + '条)</span></div>';
   if (classRecords.length > 0) {
@@ -579,6 +605,17 @@ function showStudentDetail(studentId) {
   document.getElementById('student-detail-overlay').addEventListener('click', function(e) {
     if (e.target === this) hideStudentDetail();
   });
+
+  // 绑定续费链接
+  var gotoRenewalLink = document.querySelector('.goto-renewal-detail');
+  if (gotoRenewalLink) {
+    gotoRenewalLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      var sid = parseInt(gotoRenewalLink.dataset.sid);
+      hideStudentDetail();
+      quickRenewal(sid, '');
+    });
+  }
 }
 
 function hideStudentDetail() {

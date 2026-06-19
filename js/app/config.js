@@ -19,6 +19,7 @@ var CLOUDBASE_CONFIG = {
     artworks: 'artworks',
     announcements: 'announcements',
     inquiries: 'inquiries',
+    renewals: 'renewals',
     parents: 'parents'
   }
 };

@@ -88,6 +88,7 @@
           <a href="#" class="sub-tab" data-sub="attendance">📋 点名</a>
           <a href="#" class="sub-tab" data-sub="records">📝 上课记录</a>
           <a href="#" class="sub-tab" data-sub="lessonlog">📉 课消日志</a>
+          <a href="#" class="sub-tab" data-sub="renewals">💰 续费</a>
         </div>
 
         <!-- ====== 学员 ====== -->
@@ -346,6 +347,78 @@
             <p style="color:#999; font-size:0.9em;">所有学员课次充足 ✅</p>
           </div>
         </div>
+
+        <!-- ====== 续费 ====== -->
+        <div class="sub-page" id="sub-renewals">
+          <!-- 续费表单 -->
+          <div id="renewal-form-wrap" style="background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+            <h4 style="color:#5d4037; margin:0 0 12px;">💰 学员续费</h4>
+            <p style="color:#888; font-size:0.85em; margin-bottom:16px;">为学员的报名课程增加课次，续费记录将被保存并可追溯</p>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">👨‍🎓 学员</label>
+                <select id="renewal-student" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; min-width:180px; font-size:0.95em;">
+                  <option value="">-- 选择学员 --</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📖 续费课程</label>
+                <select id="renewal-course" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; min-width:180px; font-size:0.95em;">
+                  <option value="">先选学员</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">🔢 续费课次</label>
+                <input type="number" id="renewal-lessons" placeholder="如：20" min="1" style="width:100px; padding:10px; border:2px solid #e8d4c8; border-radius:8px; text-align:center; font-size:1em;">
+              </div>
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📅 日期</label>
+                <input type="date" id="renewal-date" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; font-size:0.95em;">
+              </div>
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📝 备注（可选）</label>
+                <input type="text" id="renewal-note" placeholder="如：续费半年40节" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; min-width:200px;">
+              </div>
+            </div>
+            <div style="margin-top:16px;">
+              <button id="renewal-save-btn" class="login-btn" style="width:auto; padding:10px 28px; font-size:1em;">💰 确认续费</button>
+              <span id="renewal-msg" style="margin-left:12px; font-size:0.95em;"></span>
+            </div>
+          </div>
+
+          <!-- 续费历史 -->
+          <h3 style="margin-bottom:16px;">📜 续费记录 <span id="renewal-summary" style="font-weight:normal; font-size:0.8em; color:#888; margin-left:8px;"></span></h3>
+
+          <!-- 筛选栏 -->
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:16px;">
+            <div>
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">👨‍🎓 学员</label>
+              <select id="renewal-filter-student" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; min-width:140px; font-size:0.9em;">
+                <option value="">全部学员</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">📖 课程</label>
+              <select id="renewal-filter-course" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; min-width:130px; font-size:0.9em;">
+                <option value="">全部课程</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">📅 开始</label>
+              <input type="date" id="renewal-filter-from" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; font-size:0.9em;">
+            </div>
+            <div>
+              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">📅 结束</label>
+              <input type="date" id="renewal-filter-to" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; font-size:0.9em;">
+            </div>
+            <button id="renewal-filter-btn" class="login-btn" style="width:auto; padding:8px 16px; font-size:0.9em;">🔍 筛选</button>
+            <button id="renewal-filter-clear-btn" class="logout-btn" style="font-size:0.9em;">重置</button>
+          </div>
+
+          <div id="renewal-history-list">
+            <p style="text-align:center; color:#999; padding:40px;">暂无续费记录</p>
+          </div>
+        </div>
       </section>
 
       <!-- 作品管理 -->
@@ -500,6 +573,7 @@
   <script src="js/dashboard/announcements.js?v=20260618b"></script>
   <script src="js/dashboard/inquiries.js?v=20260618b"></script>
   <script src="js/dashboard/courses.js?v=20260618b"></script>
+  <script src="js/dashboard/renewals.js?v=20260619a"></script>
 
 </body>
 </html>

@@ -84,6 +84,7 @@ function initStudentSubTabs() {
       if (sub === 'attendance') { renderDailyAttendanceTable(document.getElementById('att-date-nav').value); renderAttendanceHistory(); renderAttendanceStats(); }
       if (sub === 'records') { refreshRecordSelects(); renderRecordsList(); }
       if (sub === 'lessonlog') { refreshLogStudentSelects(); renderLessonLog(); updateLessonLogSummary(); renderLowLessonAlerts(); }
+      if (sub === 'renewals') { refreshRenewalStudentSelects(); refreshRenewalFilterSelects(); renderRenewalHistory(); }
       if (sub === 'classes') { refreshClassStudentCheckboxes(); }
     });
   });
@@ -133,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadAttendance();
     loadRecords();
     loadLessonLog();
+    loadRenewals();
     loadArtworks();
     loadAnnouncements();
     loadCourses();
@@ -160,6 +162,9 @@ document.addEventListener('DOMContentLoaded', function () {
       renderLessonLog();
       updateLessonLogSummary();
       renderLowLessonAlerts();
+      refreshRenewalStudentSelects();
+      refreshRenewalFilterSelects();
+      renderRenewalHistory();
       refreshClassStudentCheckboxes();
       renderArtworks();
       renderAnnouncements();

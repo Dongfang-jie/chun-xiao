@@ -100,7 +100,8 @@ var DataStore = {
       { key: 'chunxiao-lesson-corrections', col: _.corrections },
       { key: 'chunxiao-artworks',           col: _.artworks },
       { key: 'chunxiao-announcements',      col: _.announcements },
-      { key: 'chunxiao-inquiries',          col: _.inquiries }
+      { key: 'chunxiao-inquiries',          col: _.inquiries },
+      { key: 'chunxiao-renewals',           col: _.renewals }
     ];
 
     for (var i = 0; i < map.length; i++) {
@@ -383,4 +384,14 @@ function saveInquiries(list) {
   localStorage.setItem('chunxiao-inquiries', JSON.stringify(list));
   localStorage.setItem('chunxiao-inquiries_synced', now);
   DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.inquiries, 'chunxiao-inquiries');
+}
+
+function getRenewals() {
+  return JSON.parse(localStorage.getItem('chunxiao-renewals') || '[]');
+}
+function saveRenewals(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-renewals', JSON.stringify(list));
+  localStorage.setItem('chunxiao-renewals_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.renewals, 'chunxiao-renewals');
 }
