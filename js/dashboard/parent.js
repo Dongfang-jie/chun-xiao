@@ -667,7 +667,7 @@ function loadParentInfo(user) {
 }
 
 /** 修改密码 */
-function changePassword() {
+async function changePassword() {
   var newPwd = document.getElementById('pwd-new').value.trim();
   var confirmPwd = document.getElementById('pwd-confirm').value.trim();
   var msgEl = document.getElementById('pwd-msg');
@@ -698,47 +698,31 @@ function changePassword() {
     return;
   }
 
-  // 家长：调用 CloudBase 修改密码
-  var auth = getAuth();
-  if (!auth) {
-    msgEl.textContent = '⚠️ 认证服务未就绪，请稍后再试';
-    msgEl.style.color = '#e88';
-    return;
-  }
-
+  // 家长：本地更新密码哈希
   msgEl.textContent = '⏳ 修改中...';
   msgEl.style.color = '#999';
 
-  // CloudBase SDK 密码重置（通过发送重置邮件或直接更新）
-  // 新版 SDK 可能需要用 auth.updatePassword 或类似方法
   try {
-    // 尝试用 CloudBase 的密码更新能力
-    if (typeof auth.updatePassword === 'function') {
-      auth.updatePassword(newPwd).then(function () {
-        msgEl.textContent = '✅ 密码修改成功';
-        msgEl.style.color = '#5a9';
-        document.getElementById('pwd-new').value = '';
-        document.getElementById('pwd-confirm').value = '';
-      }).catch(function (err) {
-        msgEl.textContent = '⚠️ 修改失败：' + (err.message || '请重新登录后再试');
-        msgEl.style.color = '#e88';
-      });
-    } else if (typeof auth.updateUser === 'function') {
-      auth.updateUser({ password: newPwd }).then(function () {
-        msgEl.textContent = '✅ 密码修改成功';
-        msgEl.style.color = '#5a9';
-        document.getElementById('pwd-new').value = '';
-        document.getElementById('pwd-confirm').value = '';
-      }).catch(function (err) {
-        msgEl.textContent = '⚠️ 修改失败：' + (err.message || '请重新登录后再试');
-        msgEl.style.color = '#e88';
-      });
-    } else {
-      msgEl.textContent = '⚠️ 当前版本暂不支持在线修改密码，请联系老师重置';
-      msgEl.style.color = '#e8a040';
+    var db = getDB();
+    if (!db) throw new Error('数据库未就绪');
+
+    // 查找家长的 parents 文档
+    var res = await db.collection('parents').where({ email: user.email }).get();
+    if (!res.data || res.data.length === 0) {
+      throw new Error('未找到账户信息');
     }
-  } catch (e) {
-    msgEl.textContent = '⚠️ 操作异常，请稍后再试';
+
+    var docId = res.data[0]._id;
+    var passwordHash = Auth.hashPassword(newPwd);
+
+    await db.collection('parents').doc(docId).update({ passwordHash: passwordHash });
+
+    msgEl.textContent = '✅ 密码修改成功';
+    msgEl.style.color = '#5a9';
+    document.getElementById('pwd-new').value = '';
+    document.getElementById('pwd-confirm').value = '';
+  } catch (err) {
+    msgEl.textContent = '⚠️ 修改失败：' + (err.message || '请重新登录后再试');
     msgEl.style.color = '#e88';
   }
 }

@@ -1,7 +1,7 @@
-﻿/*
+/*
   春晓画室 - 认证模块
   教师走本地密码 + CloudBase 同步
-  家长走 CloudBase 邮箱密码登录
+  家长走本地密码哈希（查 parents 集合验证）
 */
 
 var AUTH_CONFIG = {
@@ -70,37 +70,33 @@ var Auth = {
       return teacherUser;
     }
 
-    // 家长：CloudBase 登录
-    var auth = getAuth();
-    if (!auth) throw new Error('认证服务未就绪');
+    // 家长：本地密码验证（查 parents 集合，比哈希）
+    var db = getDB();
+    if (!db) throw new Error('数据库未就绪');
 
     try {
-      var parentResult = await auth.signInWithEmailAndPassword(email, password);
-      var db = getDB();
-      if (db) {
-        try {
-          var res = await db.collection(CLOUDBASE_CONFIG.collections.parents)
-            .where({ uid: parentResult.user.uid }).get();
-          if (res.data && res.data.length > 0) {
-            var p = res.data[0];
-            var parentUser = {
-              uid: p.uid,
-              email: p.email,
-              name: p.name,
-              childName: p.childName,
-              role: 'parent',
-              loginTime: new Date().toISOString()
-            };
-            Auth._setSession(parentUser);
-            return parentUser;
-          }
-        } catch (dbErr) {
-          console.error('获取家长信息失败:', dbErr);
-        }
+      var res = await db.collection(CLOUDBASE_CONFIG.collections.parents)
+        .where({ email: email }).get();
+      if (!res.data || res.data.length === 0) {
+        throw new Error('邮箱或密码错误');
       }
-      throw new Error('账号信息不完整，请联系老师');
+      var p = res.data[0];
+      if (!Auth.verifyPassword(password, p.passwordHash)) {
+        throw new Error('邮箱或密码错误');
+      }
+      var parentUser = {
+        uid: p._id,
+        email: p.email,
+        name: p.name,
+        childName: p.childName,
+        role: 'parent',
+        loginTime: new Date().toISOString()
+      };
+      Auth._setSession(parentUser);
+      return parentUser;
     } catch (e) {
-      if (e.message.indexOf('账号信息') >= 0) throw e;
+      if (e.message === '邮箱或密码错误') throw e;
+      if (e.message && e.message.indexOf('账号信息') >= 0) throw e;
       throw new Error('邮箱或密码错误');
     }
   },
@@ -178,5 +174,31 @@ var Auth = {
     };
     var data = JSON.stringify(session);
     localStorage.setItem(AUTH_CONFIG.sessionKey, data);
+  },
+
+  // 密码哈希（简单但有效的 ES5 兼容哈希）
+  hashPassword: function (password) {
+    var salt = 'chunxiao_2026';
+    var input = password + salt;
+    var hash = 0;
+    for (var i = 0; i < input.length; i++) {
+      var ch = input.charCodeAt(i);
+      hash = ((hash << 5) - hash) + ch;
+      hash = hash & hash;
+    }
+    var hashStr = (hash >>> 0).toString(16);
+    var combined = hashStr + salt + password.length;
+    var hash2 = 0;
+    for (var j = 0; j < combined.length; j++) {
+      var c = combined.charCodeAt(j);
+      hash2 = ((hash2 << 5) - hash2) + c;
+      hash2 = hash2 & hash2;
+    }
+    return 'cx_' + (hash2 >>> 0).toString(16);
+  },
+
+  verifyPassword: function (password, hash) {
+    if (!password || !hash) return false;
+    return Auth.hashPassword(password) === hash;
   }
 };

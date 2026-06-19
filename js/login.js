@@ -375,35 +375,35 @@ document.addEventListener('DOMContentLoaded', async function () {
           throw new Error(verifyResp.message || '验证码校验失败');
         }
 
-        // 2. 创建 CloudBase 认证账户（邮箱+密码）
-        var auth = getAuth();
-        if (!auth) throw new Error('认证服务未就绪');
-        var signUpResult;
+        // 2. 检查邮箱是否已被注册
+        var db = getDB();
+        if (!db) throw new Error('数据库未就绪');
         try {
-          signUpResult = await auth.signUpWithEmailAndPassword(email, password);
-        } catch (signUpErr) {
-          if (signUpErr.code === 'EMAIL_ALREADY_EXISTS' || (signUpErr.message && signUpErr.message.indexOf('已存在') >= 0)) {
+          var existing = await db.collection('parents').where({ email: email }).get();
+          if (existing.data && existing.data.length > 0) {
             throw new Error('该邮箱已被注册，请直接登录');
           }
-          throw new Error('注册失败：' + (signUpErr.message || '请稍后再试'));
+        } catch (checkErr) {
+          if (checkErr.message.indexOf('已被注册') >= 0) throw checkErr;
+          console.warn('检查重复邮箱失败（非致命）:', checkErr.message);
         }
 
-        // 3. 创建家长账号（存入 parents 集合）
-        var db = getDB();
+        // 3. 创建家长账号（存入 parents 集合，密码哈希存储）
+        var passwordHash = Auth.hashPassword(password);
         var doc = {
-          uid: signUpResult.user.uid,
           email: email,
           name: name,
+          passwordHash: passwordHash,
           phone: phone || '',
           childName: childName,
           regMethod: 'email_code',
           createdAt: new Date().toISOString()
         };
-        await db.collection('parents').add(doc);
+        var addResult = await db.collection('parents').add(doc);
 
         // 4. 创建会话，跳转家长端
         Auth._setSession({
-          uid: signUpResult.user.uid,
+          uid: addResult.id,
           email: email,
           name: name,
           childName: childName,
