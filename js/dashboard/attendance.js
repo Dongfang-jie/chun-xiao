@@ -318,7 +318,9 @@ function startAttendanceForClass(classId, date) {
     document.getElementById('att-msg').style.fontWeight = '';
     renderAttendanceHistory();
     renderAttendanceStats();
-    renderDailyAttendanceTable(date);
+    // 保持用户选择的日期，不跳回今天
+    var navDate = document.getElementById('att-date-nav');
+    renderDailyAttendanceTable(navDate ? navDate.value : date);
     renderLessonLog();
     updateLessonLogSummary();
     renderLowLessonAlerts();
