@@ -14,7 +14,8 @@ var COURSE_OPTIONS_HTML = [
   '<option>素描</option>',
   '<option>色彩</option>',
   '<option>硬笔书法</option>',
-  '<option>软笔书法</option>'
+  '<option>软笔书法</option>',
+  '<option>猫猫课程😽</option>'
 ].join('');
 
 // 兼容旧数据：无 enrollments 的 student 自动迁移
