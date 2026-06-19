@@ -20,7 +20,7 @@
 ├── css/  → style.css / login.css / dashboard.css
 ├── js/
 │   ├── app/ → config.js / auth.js / data.js / storage.js / ui.js / gallery.js / sync-status.js
-│   ├── dashboard/ → core.js / parent.js / overview.js / students.js / classes.js / schedule.js / attendance.js / attendance-stats.js / records.js / lesson-log.js / artworks.js / announcements.js / courses.js / inquiries.js
+│   ├── dashboard/ → core.js / parent.js / overview.js / students.js / classes.js / schedule.js / attendance.js / attendance-stats.js / records.js / lesson-log.js / renewals.js / artworks.js / announcements.js / courses.js / inquiries.js
 │   ├── login.js / contact.js
 ├── functions/
 │   ├── dbProxy/ (数据库代理，读写权限)
@@ -33,7 +33,7 @@
 - 同步通道: CloudBase Web SDK 直接数据库访问（匿名登录），**不经过云函数**
 - 依赖 CloudBase 数据库安全规则对所有业务集合开放 `read: true, write: "auth != null"`
 - parents / email_codes 集合保持仅 owner 可读写（保护隐私）
-- 8 个数据集合: students / classes / attendance / records / corrections / artworks / announcements / inquiries + email_codes(验证码) / parents(家长)
+- 9 个数据集合: students / classes / attendance / records / corrections / artworks / announcements / inquiries / renewals + email_codes(验证码) / parents(家长)
 - 认证: 教师硬编码(AUTH_CONFIG.teachers) / 家长 CloudBase 邮箱登录 或 邮箱验证码注册
 - 权限: admin(张校长 756924037@qq.com) / teacher(郑校长 953034984@qq.com) / parent
 - hasAdminPermission() 覆盖 admin+teacher
@@ -42,7 +42,7 @@
 - 公开页: 首页/画廊/课程/联系预约(ServerChan微信通知)
 - 登录: 邮箱密码 + 邮箱验证码注册(5字段) + 忘记密码 + 记住我(sessionStorage)
 - 家长端7模块: 总览/我的课程(周课表)/上课记录(考勤统计)/课次明细(消课日志)/孩子作品/画室通知/个人信息+改密码
-- 教师端: 总览/学生管理(学员/班级/课表/点名/上课记录)/课消日志/作品管理(完整CRUD+云存储+筛选+批量+导出)/预约查询/发布通知/课程管理
+- 教师端: 总览/学生管理(学员/班级/课表/点名/上课记录/续费)/课消日志/作品管理(完整CRUD+云存储+筛选+批量+导出)/预约查询/发布通知/课程管理
 - 全局: 深色模式/图片灯箱/回到顶部/响应式/同步状态气泡
 - 云存储: CloudBase Storage `app.storage.from().upload()` / `app.getTempFileURL()` / `remove()`，图片存 cloud:// fileID，渲染时异步解析临时URL
 
@@ -66,7 +66,7 @@ GitHub Issues，通过 `gh` CLI 操作。See `docs/agents/issue-tracker.md`.
 
 | 集合 | read | write | 说明 |
 |------|------|-------|------|
-| students / classes / attendance / records / corrections / artworks / announcements / inquiries | `true` | `"auth != null"` | 业务数据，双端同步 |
+| students / classes / attendance / records / corrections / artworks / announcements / inquiries / renewals | `true` | `"auth != null"` | 业务数据，双端同步 |
 | parents | `"doc._openid == auth.uid"` | `"doc._openid == auth.uid"` | 家长密码，仅 owner |
 | email_codes | `"doc._openid == auth.uid"` | `"doc._openid == auth.uid"` | 邮箱验证码，仅 owner |
 
