@@ -1,7 +1,79 @@
-/*
+﻿/*
   春晓画室 - 管理端学生管理模块
   功能：学员 CRUD / 筛选 / CSV导出 / 详情弹窗
+  支持多课程报名（enrollments 数组）
 */
+
+// ============================================================
+//  课程选项 & Enrollment 工具函数
+// ============================================================
+var COURSE_OPTIONS_HTML = [
+  '<option value="">选择课程</option>',
+  '<option>儿童创意画</option>',
+  '<option>中国画</option>',
+  '<option>素描</option>',
+  '<option>色彩</option>',
+  '<option>硬笔书法</option>',
+  '<option>软笔书法</option>'
+].join('');
+
+// 兼容旧数据：无 enrollments 的 student 自动迁移
+function normalizeStudentEnrollments(s) {
+  if (!s.enrollments || !s.enrollments.length) {
+    s.enrollments = [{ course: s.course || '--', totalLessons: s.totalLessons || 0, consumedLessons: s.consumedLessons || 0 }];
+  }
+  // 确保顶层字段与 enrollments 同步
+  s.course = s.enrollments.map(function(e) { return e.course; }).join('、');
+  s.totalLessons = s.enrollments.reduce(function(sum, e) { return sum + (e.totalLessons || 0); }, 0);
+  s.consumedLessons = s.enrollments.reduce(function(sum, e) { return sum + (e.consumedLessons || 0); }, 0);
+}
+
+// 渲染报名课程行（用于编辑回填）
+function renderEnrollmentRows(enrollments) {
+  var wrap = document.getElementById('enrollments-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  if (!enrollments || !enrollments.length) {
+    enrollments = [{ course: '', totalLessons: 0, consumedLessons: 0 }];
+  }
+  enrollments.forEach(function(e, i) {
+    addEnrollmentRow(e.course || '', e.totalLessons || 0, e.consumedLessons || 0, enrollments.length === 1);
+  });
+}
+
+// 添加一个 enrollment 行到表单
+function addEnrollmentRow(course, totalLessons, consumedLessons, hideRemove) {
+  var wrap = document.getElementById('enrollments-wrap');
+  if (!wrap) return;
+  var consumedDisplay = consumedLessons > 0 ? ' <span style="font-size:0.75em; color:#e88;">(已消' + consumedLessons + '节)</span>' : '';
+  var removeStyle = hideRemove ? 'visibility:hidden;' : '';
+  var row = document.createElement('div');
+  row.className = 'enrollment-row';
+  row.style.cssText = 'display:flex; gap:8px; align-items:center; margin-bottom:6px;';
+  row.innerHTML = '<select class="e-course" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">' + COURSE_OPTIONS_HTML + '</select>'
+    + '<input type="number" class="e-lessons" placeholder="总课次" min="0" value="' + (totalLessons || '') + '" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">'
+    + '<span class="e-consumed-info">' + consumedDisplay + '</span>'
+    + '<button type="button" class="e-remove-btn" onclick="removeEnrollmentRow(this)" style="' + removeStyle + ' padding:4px 8px; background:#e88; color:#fff; border:none; border-radius:4px; cursor:pointer;">✕</button>';
+  wrap.appendChild(row);
+  var sel = row.querySelector('.e-course');
+  if (sel && course) sel.value = course;
+}
+
+// 删除一个 enrollment 行
+function removeEnrollmentRow(btn) {
+  var wrap = document.getElementById('enrollments-wrap');
+  if (!wrap) return;
+  var rows = wrap.querySelectorAll('.enrollment-row');
+  if (rows.length <= 1) return;
+  btn.parentElement.remove();
+  // 如果删到只剩 1 行，隐藏其删除按钮
+  var remaining = wrap.querySelectorAll('.enrollment-row');
+  if (remaining.length === 1) {
+    var rmBtn = remaining[0].querySelector('.e-remove-btn');
+    if (rmBtn) rmBtn.style.visibility = 'hidden';
+  }
+  // 确保之前隐藏的按钮恢复显示（从 1 行变多行时由 addEnrollmentRow 控制）
+}
 
 // ============================================================
 //  学生管理入口
@@ -56,13 +128,27 @@ function loadStudents() {
       document.getElementById('s-edit-id').value = '';
       document.getElementById('s-name').value = '';
       document.getElementById('s-age').value = '';
-      document.getElementById('s-course').value = '';
       document.getElementById('s-parent').value = '';
       document.getElementById('s-phone').value = '';
       document.getElementById('s-status').value = '在读';
-      document.getElementById('s-lessons').value = '';
+      renderEnrollmentRows([{ course: '', totalLessons: 0, consumedLessons: 0 }]);
     };
   }
+  // 添加课程按钮
+  var addEnrBtn = document.getElementById('add-enrollment-btn');
+  if (addEnrBtn) {
+    addEnrBtn.onclick = function() {
+      var rows = document.querySelectorAll('#enrollments-wrap .enrollment-row');
+      if (rows.length >= 6) { alert('最多支持 6 门课程'); return; }
+      // 恢复所有删除按钮可见
+      rows.forEach(function(r) {
+        var btn = r.querySelector('.e-remove-btn');
+        if (btn) btn.style.visibility = 'visible';
+      });
+      addEnrollmentRow('', 0, 0, false);
+    };
+  }
+
   // 取消按钮
   var cancelBtn = document.getElementById('student-cancel-btn');
   if (cancelBtn) {
@@ -78,21 +164,48 @@ function loadStudents() {
       var name = document.getElementById('s-name').value.trim();
       if (!name) { alert('请输入学生姓名'); return; }
 
-      var totalLessons = parseInt(document.getElementById('s-lessons').value) || 0;
       var oldStudent = editId ? getStudents().find(function(s) { return s.id == editId; }) : null;
-      var consumed = oldStudent ? (oldStudent.consumedLessons || 0) : 0;
+      // 兼容旧数据（编辑时 oldStudent 可能无 enrollments）
+      if (oldStudent) normalizeStudentEnrollments(oldStudent);
+
+      // 从表单读取报名课程
+      var rows = document.querySelectorAll('#enrollments-wrap .enrollment-row');
+      var enrollments = [];
+      Array.prototype.forEach.call(rows, function(row) {
+        var eCourse = row.querySelector('.e-course').value;
+        var eLessons = parseInt(row.querySelector('.e-lessons').value) || 0;
+        if (eCourse && eLessons > 0) {
+          // 编辑时保留原有 consumedLessons
+          var oldEnr = null;
+          if (oldStudent && oldStudent.enrollments) {
+            oldEnr = oldStudent.enrollments.find(function(e) { return e.course === eCourse; });
+          }
+          enrollments.push({
+            course: eCourse,
+            totalLessons: eLessons,
+            consumedLessons: oldEnr ? (oldEnr.consumedLessons || 0) : 0
+          });
+        }
+      });
+
+      if (enrollments.length === 0) { alert('请至少填写一门课程和课次'); return; }
+
+      var totalLessons = enrollments.reduce(function(sum, e) { return sum + e.totalLessons; }, 0);
+      var consumedLessons = enrollments.reduce(function(sum, e) { return sum + (e.consumedLessons || 0); }, 0);
+      var courseStr = enrollments.map(function(e) { return e.course; }).join('、');
 
       var opName = getOperatorName();
       var student = {
         id: editId || Date.now(),
         name: name,
         age: document.getElementById('s-age').value.trim() || '--',
-        course: document.getElementById('s-course').value || '--',
+        course: courseStr || '--',
         parent: document.getElementById('s-parent').value.trim() || '--',
         phone: document.getElementById('s-phone').value.trim() || '--',
         status: document.getElementById('s-status').value,
         totalLessons: totalLessons,
-        consumedLessons: consumed,
+        consumedLessons: consumedLessons,
+        enrollments: enrollments,
         addedAt: editId ? (oldStudent ? oldStudent.addedAt : new Date().toISOString()) : new Date().toISOString(),
         addedBy: editId ? (oldStudent ? oldStudent.addedBy : opName) : opName,
         lastModifiedBy: opName
@@ -142,7 +255,7 @@ function applyStudentFilters(list) {
   }
 
   if (f.course) {
-    filtered = filtered.filter(function(s) { return s.course === f.course; });
+    filtered = filtered.filter(function(s) { return (s.course || '').indexOf(f.course) !== -1; });
   }
 
   if (f.status) {
@@ -167,7 +280,7 @@ function exportStudentsCSV() {
   var list = applyStudentFilters(getStudents());
   if (list.length === 0) { alert('没有可导出的学员数据'); return; }
 
-  var header = ['姓名', '年龄', '课程', '家长', '电话', '总课时', '已消耗', '剩余', '状态'];
+  var header = ['姓名', '年龄', '课程', '家长', '电话', '总课次', '已消耗', '剩余', '状态'];
   var rows = [header.join(',')];
   list.forEach(function(s) {
     var remaining = s.totalLessons - (s.consumedLessons || 0);
@@ -228,7 +341,7 @@ function renderStudents() {
     return;
   }
 
-  var html = '<table><thead><tr><th>姓名</th><th>年龄</th><th>课程</th><th>家长</th><th>总课时</th><th>已消耗</th><th>剩余</th><th>状态</th><th>操作</th></tr></thead><tbody>';
+  var html = '<table><thead><tr><th>姓名</th><th>年龄</th><th>课程</th><th>家长</th><th>总课次</th><th>已消耗</th><th>剩余</th><th>状态</th><th>操作</th></tr></thead><tbody>';
   list.forEach(function(s) {
     var total = s.totalLessons || 0;
     var consumed = s.consumedLessons || 0;
@@ -264,11 +377,11 @@ function renderStudents() {
       document.getElementById('s-edit-id').value = s.id;
       document.getElementById('s-name').value = s.name;
       document.getElementById('s-age').value = s.age;
-      document.getElementById('s-course').value = s.course;
       document.getElementById('s-parent').value = s.parent;
       document.getElementById('s-phone').value = s.phone;
       document.getElementById('s-status').value = s.status;
-      document.getElementById('s-lessons').value = s.totalLessons || 0;
+      normalizeStudentEnrollments(s);
+      renderEnrollmentRows(s.enrollments);
     });
   });
 
@@ -338,6 +451,8 @@ function showStudentDetail(studentId) {
   });
   classRecords.sort(function(a, b) { return b.date.localeCompare(a.date); });
 
+  // 兼容旧数据
+  normalizeStudentEnrollments(s);
   var total = s.totalLessons || 0;
   var consumed = s.consumedLessons || 0;
   var remaining = total - consumed;
@@ -354,12 +469,32 @@ function showStudentDetail(studentId) {
   html += '</div>';
   html += '<div class="student-detail-body">';
 
-  // 课时进度条
+  // 课次进度条（总览）
   html += '<div class="student-lesson-bar-wrap">';
-  html += '<div class="student-lesson-bar-header"><span>📊 课时进度</span><strong>' + (remaining <= 2 ? '⚠️ ' : '') + '剩余 ' + remaining + ' / 总 ' + total + ' 课时</strong></div>';
+  html += '<div class="student-lesson-bar-header"><span>📊 课次进度（总计）</span><strong>' + (remaining <= 2 ? '⚠️ ' : '') + '剩余 ' + remaining + ' / 总 ' + total + ' 课次</strong></div>';
   html += '<div class="student-lesson-bar"><div class="student-lesson-bar-fill' + barClass + '" style="width:' + progressPercent + '%;"></div></div>';
-  html += '<div class="student-lesson-legend"><span>已消耗：<strong>' + consumed + '</strong> 课时</span><span>进度：<strong>' + progressPercent + '%</strong></span></div>';
+  html += '<div class="student-lesson-legend"><span>已消耗：<strong>' + consumed + '</strong> 课次</span><span>进度：<strong>' + progressPercent + '%</strong></span></div>';
   html += '</div>';
+
+  // 每门课进度条
+  if (s.enrollments && s.enrollments.length > 0) {
+    html += '<div class="detail-section-title">📖 分课程进度</div>';
+    s.enrollments.forEach(function(enr) {
+      var eTotal = enr.totalLessons || 0;
+      var eConsumed = enr.consumedLessons || 0;
+      var eRemaining = eTotal - eConsumed;
+      var ePercent = eTotal > 0 ? Math.min(100, Math.round(eConsumed / eTotal * 100)) : 0;
+      var eBarClass = eRemaining <= 2 ? ' warning' : '';
+      var eRemainColor = eRemaining <= 2 ? '#e88' : eRemaining <= 5 ? '#e8a040' : '#5a9';
+      html += '<div style="margin-bottom:12px;">';
+      html += '<div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.9em;">';
+      html += '<span><strong>' + enr.course + '</strong></span>';
+      html += '<span style="color:' + eRemainColor + ';">剩余 <strong>' + eRemaining + '</strong> / ' + eTotal + ' 课次（已消 ' + eConsumed + '）</span>';
+      html += '</div>';
+      html += '<div class="student-lesson-bar" style="height:8px;"><div class="student-lesson-bar-fill' + eBarClass + '" style="width:' + ePercent + '%; height:8px;"></div></div>';
+      html += '</div>';
+    });
+  }
 
   // 基本信息
   html += '<div class="detail-section-title">📋 基本信息</div>';
@@ -368,7 +503,7 @@ function showStudentDetail(studentId) {
   html += '<div class="detail-info-item"><span class="detail-info-label">课程</span><span class="detail-info-value">' + (s.course || '--') + '</span></div>';
   html += '<div class="detail-info-item"><span class="detail-info-label">家长姓名</span><span class="detail-info-value">' + (s.parent || '--') + '</span></div>';
   html += '<div class="detail-info-item"><span class="detail-info-label">家长电话</span><span class="detail-info-value">' + (s.phone || '--') + '</span></div>';
-  html += '<div class="detail-info-item"><span class="detail-info-label">总课时</span><span class="detail-info-value">' + total + '</span></div>';
+  html += '<div class="detail-info-item"><span class="detail-info-label">总课次</span><span class="detail-info-value">' + total + '</span></div>';
   html += '<div class="detail-info-item"><span class="detail-info-label">已消耗</span><span class="detail-info-value" style="color:#e88;">' + consumed + '</span></div>';
   if (s.lastModifiedBy) html += '<div class="detail-info-item"><span class="detail-info-label">最后修改</span><span class="detail-info-value" style="font-size:0.85em;">🖊️ ' + s.lastModifiedBy + '</span></div>';
   html += '</div>';
@@ -390,13 +525,13 @@ function showStudentDetail(studentId) {
   html += '<div class="detail-stat-mini"><div class="mini-number orange">' + stats.leave + '</div><div class="mini-label">⭕ 请假</div></div>';
   html += '<div class="detail-stat-mini"><div class="mini-number red">' + stats.absent + '</div><div class="mini-label">❌ 缺勤</div></div>';
   html += '<div class="detail-stat-mini"><div class="mini-number brown">' + presentRate + '%</div><div class="mini-label">📈 出勤率</div></div>';
-  html += '<div class="detail-stat-mini"><div class="mini-number brown">' + stats.totalDeducted + '</div><div class="mini-label">📉 共扣课时</div></div>';
+  html += '<div class="detail-stat-mini"><div class="mini-number brown">' + stats.totalDeducted + '</div><div class="mini-label">📉 共扣课次</div></div>';
   html += '</div>';
 
   // 课消日志
   html += '<div class="detail-section-title">📜 课消日志 <span class="count-badge">(' + lessonLog.length + '条)</span></div>';
   if (lessonLog.length > 0) {
-    html += '<table class="detail-log-table"><thead><tr><th>日期</th><th>班级</th><th>状态</th><th>扣课时</th></tr></thead><tbody>';
+    html += '<table class="detail-log-table"><thead><tr><th>日期</th><th>班级</th><th>状态</th><th>扣课次</th></tr></thead><tbody>';
     lessonLog.forEach(function(log) {
       var statusLabel = log.status === 'present' ? '✅ 出勤' : log.status === 'leave' ? '⭕ 请假' : '❌ 缺勤';
       html += '<tr><td>' + log.date + '</td><td>' + log.className + '</td><td>' + statusLabel + '</td><td style="font-weight:bold; color:' + (log.deducted > 0 ? '#e88' : '#999') + ';">' + (log.deducted > 0 ? '-' + log.deducted : '0') + '</td></tr>';

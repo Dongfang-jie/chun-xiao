@@ -1,6 +1,6 @@
-/*
+﻿/*
   春晓画室 - 家长端模块
-  功能：总览 / 我的课程 / 上课记录 / 课时明细 / 孩子作品 / 画室通知 / 个人信息
+  功能：总览 / 我的课程 / 上课记录 / 课次明细 / 孩子作品 / 画室通知 / 个人信息
 */
 
 // ============================================================
@@ -87,7 +87,7 @@ function loadParentOverview(user) {
     }
   }
 
-  // --- 剩余课时 ---
+  // --- 剩余课次 ---
   var elRemaining = document.getElementById('ov-remaining');
   if (elRemaining) {
     if (!student) {
@@ -324,7 +324,7 @@ function renderParentAttendanceList(studentId) {
     return;
   }
 
-  var html = '<table><thead><tr><th>日期</th><th>班级</th><th>状态</th><th>扣课时</th></tr></thead><tbody>';
+  var html = '<table><thead><tr><th>日期</th><th>班级</th><th>状态</th><th>扣课次</th></tr></thead><tbody>';
   entries.forEach(function (e) {
     var statusLabel, statusColor;
     if (e.status === 'present') { statusLabel = '✅ 出勤'; statusColor = '#5a9'; }
@@ -349,7 +349,7 @@ function getDayOfWeek(dateStr) {
 }
 
 // ============================================================
-//  4. 课时明细
+//  4. 课次明细
 // ============================================================
 
 function loadParentLessonLog(user) {
@@ -364,7 +364,7 @@ function loadParentLessonLog(user) {
   renderParentLessonLog(student.id);
 }
 
-/** 渲染课时进度条 */
+/** 渲染课次进度条 */
 function renderLessonProgress(student) {
   var container = document.getElementById('parent-lesson-progress');
   if (!container) return;
@@ -377,22 +377,22 @@ function renderLessonProgress(student) {
 
   var html = '<div class="student-lesson-bar-wrap">';
   html += '<div class="student-lesson-bar-header">';
-  html += '<span>课时进度</span>';
+  html += '<span>课次进度</span>';
   html += '<strong>' + consumed + ' / ' + total + ' 已消耗</strong>';
   html += '</div>';
   html += '<div class="student-lesson-bar">';
   html += '<div class="student-lesson-bar-fill ' + barColor + '" style="width:' + pct + '%;"></div>';
   html += '</div>';
   html += '<div class="student-lesson-legend">';
-  html += '<span>总课时 <strong>' + total + '</strong></span>';
+  html += '<span>总课次 <strong>' + total + '</strong></span>';
   html += '<span>已消耗 <strong style="color:#e88;">' + consumed + '</strong></span>';
   html += '<span>剩余 <strong style="color:' + (remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9') + ';">' + remaining + '</strong></span>';
   html += '</div>';
 
   if (remaining <= 2 && remaining > 0) {
-    html += '<p class="parent-lesson-warning">⚠️ 剩余课时不足，请及时续费</p>';
+    html += '<p class="parent-lesson-warning">⚠️ 剩余课次不足，请及时续费</p>';
   } else if (remaining <= 0) {
-    html += '<p class="parent-lesson-warning">⚠️ 课时已用完，请联系老师续费</p>';
+    html += '<p class="parent-lesson-warning">⚠️ 课次已用完，请联系老师续费</p>';
   }
 
   html += '</div>';
@@ -647,7 +647,7 @@ function loadParentInfo(user) {
     html += '<hr style="border:none; border-top:1px solid #e8d4c8; margin:16px 0;">';
     html += '<p><strong>📊 在读状态：</strong>' + (student.status || '--') + '</p>';
     html += '<p><strong>📖 主修课程：</strong>' + (student.course || '--') + '</p>';
-    html += '<p><strong>📚 总课时：</strong>' + (student.totalLessons || 0) + '</p>';
+    html += '<p><strong>📚 总课次：</strong>' + (student.totalLessons || 0) + '</p>';
     html += '<p><strong>✅ 已消耗：</strong>' + (student.consumedLessons || 0) + '</p>';
     html += '<p><strong>⭐ 剩余：</strong>' + ((student.totalLessons || 0) - (student.consumedLessons || 0)) + '</p>';
   }

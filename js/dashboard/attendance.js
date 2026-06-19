@@ -1,4 +1,4 @@
-/*
+﻿/*
   春晓画室 - 管理端点名模块（每日点名 + 点名表单）
 */
 
@@ -120,7 +120,7 @@ function startAttendanceForClass(classId, date) {
   html += '<button id="att-all-leave" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em; background:#e8a040; border-color:#e8a040;">⭕ 全部请假</button>';
   html += '<span style="color:#ccc; margin:0 4px;">|</span>';
   html += '<input type="number" id="att-deduct-all" value="0" min="0" style="width:60px; padding:6px; border:2px solid #e8d4c8; border-radius:6px; text-align:center;">';
-  html += '<button id="att-deduct-all-btn" class="login-btn" style="width:auto; padding:8px 20px; font-size:0.9em; background:#e65100; border-color:#bf360c; font-weight:bold; letter-spacing:1px; transition:all 0.15s;">📉 全部扣课时</button>';
+  html += '<button id="att-deduct-all-btn" class="login-btn" style="width:auto; padding:8px 20px; font-size:0.9em; background:#e65100; border-color:#bf360c; font-weight:bold; letter-spacing:1px; transition:all 0.15s;">📉 全部扣课次</button>';
   html += '<span style="color:#888; font-size:0.8em;">仅扣出勤学员</span>';
   html += '</div>';
 
@@ -137,21 +137,26 @@ function startAttendanceForClass(classId, date) {
     return latestDate;
   }
 
-  html += '<table><thead><tr><th>学员</th><th>总/已消耗/剩余</th><th>上次扣课</th><th>出勤</th><th>请假</th><th>缺勤</th><th>扣课时</th></tr></thead><tbody>';
+  html += '<table><thead><tr><th>学员</th><th>总/已消耗/剩余</th><th>上次扣课</th><th>出勤</th><th>请假</th><th>缺勤</th><th>扣课次</th></tr></thead><tbody>';
 
   students.forEach(function(s) {
     var rec = existingRecords.find(function(r) { return r.studentId == s.id; });
     var status = rec ? rec.status : 'present';
     var deducted = rec ? (rec.deducted || 0) : 0;
-    var total = s.totalLessons || 0;
-    var consumed = s.consumedLessons || 0;
+    // 匹配该班级课程的 enrollment
+    normalizeStudentEnrollments(s);
+    var enrollment = (s.enrollments || []).find(function(e) { return e.course === cls.course; }) || (s.enrollments && s.enrollments[0]);
+    var total = enrollment ? (enrollment.totalLessons || 0) : (s.totalLessons || 0);
+    var consumed = enrollment ? (enrollment.consumedLessons || 0) : (s.consumedLessons || 0);
     var remaining = total - consumed;
     var remainColor = remaining <= 2 ? '#e88' : remaining <= 5 ? '#e8a040' : '#5a9';
     var lastDate = getLastDeductDate(s.id);
     var lastDateDisplay = lastDate ? lastDate : '<span style="color:#ccc;">无记录</span>';
+    // 多课程时显示课程名
+    var courseLabel = (s.enrollments && s.enrollments.length > 1 && enrollment) ? '<span style="font-size:0.7em; color:#888;">' + enrollment.course + '</span> ' : '';
     html += '<tr>';
     html += '<td><strong>' + s.name + '</strong></td>';
-    html += '<td style="font-size:0.85em;">总' + total + ' / <span style="color:#e88;">消' + consumed + '</span> / <span style="color:' + remainColor + ';">剩' + remaining + '</span></td>';
+    html += '<td style="font-size:0.85em;">' + courseLabel + '总' + total + ' / <span style="color:#e88;">消' + consumed + '</span> / <span style="color:' + remainColor + ';">剩' + remaining + '</span></td>';
     html += '<td style="font-size:0.8em; color:#888;">' + lastDateDisplay + '</td>';
     html += '<td><button class="att-btn att-present' + (status === 'present' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="present">✅</button></td>';
     html += '<td><button class="att-btn att-leave' + (status === 'leave' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="leave">⭕</button></td>';
@@ -236,8 +241,8 @@ function startAttendanceForClass(classId, date) {
     setTimeout(function() { btn.textContent = origText; btn.style.background = ''; btn.style.borderColor = ''; btn.style.transform = ''; }, 1200);
     var msgEl = document.getElementById('att-msg');
     if (msgEl) {
-      if (val > 0) { msgEl.textContent = '📌 已填充 ' + presentCount + ' 名出勤学员扣 ' + val + ' 课时，请点击保存'; msgEl.style.color = '#e65100'; }
-      else { msgEl.textContent = '已清零 ' + presentCount + ' 名学员的扣课时'; msgEl.style.color = '#888'; }
+      if (val > 0) { msgEl.textContent = '📌 已填充 ' + presentCount + ' 名出勤学员扣 ' + val + ' 课次，请点击保存'; msgEl.style.color = '#e65100'; }
+      else { msgEl.textContent = '已清零 ' + presentCount + ' 名学员的扣课次'; msgEl.style.color = '#888'; }
       msgEl.style.fontWeight = 'bold';
     }
   });
@@ -265,30 +270,46 @@ function startAttendanceForClass(classId, date) {
     });
 
     var studentList = getStudents();
+    // 标准化所有学生 enrollments（兼容旧数据）
+    studentList.forEach(function(s) { normalizeStudentEnrollments(s); });
+
     if (existing) {
       existing.records.forEach(function(r) {
         if (r.deducted > 0 && r.status === 'present') {
           var s = studentList.find(function(x) { return x.id === r.studentId; });
-          if (s) { s.consumedLessons = Math.max(0, (s.consumedLessons || 0) - r.deducted); }
+          if (s) {
+            var enr = (s.enrollments || []).find(function(e) { return e.course === cls.course; }) || (s.enrollments && s.enrollments[0]);
+            if (enr) { enr.consumedLessons = Math.max(0, (enr.consumedLessons || 0) - r.deducted); }
+          }
         }
       });
     }
 
     Object.keys(studentDeductions).forEach(function(sid) {
       var s = studentList.find(function(x) { return x.id == parseInt(sid); });
-      if (s) { s.consumedLessons = (s.consumedLessons || 0) + studentDeductions[sid]; }
+      if (s) {
+        var enr = (s.enrollments || []).find(function(e) { return e.course === cls.course; }) || (s.enrollments && s.enrollments[0]);
+        if (enr) { enr.consumedLessons = (enr.consumedLessons || 0) + studentDeductions[sid]; }
+      }
     });
+
+    // 同步顶层字段
+    studentList.forEach(function(s) { normalizeStudentEnrollments(s); });
     saveStudents(studentList);
 
     var all = getAttendance().filter(function(a) { return !(a.classId == classId && a.date == date); });
     all.push({ id: Date.now(), classId: classId, date: date, records: records, operator: getOperatorName() });
     saveAttendance(all);
-    document.getElementById('att-msg').textContent = '✅ 点名已保存，课时已更新';
+    document.getElementById('att-msg').textContent = '✅ 点名已保存，课次已更新';
     document.getElementById('att-msg').style.color = '#5a9';
     document.getElementById('att-msg').style.fontWeight = '';
     renderAttendanceHistory();
     renderAttendanceStats();
     renderDailyAttendanceTable(date);
+    renderLessonLog();
+    updateLessonLogSummary();
+    renderLowLessonAlerts();
+    renderStudents();
     area.style.display = 'none';
   });
 }

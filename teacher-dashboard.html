@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -114,7 +114,7 @@
             </select>
             <div class="filter-chips" style="display:flex; gap:6px; flex-wrap:wrap;">
               <span class="filter-chip active" data-filter="all">全部</span>
-              <span class="filter-chip" data-filter="low">⚠️ 课时不足</span>
+              <span class="filter-chip" data-filter="low">⚠️ 课次不足</span>
               <span class="filter-chip" data-filter="active">在读</span>
               <span class="filter-chip" data-filter="paused">休学</span>
             </div>
@@ -123,21 +123,19 @@
 
           <div id="student-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
             <h4 id="student-form-title">添加学生</h4>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
               <input type="text" id="s-name" placeholder="学生姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
               <input type="text" id="s-age" placeholder="年龄" style="flex:1; min-width:80px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <select id="s-course" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-                <option value="">选择课程</option>
-                <option>儿童创意画</option><option>中国画</option><option>素描</option>
-                <option>色彩</option><option>硬笔书法</option><option>软笔书法</option>
-              </select>
               <input type="text" id="s-parent" placeholder="家长姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
               <input type="text" id="s-phone" placeholder="家长电话" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
               <select id="s-status" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
                 <option value="在读">在读</option><option value="休学">休学</option><option value="结课">结课</option>
               </select>
-              <input type="number" id="s-lessons" placeholder="总课时（如：20）" min="0" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
             </div>
+            <!-- 课程/课次：动态 enrollment 行 -->
+            <div style="margin-bottom:4px; font-size:0.85em; color:#888; font-weight:bold;">📖 报名课程与课次</div>
+            <div id="enrollments-wrap"></div>
+            <button id="add-enrollment-btn" type="button" style="margin-top:6px; padding:6px 16px; background:#5d4037; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:0.85em;">+ 添加课程</button>
             <div style="margin-top:12px; display:flex; gap:8px;">
               <button id="student-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
               <button id="student-cancel-btn" class="logout-btn">取消</button>
@@ -263,11 +261,11 @@
           <div class="stat-cards" id="lessonlog-summary" style="margin-bottom:20px;">
             <div class="stat-card">
               <div class="stat-number" id="log-total-deducted">0</div>
-              <div class="stat-label">📉 累计扣课时</div>
+              <div class="stat-label">📉 累计扣课次</div>
             </div>
             <div class="stat-card">
               <div class="stat-number" id="log-month-deducted">0</div>
-              <div class="stat-label">📅 本月扣课时</div>
+              <div class="stat-label">📅 本月扣课次</div>
             </div>
             <div class="stat-card">
               <div class="stat-number" id="log-involved-students">0</div>
@@ -275,7 +273,7 @@
             </div>
             <div class="stat-card">
               <div class="stat-number" id="log-low-lesson-count" style="color:#e88;">0</div>
-              <div class="stat-label">⚠️ 课时不足（≤2节）</div>
+              <div class="stat-label">⚠️ 课次不足（≤2节）</div>
             </div>
           </div>
 
@@ -302,12 +300,18 @@
 
           <!-- 手动调整表单 -->
           <div id="log-manual-form" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#5d4037; margin:0 0 12px;">📝 手动调整课时</h4>
+            <h4 style="color:#5d4037; margin:0 0 12px;">📝 手动调整课次</h4>
             <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
               <div>
                 <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">学员</label>
                 <select id="log-manual-student" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:150px;">
                   <option value="">-- 选择 --</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">课程</label>
+                <select id="log-manual-course" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:130px;">
+                  <option value="">先选学员</option>
                 </select>
               </div>
               <div>
@@ -320,7 +324,7 @@
               </div>
               <div>
                 <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">原因</label>
-                <input type="text" id="log-manual-reason" placeholder="如：补课扣课、赠送课时等" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:200px;">
+                <input type="text" id="log-manual-reason" placeholder="如：补课扣课、赠送课次等" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:200px;">
               </div>
             </div>
             <div style="margin-top:12px; display:flex; gap:8px;">
@@ -332,13 +336,13 @@
 
           <!-- 日志表格 -->
           <div id="lessonlog-table-wrap">
-            <p style="text-align:center; color:#999; padding:40px;">暂无课消记录，点名扣课时后自动生成</p>
+            <p style="text-align:center; color:#999; padding:40px;">暂无课消记录，点名扣课次后自动生成</p>
           </div>
 
-          <!-- 低课时预警 -->
-          <h3 style="margin-top:30px;">⚠️ 课时不足预警</h3>
+          <!-- 低课次预警 -->
+          <h3 style="margin-top:30px;">⚠️ 课次不足预警</h3>
           <div id="low-lesson-alerts">
-            <p style="color:#999; font-size:0.9em;">所有学员课时充足 ✅</p>
+            <p style="color:#999; font-size:0.9em;">所有学员课次充足 ✅</p>
           </div>
         </div>
       </section>
@@ -484,13 +488,13 @@
   <script src="js/app/sync-status.js?v=20260618c"></script>
   <script src="js/dashboard/core.js?v=20260618c"></script>
   <script src="js/dashboard/overview.js?v=20260618b"></script>
-  <script src="js/dashboard/students.js?v=20260618b"></script>
+  <script src="js/dashboard/students.js?v=20260619a"></script>
   <script src="js/dashboard/classes.js?v=20260618b"></script>
   <script src="js/dashboard/schedule.js?v=20260618b"></script>
-  <script src="js/dashboard/attendance.js?v=20260618b"></script>
-  <script src="js/dashboard/attendance-stats.js?v=20260618b"></script>
+  <script src="js/dashboard/attendance.js?v=20260619a"></script>
+  <script src="js/dashboard/attendance-stats.js?v=20260619a"></script>
   <script src="js/dashboard/records.js?v=20260618b"></script>
-  <script src="js/dashboard/lesson-log.js?v=20260618b"></script>
+  <script src="js/dashboard/lesson-log.js?v=20260619a"></script>
   <script src="js/dashboard/artworks.js?v=20260618d"></script>
   <script src="js/dashboard/announcements.js?v=20260618b"></script>
   <script src="js/dashboard/inquiries.js?v=20260618b"></script>

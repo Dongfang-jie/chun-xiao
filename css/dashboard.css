@@ -1,4 +1,4 @@
-/*
+﻿/*
   春晓画室 - 仪表盘样式
   阶段 5: 登录系统（老师端 + 家长端共用）
 */
@@ -1030,7 +1030,7 @@ body.dark-mode .log-type-manual {
   overflow-y: auto;
 }
 
-/* 课时进度环 */
+/* 课次进度环 */
 .student-lesson-bar-wrap {
   margin-bottom: 24px;
   background: #fdfaf5;
@@ -1529,7 +1529,7 @@ body.dark-mode .student-lesson-legend strong {
   border-left: 3px solid #d7a86e;
 }
 
-/* 家长端：课时不足警告 */
+/* 家长端：课次不足警告 */
 .parent-lesson-warning {
   margin-top: 12px;
   padding: 10px 14px;

@@ -1,82 +1,100 @@
-# 记忆备份 — 2026-06-17
+# 记忆备份 2026-06-17
 
-> 来源：`C:\Users\35047\.claude\projects\G------\memory\`
-> 共 3 条记忆
+> 自动备份于 2026-06-17 会话结束
+
+## 记忆索引
+
+- [项目状态总览](#项目状态总览)
+- [项目架构](#项目架构)
+- [verify-code SMTP 配置](#verify-code-smtp-配置)
+- [整体架构原则](#整体架构原则)
 
 ---
 
-## 1. 项目状态总览
+## 项目状态总览
 
-### 本次会话改动（2026-06-17）
-- 🆕 **家长端全面升级**（7模块）：总览/我的课程/上课记录/课时明细/孩子作品/画室通知/个人信息+改密码
-- 🆕 **登录优化**（7项）：密码可见切换/记住我(sessionStorage)/忘记密码/表单切换动画/实时校验/按钮loading/视觉微调
-- 🆕 **邮箱验证码注册**：注册表单改为 家长姓名+邮箱+邮箱验证码+手机号+孩子姓名
-- 🆕 **verify-code 云函数**：QQ SMTP 发邮件验证码 + 校验 + 防刷
-- 🔧 **auth.js 升级**：_setSession 支持 rememberMe → localStorage/sessionStorage 双存储
+### 项目状态（截至 2026-06-17）
+
+### 本次会话改动
+- 🆕 家长端全面升级（7模块）
+- 🆕 登录优化（7项）
+- 🆕 邮箱验证码注册
+- 🆕 verify-code 云函数
+- 🔧 auth.js 升级
+- 🔧 complete-profile.html / functions/sms 已删除
+- 🔧 数据层双向同步修复：dbProxy 云函数替代 Web SDK 直连 + 时间戳比较 + 离线重试 + 旧数据迁移保护 + 家长端补全同步
+- 🎨 对外展示页面全面优化：SEO / CSS架构 / 性能 / 结构化数据 / sitemap + robots.txt
+
+### 最新提交
+- `5487d58` fix: data.js 完善双向同步
+- `c5664bb` fix: data.js 改用 dbProxy 云函数
+- `f91ec59` feat: 对外展示页面全面优化
 
 ### 部署
-- **前端**: GitHub Pages — https://dongfang-jie.github.io/chun-xiao/
-- **后端**: CloudBase `chunxiao-d8ghfaw3y0781da11`
-- **云函数**: `dbProxy`, `verify-code`
+- 前端: GitHub Pages — https://dongfang-jie.github.io/chun-xiao/
+- 后端: CloudBase `chunxiao-d8ghfaw3y0781da11`
+- 云函数: dbProxy, verify-code
 
-### 待办
-1. ✅ ~~创建 email_codes 数据库集合~~（已通过 ensureCollection 自动创建）
-2. ✅ ~~确认 verify-code 环境变量~~（已确认）
-3. 🟡 替换占位图片
-4. 🟡 对外展示页面优化
-5. 🟢 教师端继续填充
+### 部署待办
+- ✅ email_codes 集合
+- ✅ verify-code 环境变量
+- ✅ 替换占位图片
+- ✅ 对外展示页面优化
+- 🟢 教师端继续填充
 
 ---
 
-## 2. 项目架构
+## 项目架构
 
-### 目录
+### 页面加载链
+
+| 页面 | SDK | config | auth | data | 其他 |
+|------|-----|--------|------|------|------|
+| courses.html | ❌ | ❌ | ❌ | ❌ | ui |
+| contact.html | ✅ | ✅ | ✅ | ❌ | ui + contact |
+| login.html | ✅ | ✅ | ✅ | ❌ | login |
+| index.html | ✅ | ✅ | ✅ | ✅ | ui + gallery |
+| gallery.html | ✅ | ✅ | ✅ | ✅ | ui + gallery |
+| parent-dashboard | ✅ | ✅ | ✅ | ✅ | core + parent |
+| teacher-dashboard | ✅ | ✅ | ✅ | ✅ | core + 12 modules |
+
+### 数据流（2026-06-17 更新）
+
 ```
-├── index.html / login.html / parent-dashboard.html / teacher-dashboard.html
-├── css/  → style.css / login.css / dashboard.css
-├── js/
-│   ├── app/ → config.js / auth.js / data.js / ui.js / gallery.js
-│   ├── dashboard/ → core.js / parent.js / students.js / classes.js / ...
-│   ├── login.js / contact.js
-├── functions/
-│   ├── dbProxy/ / verify-code/
-├── cloudbaserc.json
+localStorage (主存储)
+    ↕ 双向同步（dbProxy 云函数，管理员权限）
+CloudBase
+    - pullFromCloud(): 每次加载比较 _synced 与 updatedAt 时间戳
+    - save*(): 立即写 localStorage + 标记 _synced + 异步推 dbProxy
 ```
-
-### 数据流
-localStorage ↔ CloudBase（本地为主，云端备份）
-8个集合: students / classes / attendance / records / corrections / artworks / announcements / inquiries / email_codes / parents
-
-### 认证
-- 教师: 硬编码 (AUTH_CONFIG.teachers)
-- 家长: CloudBase 邮箱登录 或 邮箱验证码注册
-- 权限: admin(张校长) / teacher(郑校长) / parent
 
 ### 关键约定
-- ES5 语法
-- 全局 get/save 函数
-- 模块按依赖顺序加载
+- ES5 语法: 只用 var
+- 函数声明: function name() {}
+- 全局函数: get/save 系列
+- 模块顺序: script 标签按依赖排列
 
 ---
 
-## 3. verify-code SMTP 配置
+## verify-code SMTP 配置
 
-### 凭证
-- EMAIL_USER: (见 Claude 记忆，未写入仓库)
-- EMAIL_PASS: (QQ 授权码，见 Claude 记忆，未写入仓库)
+- EMAIL_USER: 3504718793@qq.com（已脱敏，仅备份结构）
+- 架构: HTTP 直连 → fetch() 调用
+- 部署: `tcb fn deploy verify-code --force`
+- 频率限制: 同邮箱 60s / 同 IP 5次/小时 / 5分钟过期
 
-### 架构（2026-06-17 修复）
-- 前端 fetch() → HTTP 访问服务 → verify-code 云函数
-- 不再使用 SDK callFunction（浏览器报 network request error）
-- HTTP URL: `https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/G:/Ruanjian/Git/verify-code`
+---
 
-### 部署
-```bash
-# 部署云函数（凭证临时填入 cloudbaserc.json，部署后恢复空占位符）
-npx tcb fn deploy verify-code --envId chunxiao-d8ghfaw3y0781da11 --force
-```
+## 整体架构原则
 
-### 排查
-- `tcb fn invoke verify-code --params '{"action":"ping"}'` — 检查环境变量
-- `tcb fn log verify-code --limit 20` — 查看日志
-- 本地测试: `python -m http.server 8899` → `http://localhost:8899/login.html`
+**铁律**：
+1. 改 style.css 前检查所有加载它的页面
+2. 新增 CSS 类名检查是否与 dashboard.css 冲突
+3. 改 JS 模块前检查所有加载该模块的页面
+4. 永远从架构视角出发
+
+**共享关系**：
+- css/style.css → 所有页面
+- css/dashboard.css → teacher + parent dashboard
+- js/app/*.js → 所有页面
+- js/dashboard/*.js → teacher + parent dashboard

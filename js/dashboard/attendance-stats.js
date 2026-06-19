@@ -1,4 +1,4 @@
-/*
+﻿/*
   春晓画室 - 管理端点名历史与出勤统计
 */
 
@@ -37,24 +37,33 @@ function renderAttendanceHistory() {
       att.records.forEach(function(r) {
         if (r.deducted > 0 && r.status === 'present') {
           var s = studentList.find(function(x) { return x.id === r.studentId; });
-          if (s) restoreInfo.push(s.name + '（恢复' + r.deducted + '课时）');
+          if (s) restoreInfo.push(s.name + '（恢复' + r.deducted + '课次）');
         }
       });
 
       var confirmMsg = '确定撤销该次点名？';
-      if (restoreInfo.length > 0) { confirmMsg += '\n\n将恢复以下学员的课时：\n' + restoreInfo.join('\n'); }
+      if (restoreInfo.length > 0) { confirmMsg += '\n\n将恢复以下学员的课次：\n' + restoreInfo.join('\n'); }
       if (!confirm(confirmMsg)) return;
 
+      var cls = getClasses().find(function(c) { return c.id === att.classId; });
+      studentList.forEach(function(s) { normalizeStudentEnrollments(s); });
       att.records.forEach(function(r) {
         if (r.deducted > 0 && r.status === 'present') {
           var s = studentList.find(function(x) { return x.id === r.studentId; });
-          if (s) { s.consumedLessons = Math.max(0, (s.consumedLessons || 0) - r.deducted); }
+          if (s) {
+            var enr = (s.enrollments || []).find(function(e) { return cls && e.course === cls.course; }) || (s.enrollments && s.enrollments[0]);
+            if (enr) { enr.consumedLessons = Math.max(0, (enr.consumedLessons || 0) - r.deducted); }
+          }
         }
       });
+      studentList.forEach(function(s) { normalizeStudentEnrollments(s); });
       saveStudents(studentList);
       saveAttendance(getAttendance().filter(function(a) { return a.id != id; }));
       renderAttendanceHistory();
       renderAttendanceStats();
+      renderLessonLog();
+      updateLessonLogSummary();
+      renderLowLessonAlerts();
       renderStudents();
       updateOverview();
     });
