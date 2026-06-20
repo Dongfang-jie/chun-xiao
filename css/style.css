@@ -31,6 +31,23 @@
   --transition-normal: 0.3s;
 }
 
+/* 暗色模式：覆盖设计令牌值 */
+body.dark-mode {
+  --color-primary: #d7a86e;
+  --color-primary-dark: #b8955a;
+  --color-primary-light: #c9a87c;
+  --color-accent: #d7a86e;
+  --color-accent-light: #c9a87c;
+  --color-bg: #1a1a1a;
+  --color-bg-card: #2a2a2a;
+  --color-border: #444;
+  --color-text: #ccc;
+  --color-text-light: #aaa;
+  --color-text-muted: #888;
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-card-hover: 0 4px 15px rgba(0,0,0,0.4);
+}
+
 /* ========== 基础设置 ========== */
 * {
   margin: 0;

@@ -112,7 +112,7 @@ function initDarkMode() {
     var isDark = document.body.classList.contains('dark-mode');
     toggleBtn.textContent = isDark ? '☀️' : '🌙';
     // 记住用户的选择
-    localStorage.setItem('chunxiao-dark-mode', isDark ? 'dark' : 'light');
+    safeSetItem('chunxiao-dark-mode', isDark ? 'dark' : 'light');
   });
 }
 

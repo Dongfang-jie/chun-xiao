@@ -160,12 +160,16 @@ var Auth = {
 
   // 登出
   logout: async function () {
-    localStorage.removeItem(AUTH_CONFIG.sessionKey);
+    safeRemoveItem(AUTH_CONFIG.sessionKey);
     sessionStorage.removeItem(AUTH_CONFIG.sessionKey);
     try {
       var auth = getAuth();
       if (auth) await auth.signOut();
-    } catch (e) { /* 忽略 */ }
+    } catch (e) {
+      console.warn('CloudBase 登出失败（本地会话已清除）:', e.message);
+      // 尝试用匿名登录覆盖残留的 CloudBase 会话
+      try { if (auth) await auth.signInAnonymously(); } catch (e2) { /* 尽力而为 */ }
+    }
   },
 
   // 获取当前用户（自动迁移旧 childName 格式 + 旧 localStorage key）
@@ -195,7 +199,7 @@ var Auth = {
       loginTime: new Date().toISOString()
     };
     var data = JSON.stringify(session);
-    localStorage.setItem(AUTH_CONFIG.sessionKey, data);
+    safeSetItem(AUTH_CONFIG.sessionKey, data);
   },
 
   // 获取当前孩子对象

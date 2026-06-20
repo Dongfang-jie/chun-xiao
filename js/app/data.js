@@ -42,7 +42,7 @@ var DataStore = {
           data: data
         });
         if (result && result.result) {
-          console.log('🔧 dbProxy(callFunction) ' + action + ' 成功:', collection);
+          logDebug('🔧 dbProxy(callFunction) ' + action + ' 成功:', collection);
           return result.result;
         }
         if (result) console.warn('⚠️ dbProxy callFunction 返回异常:', collection, JSON.stringify(result).substring(0, 200));
@@ -78,7 +78,7 @@ var DataStore = {
       } else {
         parsed = wrapper;
       }
-      console.log('🔧 dbProxy(HTTP) ' + action + ' 成功:', collection);
+      logDebug('🔧 dbProxy(HTTP) ' + action + ' 成功:', collection);
       return parsed;
     } catch (e) {
       console.warn('dbProxy HTTP 调用失败:', collection, e.message);
@@ -107,7 +107,7 @@ var DataStore = {
     // 诊断：测试数据库直连
     try {
       var pingRes = await db.collection('students').where({ _type: '_sync' }).get();
-      console.log('🔍 数据库直连: ✅ 可读');
+      logDebug('🔍 数据库直连: ✅ 可读');
     } catch (e) {
       console.warn('🔍 数据库直连失败:', e.message);
     }
@@ -118,7 +118,7 @@ var DataStore = {
       var proxyPing = await DataStore._callDbProxy('ping', 'students');
       if (proxyPing && proxyPing.success) {
         dbProxyOk = true;
-        console.log('🔧 dbProxy HTTP 通道: ✅ 可达');
+        logDebug('🔧 dbProxy HTTP 通道: ✅ 可达');
       }
     } catch (e) {
       console.warn('🔧 dbProxy HTTP 通道: ❌ 不可达');
@@ -148,14 +148,14 @@ var DataStore = {
             if (!isLegacyData) {
               // 正常：云端比本地新 → 用云端数据
               if (!localTime || cloudTime > localTime) {
-                localStorage.setItem(m.key, JSON.stringify(doc.items));
-                localStorage.setItem(m.key + '_synced', cloudTime);
+                safeSetItem(m.key, JSON.stringify(doc.items));
+                safeSetItem(m.key + '_synced', cloudTime);
                 cloudDataNewer = true;
-                console.log('☁️ 云端更新 → 本地:', m.col);
+                logDebug('☁️ 云端更新 → 本地:', m.col);
                 if (typeof SyncBubble !== 'undefined') SyncBubble.pullOk(m.col, doc.items.length);
               }
             } else {
-              console.log('📦 检测到旧版本数据，本地优先 → 将推送至云端:', m.col);
+              logDebug('📦 检测到旧版本数据，本地优先 → 将推送至云端:', m.col);
             }
           }
         }
@@ -165,7 +165,7 @@ var DataStore = {
 
         // 回退到 dbProxy 云函数读取（绕过安全规则）
         if (dbProxyOk) {
-          console.log('🔄 尝试 dbProxy 云函数拉取:', m.col);
+          logDebug('🔄 尝试 dbProxy 云函数拉取:', m.col);
           try {
             var fnRes = await DataStore._callDbProxy('read', m.col);
             if (fnRes && fnRes.success && fnRes.data && fnRes.data.length > 0) {
@@ -175,10 +175,10 @@ var DataStore = {
                 var isLegacyData = localHasData && !localTime;
                 if (!isLegacyData) {
                   if (!localTime || fnCloudTime > localTime) {
-                    localStorage.setItem(m.key, JSON.stringify(fnDoc.items));
-                    localStorage.setItem(m.key + '_synced', fnCloudTime);
+                    safeSetItem(m.key, JSON.stringify(fnDoc.items));
+                    safeSetItem(m.key + '_synced', fnCloudTime);
                     cloudDataNewer = true;
-                    console.log('☁️ 云端更新 → 本地(via dbProxy):', m.col);
+                    logDebug('☁️ 云端更新 → 本地(via dbProxy):', m.col);
                     if (typeof SyncBubble !== 'undefined') SyncBubble.pullOk(m.col, fnDoc.items.length);
                   }
                 }
@@ -220,7 +220,7 @@ var DataStore = {
           // 关键：如果 dbProxy 拉取时发现云端更新（cloudDataNewer=true），则不推送
           if (cloudDataNewer) {
             // 云端数据已更新到本地，无需再推送
-            console.log('⏭️ 云端数据更新，跳过推送:', m.col);
+            logDebug('⏭️ 云端数据更新，跳过推送:', m.col);
           } else if (dbProxyOk) {
             // 云端无数据或本地更新 → 推送
             shouldPushViaFn = true;
@@ -232,7 +232,7 @@ var DataStore = {
         if (shouldPush) {
           var directOk = await DataStore._pushToCloudDirect(m.col, m.key, localData);
           if (!directOk) {
-            console.log('🔄 直接推送失败，尝试 dbProxy 云函数:', m.col);
+            logDebug('🔄 直接推送失败，尝试 dbProxy 云函数:', m.col);
             if (dbProxyOk) await DataStore._pushToCloudViaFn(m.col, m.key, localData);
           }
         } else if (shouldPushViaFn) {
@@ -262,13 +262,13 @@ var DataStore = {
       if (old.data) {
         for (var i = 0; i < old.data.length; i++) {
           if (old.data[i]._id !== addResult.id) {
-            try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch (e) {}
+            try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch (e) { console.warn('清理旧同步文档失败 (' + collection + '):', e.message); }
           }
         }
       }
       // 推送成功：_synced 更新为推送完成时间
-      localStorage.setItem(key + '_synced', now);
-      console.log('📤 已推送:', collection, list.length + '条');
+      safeSetItem(key + '_synced', now);
+      logDebug('📤 已推送:', collection, list.length + '条');
       if (typeof SyncBubble !== 'undefined') SyncBubble.pushOk(collection, list.length);
       return true;
     } catch (e) {
@@ -282,12 +282,12 @@ var DataStore = {
     var list = safeParseJSON(key, []);
     var now = new Date().toISOString();
 
-    console.log('🔄 通过 dbProxy 云函数推送:', collection);
+    logDebug('🔄 通过 dbProxy 云函数推送:', collection);
     try {
       var result = await DataStore._callDbProxy('write', collection, list);
       if (result && result.success) {
-        localStorage.setItem(key + '_synced', now);
-        console.log('📤 已推送(via dbProxy):', collection, list.length + '条');
+        safeSetItem(key + '_synced', now);
+        logDebug('📤 已推送(via dbProxy):', collection, list.length + '条');
         if (typeof SyncBubble !== 'undefined') SyncBubble.pushOk(collection, list.length);
         return true;
       } else {
@@ -314,7 +314,11 @@ var DataStore = {
     if (!ok && attempt < 2) {
       console.warn('🔄 推送失败，3秒后重试 (' + (attempt + 1) + '/2):', collection);
       setTimeout(function () {
-        DataStore._pushToCloud(collection, key, attempt + 1);
+        try {
+          DataStore._pushToCloud(collection, key, attempt + 1);
+        } catch (e) {
+          console.error('推送重试异常 (' + collection + '):', e.message);
+        }
       }, 3000);
     }
     if (!ok && attempt >= 2) {
@@ -356,9 +360,9 @@ var DataStore = {
       var k = keys[i];
       var items = jsonData.collections[k];
       if (!Array.isArray(items)) continue;
-      localStorage.setItem(k, JSON.stringify(items));
+      safeSetItem(k, JSON.stringify(items));
       var ts = (jsonData.syncedTimestamps && jsonData.syncedTimestamps[k + '_synced']) || now;
-      localStorage.setItem(k + '_synced', ts);
+      safeSetItem(k + '_synced', ts);
       restored++;
 
       // 异步推送到 CloudBase
@@ -383,103 +387,7 @@ function findEnrollment(student, course) {
   return null;
 }
 
-// ========== 数据操作方法 ==========
-// 每次保存：立即写 localStorage + 标记 _synced + 异步推 CloudBase
-// _synced 在保存时立即标记，确保推送失败后下次 pullFromCloud 能检测并重试
-// 所有读取使用 safeParseJSON 防止 JSON 损坏导致数据丢失
-
-function getStudents() {
-  return safeParseJSON('chunxiao-students', []);
-}
-function saveStudents(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-students', JSON.stringify(list));
-  localStorage.setItem('chunxiao-students_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.students, 'chunxiao-students');
-}
-
-function getClasses() {
-  return safeParseJSON('chunxiao-classes', []);
-}
-function saveClasses(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-classes', JSON.stringify(list));
-  localStorage.setItem('chunxiao-classes_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.classes, 'chunxiao-classes');
-}
-
-function getAttendance() {
-  return safeParseJSON('chunxiao-attendance', []);
-}
-function saveAttendance(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-attendance', JSON.stringify(list));
-  localStorage.setItem('chunxiao-attendance_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.attendance, 'chunxiao-attendance');
-}
-
-function getRecords() {
-  return safeParseJSON('chunxiao-records', []);
-}
-function saveRecords(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-records', JSON.stringify(list));
-  localStorage.setItem('chunxiao-records_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.records, 'chunxiao-records');
-}
-
-function getLessonCorrections() {
-  return safeParseJSON('chunxiao-lesson-corrections', []);
-}
-function saveLessonCorrections(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-lesson-corrections', JSON.stringify(list));
-  localStorage.setItem('chunxiao-lesson-corrections_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.corrections, 'chunxiao-lesson-corrections');
-}
-
-function getArtworks() {
-  return safeParseJSON('chunxiao-artworks', []);
-}
-function saveArtworks(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-artworks', JSON.stringify(list));
-  localStorage.setItem('chunxiao-artworks_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.artworks, 'chunxiao-artworks');
-}
-
-function getAnnouncements() {
-  return safeParseJSON('chunxiao-announcements', []);
-}
-function saveAnnouncements(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-announcements', JSON.stringify(list));
-  localStorage.setItem('chunxiao-announcements_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.announcements, 'chunxiao-announcements');
-}
-
-function getInquiries() {
-  return safeParseJSON('chunxiao-inquiries', []);
-}
-function saveInquiries(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-inquiries', JSON.stringify(list));
-  localStorage.setItem('chunxiao-inquiries_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.inquiries, 'chunxiao-inquiries');
-}
-
-function getRenewals() {
-  return safeParseJSON('chunxiao-renewals', []);
-}
-function saveRenewals(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-renewals', JSON.stringify(list));
-  localStorage.setItem('chunxiao-renewals_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.renewals, 'chunxiao-renewals');
-}
-
 // DEFAULT_COURSES 作为兜底（当 courses 数据全部丢失时）
-// 必须定义在 getCourses() 之前 — var hoisting 只提升声明不提升赋值
 var DEFAULT_COURSES = [
   { name: '儿童创意画', age: '4岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
   { name: '中国画',     age: '8岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
@@ -489,12 +397,43 @@ var DEFAULT_COURSES = [
   { name: '软笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' }
 ];
 
-function getCourses() {
-  return safeParseJSON('chunxiao-courses', DEFAULT_COURSES);
-}
-function saveCourses(list) {
-  var now = new Date().toISOString();
-  localStorage.setItem('chunxiao-courses', JSON.stringify(list));
-  localStorage.setItem('chunxiao-courses_synced', now);
-  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.courses, 'chunxiao-courses');
-}
+// ========== 数据操作方法（工厂生成，消除重复代码） ==========
+// 从 STORAGE_KEY_MAP 统一生成 getXxx / saveXxx 函数对
+// 每次保存：safeSetItem 写 localStorage + 标记 _synced + 异步推 CloudBase
+// 所有读取使用 safeParseJSON 防止 JSON 损坏导致数据丢失
+(function () {
+  // storageKey → { suffix, fallback } 映射
+  var FACTORY_CONFIG = {
+    'chunxiao-students':           { suffix: 'Students',           fallback: [] },
+    'chunxiao-classes':            { suffix: 'Classes',            fallback: [] },
+    'chunxiao-attendance':         { suffix: 'Attendance',         fallback: [] },
+    'chunxiao-records':            { suffix: 'Records',            fallback: [] },
+    'chunxiao-lesson-corrections': { suffix: 'LessonCorrections',  fallback: [] },
+    'chunxiao-artworks':           { suffix: 'Artworks',           fallback: [] },
+    'chunxiao-announcements':      { suffix: 'Announcements',      fallback: [] },
+    'chunxiao-inquiries':          { suffix: 'Inquiries',          fallback: [] },
+    'chunxiao-renewals':           { suffix: 'Renewals',           fallback: [] },
+    'chunxiao-courses':            { suffix: 'Courses',            fallback: DEFAULT_COURSES }
+  };
+
+  STORAGE_KEY_MAP.forEach(function (entry) {
+    var cfg = FACTORY_CONFIG[entry.key];
+    if (!cfg) return;
+
+    var key = entry.key;
+    var col = entry.col;
+
+    // 生成 getter
+    window['get' + cfg.suffix] = function () {
+      return safeParseJSON(key, cfg.fallback);
+    };
+
+    // 生成 saver（使用 safeSetItem 防止 QuotaExceededError）
+    window['save' + cfg.suffix] = function (list) {
+      var now = new Date().toISOString();
+      safeSetItem(key, JSON.stringify(list));
+      safeSetItem(key + '_synced', now);
+      DataStore._pushToCloud(CLOUDBASE_CONFIG.collections[col], key);
+    };
+  });
+})();

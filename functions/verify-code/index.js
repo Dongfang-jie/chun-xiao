@@ -320,10 +320,12 @@ async function handleSend(email, context) {
         attempts: 0
       });
     } catch (e) {
-      console.warn('code storage failed (non-fatal):', e.message);
+      console.error('code storage failed:', e.message);
+      return { success: false, message: '验证码存储失败，请重试' };
     }
   } else {
-    console.warn('code NOT stored — email_codes collection unavailable');
+    console.error('code NOT stored — email_codes collection unavailable');
+    return { success: false, message: '验证码服务异常，请联系管理员' };
   }
 
   return { success: true, message: '验证码已发送，请检查邮箱' };

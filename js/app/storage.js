@@ -47,7 +47,7 @@ var ArtworkStorage = {
         console.error('ArtworkStorage 上传失败:', result.error);
         return { success: false, error: result.error.message || '上传失败' };
       }
-      console.log('ArtworkStorage 上传成功:', result.data.id);
+      logDebug('ArtworkStorage 上传成功:', result.data.id);
       return { success: true, fileID: result.data.id };
     } catch (e) {
       console.error('ArtworkStorage 上传异常:', e.message);
@@ -112,7 +112,7 @@ var ArtworkStorage = {
 
     try {
       await app.storage.from().remove(cloudIDs);
-      console.log('ArtworkStorage 已删除:', cloudIDs.length + '个文件');
+      logDebug('ArtworkStorage 已删除:', cloudIDs.length + '个文件');
     } catch (e) {
       console.warn('ArtworkStorage 删除文件失败:', e.message);
     }

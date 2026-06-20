@@ -52,7 +52,7 @@ function initDashboardDarkMode() {
       document.body.classList.toggle('dark-mode');
       var isDark = document.body.classList.contains('dark-mode');
       toggleBtn.textContent = isDark ? '☀️' : '🌙';
-      localStorage.setItem('chunxiao-dark-mode', isDark ? 'dark' : 'light');
+      safeSetItem('chunxiao-dark-mode', isDark ? 'dark' : 'light');
     });
 
     var logoutBtn = document.getElementById('logout-btn');
@@ -77,7 +77,7 @@ function initStudentSubTabs() {
       if (target) target.classList.add('active');
 
       // 记住当前子标签
-      localStorage.setItem('chunxiao-dashboard-subtab', sub);
+      safeSetItem('chunxiao-dashboard-subtab', sub);
 
       // 切换到对应子页面时刷新数据
       if (sub === 'schedule') renderSchedule();
@@ -127,58 +127,65 @@ document.addEventListener('DOMContentLoaded', function () {
     userNameEl.innerHTML = icon + displayName + roleBadge;
   }
 
-  // 老师端：先绑定事件（不依赖数据），再等 CloudBase 同步后渲染
+  // 老师端：先绑定事件（不依赖数据），渲染由 CloudBase 同步后统一触发
   if (isTeacher) {
     initStudentSubTabs();
-    loadStudents();
-    loadClasses();
-    loadSchedule();
-    loadAttendance();
-    loadRecords();
-    loadLessonLog();
-    loadRenewals();
-    loadArtworks();
-    loadAnnouncements();
-    loadCourses();
-    loadInquiries();
-    updateOverview();
   }
 
-  // ===== 核心：从 CloudBase 同步数据（每次加载都检查时间戳），再刷新界面 =====
+  // ===== 核心：从 CloudBase 同步数据，统一渲染（避免双次渲染） =====
+  window._cloudSynced = false;
   DataStore.pullFromCloud().then(function() {
-    console.log('✅ CloudBase 双向同步完成');
+    window._cloudSynced = true;
+    logDebug('✅ CloudBase 双向同步完成');
 
     if (isTeacher) {
-      // 同步后刷新所有界面（用云端最新数据）
-      renderStudents();
-      renderClasses();
-      renderSchedule();
-      // 刷新点名页：每日点名表 + 历史 + 统计
-      var attDateNav = document.getElementById('att-date-nav');
-      if (attDateNav) renderDailyAttendanceTable(attDateNav.value);
-      renderAttendanceHistory();
-      renderAttendanceStats();
-      refreshRecordSelects();
-      renderRecordsList();
-      refreshLogStudentSelects();
-      renderLessonLog();
-      updateLessonLogSummary();
-      renderLowLessonAlerts();
-      refreshRenewalStudentSelects();
-      refreshRenewalFilterSelects();
-      renderRenewalHistory();
-      refreshClassStudentCheckboxes();
-      renderArtworks();
-      renderAnnouncements();
-      renderCourses();
-      // 首次初始化：同步后仍无课程数据 → 写入默认值（此时云端也无数据，不会冲突）
+      loadStudents();
+      loadClasses();
+      loadSchedule();
+      loadAttendance();
+      loadRecords();
+      loadLessonLog();
+      loadRenewals();
+      loadArtworks();
+      loadAnnouncements();
+      loadCourses();
+      loadInquiries();
+      // 首次初始化：同步后仍无课程数据 → 写入默认值
       if (!localStorage.getItem('chunxiao-courses')) {
         saveCourses(DEFAULT_COURSES);
-        renderCourses();
       }
       updateOverview();
     } else {
-      // 家长端：同步后加载所有模块
+      initParentHeader(user);
+      loadParentInfo(user);
+      loadChildManagement(user);
+      loadParentOverview(user);
+      loadParentSchedule(user);
+      loadParentAttendance(user);
+      loadParentLessonLog(user);
+      loadParentAnnouncements();
+    }
+  }).catch(function(err) {
+    window._cloudSynced = true;
+    console.warn('CloudBase 同步失败，使用本地数据:', err.message || err);
+    if (typeof SyncBubble !== 'undefined') {
+      SyncBubble.show('离线模式：使用本地数据', 'error');
+    }
+    // 回退到本地数据渲染
+    if (isTeacher) {
+      loadStudents();
+      loadClasses();
+      loadSchedule();
+      loadAttendance();
+      loadRecords();
+      loadLessonLog();
+      loadRenewals();
+      loadArtworks();
+      loadAnnouncements();
+      loadCourses();
+      loadInquiries();
+      updateOverview();
+    } else {
       initParentHeader(user);
       loadParentInfo(user);
       loadChildManagement(user);
@@ -210,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       // 记住当前页面，刷新后恢复
-      localStorage.setItem('chunxiao-dashboard-page', pageName);
+      safeSetItem('chunxiao-dashboard-page', pageName);
 
       // 切换到数据管理页时加载统计
       if (pageName === 'datamgmt' && typeof loadDataMgmt === 'function') {

@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   if (typeof Auth !== 'undefined') {
     try {
       await Auth.initAnonymous();
-      console.log('Anonymous auth initialized for login page');
+      logDebug('Anonymous auth initialized for login page');
     } catch (e) {
       console.warn('Anonymous auth init failed (non-fatal):', e.message);
     }
@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', async function () {
           var matched = localStudents.find(function (s) { return s.name === childName; });
           if (matched) {
             matchedStudentId = matched.id;
-            console.log('注册自动匹配学生:', childName, 'id:', matched.id);
+            logDebug('注册自动匹配学生成功 (id=' + matched.id + ')');
             // 更新学生的 parentEmail
             matched.parentEmail = email;
             localStorage.setItem('chunxiao-students', JSON.stringify(localStudents));

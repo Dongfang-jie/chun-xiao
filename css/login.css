@@ -34,7 +34,7 @@
 
 .login-tab.active {
   background: #fff;
-  color: #5d4037;
+  color: var(--color-primary);
   border-bottom-color: #d7a86e;
 }
 
@@ -49,7 +49,7 @@
   margin-bottom: 20px;
   border-radius: 8px;
   overflow: hidden;
-  border: 2px solid #e8d4c8;
+  border: 2px solid var(--color-border);
 }
 
 .method-tab {
@@ -66,11 +66,11 @@
 }
 
 .method-tab + .method-tab {
-  border-left: 2px solid #e8d4c8;
+  border-left: 2px solid var(--color-border);
 }
 
 .method-tab.active {
-  background: #5d4037;
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -167,7 +167,7 @@
 /* ========== 表单标题 ========== */
 .form-title {
   text-align: center;
-  color: #5d4037;
+  color: var(--color-primary);
   margin: 0 0 16px;
   font-size: 1.15em;
 }
@@ -180,7 +180,7 @@
 .login-form label {
   display: block;
   margin-bottom: 6px;
-  color: #5d4037;
+  color: var(--color-primary);
   font-weight: bold;
   font-size: 0.93em;
 }
@@ -190,7 +190,7 @@
 .login-form input[type="password"] {
   width: 100%;
   padding: 12px 14px;
-  border: 2px solid #e8d4c8;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.98em;
   transition: border-color 0.25s, box-shadow 0.25s;
@@ -251,11 +251,11 @@
 
 .pwd-toggle:hover {
   background: #f0e6d8;
-  color: #5d4037;
+  color: var(--color-primary);
 }
 
 .pwd-toggle:active {
-  background: #e8d4c8;
+  background: var(--color-border);
 }
 
 .pwd-icon {
@@ -299,7 +299,7 @@
   width: 100%;
   margin-top: 20px;
   padding: 14px 24px;
-  background: #5d4037;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-bottom: 3px solid #3e2723;
@@ -396,14 +396,14 @@
 .login-info {
   padding: 20px 35px;
   background: #fdfaf5;
-  border-top: 1px solid #e8d4c8;
+  border-top: 1px solid var(--color-border);
   font-size: 0.85em;
   color: #888;
   line-height: 1.8;
 }
 
 .login-info strong {
-  color: #5d4037;
+  color: var(--color-primary);
 }
 
 /* ========== 深色模式适配 ========== */

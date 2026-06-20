@@ -104,13 +104,13 @@ function migrateStorageKeys() {
   Object.keys(STORAGE_KEY_MIGRATIONS).forEach(function (oldKey) {
     var newKey = STORAGE_KEY_MIGRATIONS[oldKey];
     if (!localStorage.getItem(newKey) && localStorage.getItem(oldKey)) {
-      localStorage.setItem(newKey, localStorage.getItem(oldKey));
-      localStorage.removeItem(oldKey);
+      safeSetItem(newKey, localStorage.getItem(oldKey));
+      safeRemoveItem(oldKey);
       migrated = true;
     }
   });
   if (migrated) {
-    console.log('🔑 localStorage keys 已迁移至统一命名');
+    logDebug('🔑 localStorage keys 已迁移至统一命名');
   }
 }
 
@@ -145,3 +145,56 @@ function getCollectionName(storageKey) {
  * 仪表盘页面脚本使用同步加载（<script src>），确保依赖顺序。
  * 公开页面可使用 defer 属性异步加载。
  */
+
+// ========== 错误处理 & 存储安全 ==========
+
+// 安全的 localStorage.setItem（捕获 QuotaExceededError 等异常）
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    console.warn('localStorage 写入失败 (' + key + '):', e.message);
+    if (typeof SyncBubble !== 'undefined') {
+      SyncBubble.show('<strong>存储空间不足</strong> 请清理浏览器数据', 'error');
+    }
+    return false;
+  }
+}
+
+// 安全的 localStorage.removeItem
+function safeRemoveItem(key) {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (e) {
+    console.warn('localStorage 删除失败 (' + key + '):', e.message);
+    return false;
+  }
+}
+
+// 全局未处理 Promise 拒绝监听器（捕获遗漏的异步错误）
+window.addEventListener('unhandledrejection', function (event) {
+  console.error('未处理的异步错误:', event.reason);
+  if (typeof SyncBubble !== 'undefined') {
+    var msg = (event.reason && event.reason.message) ? event.reason.message : '未知错误';
+    SyncBubble.show('<strong>操作失败</strong> ' + msg, 'error');
+  }
+});
+
+// ========== 调试工具 ==========
+
+// 调试模式开关（URL ?debug=1 或 localStorage chunxiao-debug=1）
+var DEBUG = (function () {
+  if (window.location.search.indexOf('debug=1') >= 0) return true;
+  if (localStorage.getItem('chunxiao-debug') === '1') return true;
+  return false;
+})();
+
+// 生产环境静默的调试日志（仅在 debug 模式下输出）
+function logDebug() {
+  if (DEBUG) {
+    var args = Array.prototype.slice.call(arguments);
+    console.log.apply(console, args);
+  }
+}
