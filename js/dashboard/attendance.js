@@ -59,7 +59,7 @@ function renderDailyAttendanceTable(date) {
   var todayClasses = classes.filter(function(c) { return c.day === dayName; });
 
   if (todayClasses.length === 0) {
-    container.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">' + dayName + '没有安排课程</p>';
+    container.innerHTML = '<p class="empty-state-sm">' + dayName + '没有安排课程</p>';
     return;
   }
 
@@ -77,7 +77,7 @@ function renderDailyAttendanceTable(date) {
     var rowClass = isDone ? 'att-row-done' : 'att-row-pending';
 
     html += '<tr class="' + rowClass + '">';
-    html += '<td><strong style="color:#5d4037;">' + escapeHtml(cls.name || '') + '</strong></td>';
+    html += '<td><strong>' + escapeHtml(cls.name || '') + '</strong></td>';
     html += '<td>' + escapeHtml(cls.course || '--') + '</td>';
     html += '<td>' + escapeHtml(cls.timeSlot || '--') + '</td>';
     html += '<td>' + escapeHtml(cls.room || '--') + '</td>';
@@ -104,7 +104,7 @@ function startAttendanceForClass(classId, date) {
   area.style.display = 'block';
 
   var cls = getClasses().find(function(c) { return c.id == classId; });
-  if (!cls) { area.innerHTML = '<p style="color:#e88;">班级不存在</p>'; return; }
+  if (!cls) { area.innerHTML = '<p class="text-warn">班级不存在</p>'; return; }
 
   var students = getStudents().filter(function(s) {
     for (var i = 0; i < (cls.studentIds || []).length; i++) {
@@ -114,22 +114,22 @@ function startAttendanceForClass(classId, date) {
   });
   if (students.length === 0) {
     logDebug('⚠️ 点名失败: 班级「' + cls.name + '」studentIds=' + JSON.stringify(cls.studentIds) + ', 学生总数=' + getStudents().length);
-    area.innerHTML = '<p style="color:#e88; text-align:center;">该班级没有学员，请先在「班级」中分配学员</p><p style="color:#999; font-size:0.8em;">班级studentIds: ' + JSON.stringify(cls.studentIds) + '<br>学生库共 ' + getStudents().length + ' 人</p>'; return;
+    area.innerHTML = '<p class="text-warn" style="text-align:center;">该班级没有学员，请先在「班级」中分配学员</p><p class="text-hint" style="font-size:0.8em;">班级studentIds: ' + JSON.stringify(cls.studentIds) + '<br>学生库共 ' + getStudents().length + ' 人</p>'; return;
   }
 
   var existing = getAttendance().find(function(a) { return a.classId == classId && a.date == date; });
   var existingRecords = existing ? existing.records : [];
 
-  var html = '<div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); border:2px solid #d7a86e;">';
-  html += '<h4 style="color:#5d4037; margin-bottom:4px;">📋 ' + escapeHtml(cls.name || '') + '</h4>';
-  html += '<p style="color:#888; margin:0 0 12px; font-size:0.9em;">' + escapeHtml(date || '') + ' · ' + escapeHtml(cls.day || '') + ' ' + escapeHtml(cls.timeSlot || '') + ' · ' + escapeHtml(cls.room || '') + '</p>';
-  html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">';
+  var html = '<div class="att-panel">';
+  html += '<h4 class="dash-label" style="margin-bottom:4px;">📋 ' + escapeHtml(cls.name || '') + '</h4>';
+  html += '<p class="text-sub" style="margin:0 0 12px;">' + escapeHtml(date || '') + ' · ' + escapeHtml(cls.day || '') + ' ' + escapeHtml(cls.timeSlot || '') + ' · ' + escapeHtml(cls.room || '') + '</p>';
+  html += '<div class="att-action-row">';
   html += '<button id="att-all-present" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em;">✅ 全部出勤</button>';
-  html += '<button id="att-all-leave" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em; background:#e8a040; border-color:#e8a040;">⭕ 全部请假</button>';
+  html += '<button id="att-all-leave" class="login-btn btn-warning" style="width:auto; padding:6px 16px; font-size:0.85em;">⭕ 全部请假</button>';
   html += '<span style="color:#ccc; margin:0 4px;">|</span>';
-  html += '<input type="number" id="att-deduct-all" value="0" min="0" style="width:60px; padding:6px; border:2px solid #e8d4c8; border-radius:6px; text-align:center;">';
-  html += '<button id="att-deduct-all-btn" class="login-btn" style="width:auto; padding:8px 20px; font-size:0.9em; background:#e65100; border-color:#bf360c; font-weight:bold; letter-spacing:1px; transition:all 0.15s;">📉 全部扣课次</button>';
-  html += '<span style="color:#888; font-size:0.8em;">仅扣出勤学员</span>';
+  html += '<input type="number" id="att-deduct-all" value="0" min="0" class="att-deduct-all-input">';
+  html += '<button id="att-deduct-all-btn" class="login-btn btn-danger-action" style="width:auto; padding:8px 20px; font-size:0.9em; transition:all 0.15s;">📉 全部扣课次</button>';
+  html += '<span class="text-hint" style="font-size:0.8em;">仅扣出勤学员</span>';
   html += '</div>';
 
   var allAtt = getAttendance();
@@ -159,24 +159,24 @@ function startAttendanceForClass(classId, date) {
     var remaining = total - consumed;
     var remainColor = remaining <= 4 ? '#e88' : remaining <= 8 ? '#e8a040' : '#5a9';
     var lastDate = getLastDeductDate(s.id);
-    var lastDateDisplay = lastDate ? lastDate : '<span style="color:#ccc;">无记录</span>';
+    var lastDateDisplay = lastDate ? lastDate : '<span class="text-hint" style="color:#ccc;">无记录</span>';
     // 多课程时显示课程名
-    var courseLabel = (s.enrollments && s.enrollments.length > 1 && enrollment) ? '<span style="font-size:0.7em; color:#888;">' + escapeHtml(enrollment.course || '') + '</span> ' : '';
+    var courseLabel = (s.enrollments && s.enrollments.length > 1 && enrollment) ? '<span class="text-hint" style="font-size:0.7em;">' + escapeHtml(enrollment.course || '') + '</span> ' : '';
     html += '<tr>';
     html += '<td><strong>' + escapeHtml(s.name || '') + '</strong></td>';
-    html += '<td style="font-size:0.85em;">' + courseLabel + '总' + total + ' / <span style="color:#e88;">消' + consumed + '</span> / <span style="color:' + remainColor + ';">剩' + remaining + '</span></td>';
-    html += '<td style="font-size:0.8em; color:#888;">' + lastDateDisplay + '</td>';
-    html += '<td><button class="att-btn att-present' + (status === 'present' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="present">✅</button></td>';
-    html += '<td><button class="att-btn att-leave' + (status === 'leave' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="leave">⭕</button></td>';
-    html += '<td><button class="att-btn att-absent' + (status === 'absent' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="absent">❌</button></td>';
-    html += '<td><input type="number" class="att-deduct" value="' + deducted + '" min="0" data-sid="' + s.id + '" style="width:55px; padding:4px; border:2px solid #e8d4c8; border-radius:4px; text-align:center;"></td>';
+    html += '<td style="font-size:0.85em;">' + courseLabel + '总' + total + ' / <span class="text-warn">消' + consumed + '</span> / <span style="color:' + remainColor + ';">剩' + remaining + '</span></td>';
+    html += '<td class="text-hint" style="font-size:0.8em;">' + lastDateDisplay + '</td>';
+    html += '<td><button class="att-btn att-present' + (status === 'present' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="present" aria-label="出勤">✅</button></td>';
+    html += '<td><button class="att-btn att-leave' + (status === 'leave' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="leave" aria-label="请假">⭕</button></td>';
+    html += '<td><button class="att-btn att-absent' + (status === 'absent' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="absent" aria-label="缺勤">❌</button></td>';
+    html += '<td><input type="number" class="att-deduct att-deduct-input" value="' + deducted + '" min="0" data-sid="' + s.id + '"></td>';
     html += '</tr>';
   });
   html += '</tbody></table>';
-  html += '<div style="margin-top:12px; display:flex; gap:8px; align-items:center;">';
+  html += '<div class="mt-sm flex-gap-sm" style="align-items:center;">';
   html += '<button id="att-save-btn" class="login-btn" style="width:auto; padding:10px 24px;">💾 保存点名</button>';
   html += '<button id="att-cancel-area-btn" class="logout-btn">收起</button>';
-  html += '<span id="att-msg" style="margin-left:12px; font-size:0.9em;"></span>';
+  html += '<span id="att-msg" class="ml-sm text-sub"></span>';
   html += '</div>';
   html += '</div>';
   area.innerHTML = html;

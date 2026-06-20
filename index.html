@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudbase.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://placehold.co https://*.tcloudbase.com; connect-src 'self' https://*.tcloudbase.com; frame-src 'self' https://www.openstreetmap.org; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
   <title>春晓画室 - 莒县少儿美术 &amp; 书法兴趣班</title>
   <meta name="description" content="春晓画室专注4-15岁青少年美术与书法教育，开设儿童创意画、素描、水彩、动漫、硬笔书法、软笔书法课程。小班授课，免费试听。地址：莒县银杏大道33号金润财富大厦。">
   <meta property="og:title" content="春晓画室 - 少儿美术 &amp; 书法兴趣班">
@@ -225,9 +226,9 @@
         overlay.id = 'cert-lightbox';
         overlay.className = 'lightbox-overlay';
         overlay.innerHTML = ''
-          + '<span class="cert-lightbox-nav cert-lightbox-prev" id="cert-lb-prev">&#8249;</span>'
-          + '<span class="cert-lightbox-nav cert-lightbox-next" id="cert-lb-next">&#8250;</span>'
-          + '<span id="cert-lb-close" style="position:absolute; top:16px; right:28px; font-size:2.5em; color:#fff; cursor:pointer; z-index:11; line-height:1;">&times;</span>'
+          + '<button class="cert-lightbox-nav cert-lightbox-prev" id="cert-lb-prev" aria-label="上一张">&#8249;</button>'
+          + '<button class="cert-lightbox-nav cert-lightbox-next" id="cert-lb-next" aria-label="下一张">&#8250;</button>'
+          + '<button id="cert-lb-close" class="lightbox-close" aria-label="关闭灯箱" style="top:16px; right:28px; font-size:2.5em; z-index:11;">&times;</button>'
           + '<img class="lightbox-img" id="cert-lb-img" src="" alt="">'
           + '<p class="lightbox-caption" id="cert-lb-caption"></p>';
         document.body.appendChild(overlay);

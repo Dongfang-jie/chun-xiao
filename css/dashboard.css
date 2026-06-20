@@ -360,6 +360,453 @@ body.dark-mode .logout-btn:active {
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
+/* ============================================================
+   M2: 通用组件类（从内联样式迁移）
+   ============================================================ */
+
+/* ---- Form panel (隐藏的添加/编辑表单容器) ---- */
+.dash-panel {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* ---- 工具栏行 ---- */
+.dash-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dash-toolbar-end {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.dash-toolbar-sm {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* ---- 表单行 ---- */
+.dash-form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dash-form-row-end {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: end;
+}
+
+/* ---- 表单标签 ---- */
+.dash-label {
+  display: block;
+  font-weight: bold;
+  color: #5d4037;
+  margin-bottom: 4px;
+}
+
+.dash-label-sm {
+  display: block;
+  font-weight: bold;
+  color: #5d4037;
+  margin-bottom: 4px;
+  font-size: 0.85em;
+}
+
+.dash-label-xs {
+  display: block;
+  font-weight: bold;
+  color: #5d4037;
+  margin-bottom: 2px;
+  font-size: 0.8em;
+}
+
+/* ---- 输入框基础样式 ---- */
+.dash-input {
+  padding: 8px;
+  border: 2px solid #e8d4c8;
+  border-radius: 6px;
+}
+
+.dash-input-lg {
+  padding: 10px 12px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+}
+
+.dash-input-full {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+}
+
+.dash-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+/* ---- 空状态占位 ---- */
+.empty-state {
+  text-align: center;
+  color: #999;
+  padding: 40px;
+}
+
+.empty-state-sm {
+  text-align: center;
+  color: #999;
+  padding: 30px;
+}
+
+.empty-state-xs {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
+
+/* ---- 辅助文字 ---- */
+.text-sub {
+  color: #888;
+  font-size: 0.9em;
+}
+
+.text-hint {
+  color: #888;
+  font-size: 0.85em;
+}
+
+.text-hint-sm {
+  color: #888;
+  font-size: 0.75em;
+}
+
+/* ---- 区块标题 ---- */
+.section-title {
+  color: #5d4037;
+  margin: 0 0 12px;
+}
+
+/* ---- 分隔线 ---- */
+.dash-hr {
+  margin: 30px 0;
+  border-color: #e8d4c8;
+}
+
+/* ---- 间距工具 ---- */
+.mt-sm  { margin-top: 12px; }
+.mt-md  { margin-top: 16px; }
+.mt-lg  { margin-top: 20px; }
+.mt-xl  { margin-top: 30px; }
+.mb-sm  { margin-bottom: 12px; }
+.mb-md  { margin-bottom: 16px; }
+.mb-lg  { margin-bottom: 20px; }
+.ml-auto { margin-left: auto; }
+.ml-sm  { margin-left: 12px; }
+.ml-xs  { margin-left: 8px; }
+
+/* ---- Flex 工具 ---- */
+.flex-gap-sm { display: flex; gap: 8px; }
+.flex-gap-xs { display: flex; gap: 6px; flex-wrap: wrap; }
+.flex-col   { display: flex; flex-direction: column; gap: 8px; }
+
+/* ---- 按钮宽度 ---- */
+.btn-auto { width: auto; }
+.btn-sm   { padding: 8px 14px; }
+
+/* ---- 文件上传标签 ---- */
+.file-upload-label {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #5d4037;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+/* ---- 预览清除按钮 ---- */
+.preview-clear-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #e88;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* ---- 缩略图预览区 ---- */
+.preview-thumb {
+  width: 100%;
+  border-radius: 8px;
+  border: 2px solid #d7a86e;
+}
+
+/* ---- 警告文字 ---- */
+.text-danger { color: #c55; }
+.text-warn  { color: #e88; }
+
+/* ---- 出勤统计卡片 ---- */
+.overview-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* ---- 危险操作区 ---- */
+.danger-zone {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border-left: 4px solid #e88;
+}
+
+/* ---- 表头背景行 ---- */
+.tr-header {
+  background: #f5f0eb;
+}
+
+/* ---- 课消数量输入 ---- */
+.lesson-amount-input {
+  width: 80px;
+  padding: 8px;
+  border: 2px solid #e8d4c8;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* ---- 课消手动调整按钮 ---- */
+.btn-manual-adjust {
+  margin-top: 6px;
+  padding: 6px 16px;
+  background: #5d4037;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+/* ---- 批量操作取消按钮 ---- */
+.btn-batch-clear {
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+/* ---- 溢出滚动 ---- */
+.schedule-grid-scroll { overflow-x: auto; }
+
+/* ---- 点名日期输入 ---- */
+.att-date-input {
+  padding: 10px 14px;
+  border: 2px solid #e8d4c8;
+  border-radius: 8px;
+  font-size: 1em;
+  font-weight: bold;
+  color: #5d4037;
+  min-width: 160px;
+}
+
+/* ---- 数据管理表头 ---- */
+.dm-th { padding: 10px; text-align: left; }
+
+/* ---- 点名扣课次输入 ---- */
+.att-deduct-input {
+  width: 55px;
+  padding: 4px;
+  border: 2px solid #e8d4c8;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.att-deduct-all-input {
+  width: 60px;
+  padding: 6px;
+  border: 2px solid #e8d4c8;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* ---- 点名包装器 ---- */
+.att-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  border: 2px solid #d7a86e;
+}
+
+/* ---- 点名操作按钮行 ---- */
+.att-action-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* ---- 点名按钮颜色变体 ---- */
+.btn-warning {
+  background: #e8a040;
+  border-color: #e8a040;
+}
+
+.btn-danger-action {
+  background: #e65100;
+  border-color: #bf360c;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* ---- 暗色模式下新类的覆盖 ---- */
+body.dark-mode .dash-panel,
+body.dark-mode .overview-card {
+  background: #2a2a2a;
+}
+
+body.dark-mode .dash-label,
+body.dark-mode .dash-label-sm,
+body.dark-mode .dash-label-xs,
+body.dark-mode .section-title {
+  color: var(--color-accent);
+}
+
+body.dark-mode .dash-input,
+body.dark-mode .dash-input-lg {
+  background: #333;
+  border-color: #555;
+  color: #ddd;
+}
+
+body.dark-mode .dash-input:focus,
+body.dark-mode .dash-input-lg:focus {
+  border-color: var(--color-accent);
+}
+
+body.dark-mode .dash-input-full,
+body.dark-mode .dash-textarea {
+  background: #333;
+  border-color: #555;
+  color: #ddd;
+}
+
+body.dark-mode .dash-input-full:focus,
+body.dark-mode .dash-textarea:focus {
+  border-color: var(--color-accent);
+}
+
+body.dark-mode .empty-state,
+body.dark-mode .empty-state-sm,
+body.dark-mode .empty-state-xs {
+  color: #888;
+}
+
+body.dark-mode .text-sub,
+body.dark-mode .text-hint,
+body.dark-mode .text-hint-sm {
+  color: #999;
+}
+
+body.dark-mode .text-danger { color: #ef9a9a; }
+body.dark-mode .text-warn  { color: #ef8a8a; }
+
+body.dark-mode .dash-hr { border-color: #444; }
+
+body.dark-mode .danger-zone {
+  background: #2a2a2a;
+  border-left-color: #c55;
+}
+
+body.dark-mode .tr-header { background: #333; }
+
+body.dark-mode .file-upload-label {
+  background: var(--color-accent);
+  color: #1a1a1a;
+}
+
+body.dark-mode .btn-manual-adjust {
+  background: var(--color-accent);
+  color: #1a1a1a;
+}
+
+body.dark-mode .btn-batch-clear {
+  color: #999;
+  border-color: #555;
+}
+
+body.dark-mode .btn-batch-clear:hover {
+  color: #ddd;
+  border-color: #888;
+}
+
+body.dark-mode .lesson-amount-input {
+  background: #333;
+  border-color: #555;
+  color: #ddd;
+}
+
+body.dark-mode .preview-thumb {
+  border-color: #555;
+}
+
+body.dark-mode .att-date-input {
+  background: #333;
+  border-color: #555;
+  color: var(--color-accent);
+}
+
+body.dark-mode .att-panel {
+  background: #2a2a2a;
+  border-color: #555;
+}
+
+body.dark-mode .att-deduct-input,
+body.dark-mode .att-deduct-all-input {
+  background: #333;
+  border-color: #555;
+  color: #ddd;
+}
+
+body.dark-mode .btn-warning {
+  background: #5a4030;
+  border-color: #8a6040;
+}
+
+body.dark-mode .btn-danger-action {
+  background: #d84315;
+  border-color: #bf360c;
+}
+
 /* ========== 预约查询 ========== */
 .inquiry-badge {
   display: inline-block;
@@ -379,23 +826,23 @@ body.dark-mode .logout-btn:active {
 
 .inquiry-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
 
 .inquiry-unread {
-  background: #fff8fa !important;
+  background: #fff8fa;
 }
 
 body.dark-mode .inquiry-card {
-  background: #2a2a2a !important;
+  background: #2a2a2a;
 }
 
 body.dark-mode .inquiry-unread {
-  background: #2a1a22 !important;
+  background: #2a1a22;
 }
 
 body.dark-mode .inquiry-card:hover {
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
 body.dark-mode .inquiry-badge {
@@ -424,7 +871,7 @@ body.dark-mode #artwork-form-wrap,
 body.dark-mode #announce-form-wrap,
 body.dark-mode #class-form-wrap,
 body.dark-mode #record-form-wrap {
-  background: #2a2a2a !important;
+  background: #2a2a2a;
 }
 
 /* ========== 子标签页 ========== */
@@ -553,44 +1000,44 @@ body.dark-mode .att-btn.active:hover {
 
 /* 深色模式 - 点名操作区 */
 body.dark-mode #attendance-area > div:first-child {
-  background: #2a2a2a !important;
-  border-color: #555 !important;
+  background: #2a2a2a;
+  border-color: #555;
 }
 body.dark-mode #attendance-area h4 {
-  color: var(--color-accent) !important;
+  color: var(--color-accent);
 }
 body.dark-mode #attendance-area .att-deduct {
-  background: #333 !important;
-  border-color: #555 !important;
-  color: #ddd !important;
+  background: #333;
+  border-color: #555;
+  color: #ddd;
 }
 body.dark-mode #attendance-area tbody td {
   color: #ddd;
 }
 body.dark-mode #att-deduct-all {
-  background: #333 !important;
-  border-color: #555 !important;
-  color: #ddd !important;
+  background: #333;
+  border-color: #555;
+  color: #ddd;
 }
 body.dark-mode #att-all-present {
-  background: #3a5a3a !important;
-  border-color: #5a8a5a !important;
+  background: #3a5a3a;
+  border-color: #5a8a5a;
 }
 body.dark-mode #att-all-leave {
-  background: #5a4030 !important;
-  border-color: #8a6040 !important;
+  background: #5a4030;
+  border-color: #8a6040;
 }
 body.dark-mode #att-deduct-all-btn {
-  background: #d84315 !important;
-  border-color: #bf360c !important;
+  background: #d84315;
+  border-color: #bf360c;
 }
 body.dark-mode #att-save-btn {
-  background: var(--color-accent) !important;
-  border-color: #b8955a !important;
-  color: #1a1a1a !important;
+  background: var(--color-accent);
+  border-color: #b8955a;
+  color: #1a1a1a;
 }
 body.dark-mode #att-msg {
-  color: var(--color-accent) !important;
+  color: var(--color-accent);
 }
 
 /* ========== 课表时间表 ========== */
@@ -1442,8 +1889,8 @@ body.dark-mode .student-lesson-legend strong {
   }
 
   .dark-mode-toggle {
-    font-size: 0.9em !important;
-    padding: 3px 6px !important;
+    font-size: 0.9em;
+    padding: 3px 6px;
   }
 
   /* 内容区缩小间距 */
@@ -1606,7 +2053,7 @@ body.dark-mode .parent-lesson-warning {
 }
 
 body.dark-mode #parent-info hr {
-  border-top-color: #444 !important;
+  border-top-color: #444;
 }
 
 /* 手机端：家长端适配 */

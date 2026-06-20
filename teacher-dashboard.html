@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudbase.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://placehold.co https://*.tcloudbase.com; connect-src 'self' https://*.tcloudbase.com; frame-src 'self' https://www.openstreetmap.org; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
   <title>老师管理端 - 春晓画室</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/dashboard.css">
@@ -69,11 +70,12 @@
 
         <h3>📅 今日课程</h3>
         <table>
+          <caption class="sr-only">今日课程安排</caption>
           <thead>
             <tr><th>时间</th><th>课程</th><th>学生</th><th>教室</th></tr>
           </thead>
           <tbody>
-            <tr><td colspan="4" style="text-align:center; color:#999;">暂无今日课程数据</td></tr>
+            <tr><td colspan="4" class="empty-state-xs">暂无今日课程数据</td></tr>
           </tbody>
         </table>
       </section>
@@ -94,174 +96,174 @@
 
         <!-- ====== 学员 ====== -->
         <div class="sub-page active" id="sub-roster">
-          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
-            <button id="add-student-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 添加学生</button>
-            <span style="color:#888; font-size:0.9em;">共 <strong id="student-count">0</strong> 名学生</span>
-            <button id="export-students-btn" class="logout-btn" style="margin-left:auto;">📥 导出CSV</button>
+          <div class="dash-toolbar-sm">
+            <button id="add-student-btn" class="login-btn btn-auto" style="padding:10px 20px;">+ 添加学生</button>
+            <span class="text-sub">共 <strong id="student-count">0</strong> 名学生</span>
+            <button id="export-students-btn" class="logout-btn ml-auto">📥 导出CSV</button>
           </div>
 
           <!-- 筛选栏 -->
-          <div id="student-filter-bar" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px;">
-            <input type="text" id="student-search" placeholder="🔍 搜索姓名或家长..." style="flex:2; min-width:180px; padding:8px 12px; border:2px solid #e8d4c8; border-radius:8px; font-size:0.9em; outline:none;">
-            <select id="student-filter-course" style="flex:1; min-width:130px; padding:8px 12px; border:2px solid #e8d4c8; border-radius:8px; font-size:0.9em;">
+          <div id="student-filter-bar" class="dash-toolbar-sm">
+            <input type="text" id="student-search" placeholder="🔍 搜索姓名或家长..." class="dash-input-lg" style="flex:2; min-width:180px; font-size:0.9em; outline:none;">
+            <select id="student-filter-course" class="dash-input-lg" style="flex:1; min-width:130px; font-size:0.9em;">
               <option value="">全部课程</option>
               <option>儿童创意画</option><option>中国画</option><option>素描</option>
               <option>色彩</option><option>硬笔书法</option><option>软笔书法</option><option>猫猫课程😽</option>
             </select>
-            <select id="student-filter-status" style="flex:1; min-width:100px; padding:8px 12px; border:2px solid #e8d4c8; border-radius:8px; font-size:0.9em;">
+            <select id="student-filter-status" class="dash-input-lg" style="flex:1; min-width:100px; font-size:0.9em;">
               <option value="">全部状态</option>
               <option value="在读">在读</option>
               <option value="休学">休学</option>
               <option value="结课">结课</option>
             </select>
-            <div class="filter-chips" style="display:flex; gap:6px; flex-wrap:wrap;">
+            <div class="filter-chips flex-gap-xs">
               <span class="filter-chip active" data-filter="all">全部</span>
               <span class="filter-chip" data-filter="low">⚠️ 课次不足</span>
               <span class="filter-chip" data-filter="active">在读</span>
               <span class="filter-chip" data-filter="paused">休学</span>
             </div>
           </div>
-          <p id="student-filter-result" style="color:#888; font-size:0.85em; margin-bottom:16px; display:none;"></p>
+          <p id="student-filter-result" class="text-hint mb-md" style="display:none;"></p>
 
-          <div id="student-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <div id="student-form-wrap" class="dash-panel" style="display:none;">
             <h4 id="student-form-title">添加学生</h4>
-            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
-              <input type="text" id="s-name" placeholder="学生姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <input type="text" id="s-age" placeholder="年龄" style="flex:1; min-width:80px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <input type="text" id="s-parent" placeholder="家长姓名" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <input type="text" id="s-phone" placeholder="家长电话" style="flex:1; min-width:120px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <input type="email" id="s-parentEmail" placeholder="家长邮箱（关联账号）" style="flex:1; min-width:160px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <select id="s-status" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <div class="dash-form-row mb-sm">
+              <input type="text" id="s-name" placeholder="学生姓名" class="dash-input" style="flex:1; min-width:120px;">
+              <input type="text" id="s-age" placeholder="年龄" class="dash-input" style="flex:1; min-width:80px;">
+              <input type="text" id="s-parent" placeholder="家长姓名" class="dash-input" style="flex:1; min-width:120px;">
+              <input type="text" id="s-phone" placeholder="家长电话" class="dash-input" style="flex:1; min-width:120px;">
+              <input type="email" id="s-parentEmail" placeholder="家长邮箱（关联账号）" class="dash-input" style="flex:1; min-width:160px;">
+              <select id="s-status" class="dash-input" style="flex:1; min-width:100px;">
                 <option value="在读">在读</option><option value="休学">休学</option><option value="结课">结课</option>
               </select>
             </div>
             <!-- 课程/课次：动态 enrollment 行 -->
-            <div style="margin-bottom:4px; font-size:0.85em; color:#888; font-weight:bold;">📖 报名课程与课次</div>
+            <div class="text-hint" style="font-weight:bold; margin-bottom:4px;">📖 报名课程与课次</div>
             <div id="enrollments-wrap"></div>
-            <button id="add-enrollment-btn" type="button" style="margin-top:6px; padding:6px 16px; background:#5d4037; color:#fff; border:none; border-radius:6px; cursor:pointer; font-size:0.85em;">+ 添加课程</button>
-            <div style="margin-top:12px; display:flex; gap:8px;">
-              <button id="student-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+            <button id="add-enrollment-btn" type="button" class="btn-manual-adjust">+ 添加课程</button>
+            <div class="mt-sm flex-gap-sm">
+              <button id="student-save-btn" class="login-btn btn-auto" style="padding:8px 24px;">💾 保存</button>
               <button id="student-cancel-btn" class="logout-btn">取消</button>
               <input type="hidden" id="s-edit-id" value="">
             </div>
           </div>
           <div id="students-list">
-            <p style="text-align:center; color:#999; padding:40px;">暂无学生，点击"+ 添加学生"开始</p>
+            <p class="empty-state">暂无学生，点击"+ 添加学生"开始</p>
           </div>
         </div>
 
         <!-- ====== 班级 ====== -->
         <div class="sub-page" id="sub-classes">
-          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
-            <button id="add-class-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 创建班级</button>
-            <span style="color:#888; font-size:0.9em;">共 <strong id="class-count">0</strong> 个班级</span>
+          <div class="dash-toolbar">
+            <button id="add-class-btn" class="login-btn btn-auto" style="padding:10px 20px;">+ 创建班级</button>
+            <span class="text-sub">共 <strong id="class-count">0</strong> 个班级</span>
           </div>
-          <div id="class-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <div id="class-form-wrap" class="dash-panel" style="display:none;">
             <h4 id="class-form-title">创建班级</h4>
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-              <input type="text" id="c-name" placeholder="班级名称，如：创意画A班" style="flex:2; min-width:150px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <select id="c-course" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <div class="dash-form-row">
+              <input type="text" id="c-name" placeholder="班级名称，如：创意画A班" class="dash-input" style="flex:2; min-width:150px;">
+              <select id="c-course" class="dash-input" style="flex:1; min-width:130px;">
                 <option value="">关联课程</option>
                 <option>儿童创意画</option><option>中国画</option><option>素描</option>
                 <option>色彩</option><option>硬笔书法</option><option>软笔书法</option><option>猫猫课程😽</option>
               </select>
-              <select id="c-day" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <select id="c-day" class="dash-input" style="flex:1; min-width:100px;">
                 <option value="">上课日</option>
                 <option>周一</option><option>周二</option><option>周三</option><option>周四</option>
                 <option>周五</option><option>周六</option><option>周日</option>
               </select>
-              <input type="text" id="c-time" placeholder="时段，如：9:00-10:30" style="flex:1; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-              <input type="text" id="c-room" placeholder="教室" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <input type="text" id="c-time" placeholder="时段，如：9:00-10:30" class="dash-input" style="flex:1; min-width:130px;">
+              <input type="text" id="c-room" placeholder="教室" class="dash-input" style="flex:1; min-width:100px;">
             </div>
-            <div style="margin-top:12px;">
-              <label style="font-weight:bold; color:#5d4037;">👨‍🎓 选择学员：</label>
-              <div id="class-student-checkboxes" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+            <div class="mt-sm">
+              <label class="dash-label" style="display:inline;">👨‍🎓 选择学员：</label>
+              <div id="class-student-checkboxes" class="flex-gap-sm" style="flex-wrap:wrap; margin-top:6px;"></div>
             </div>
-            <div style="margin-top:12px; display:flex; gap:8px;">
-              <button id="class-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+            <div class="mt-sm flex-gap-sm">
+              <button id="class-save-btn" class="login-btn btn-auto" style="padding:8px 24px;">💾 保存</button>
               <button id="class-cancel-btn" class="logout-btn">取消</button>
               <input type="hidden" id="c-edit-id" value="">
             </div>
           </div>
           <div id="classes-list">
-            <p style="text-align:center; color:#999; padding:40px;">暂无班级，点击"+ 创建班级"开始</p>
+            <p class="empty-state">暂无班级，点击"+ 创建班级"开始</p>
           </div>
         </div>
 
         <!-- ====== 课表 ====== -->
         <div class="sub-page" id="sub-schedule">
-          <p style="color:#888; margin-bottom:15px;">📅 周视图课表 · 根据班级数据自动生成</p>
-          <div id="schedule-grid" style="overflow-x:auto;"></div>
-          <div id="unscheduled-classes" style="margin-top:20px;"></div>
+          <p class="text-sub" style="margin-bottom:15px;">📅 周视图课表 · 根据班级数据自动生成</p>
+          <div id="schedule-grid" class="schedule-grid-scroll"></div>
+          <div id="unscheduled-classes" class="mt-lg"></div>
         </div>
 
         <!-- ====== 点名 ====== -->
         <div class="sub-page" id="sub-attendance">
           <!-- 日期导航 -->
-          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
-            <button id="att-week-prev" class="logout-btn" style="padding:8px 14px;">◀ 前一天</button>
-            <input type="date" id="att-date-nav" style="padding:10px 14px; border:2px solid #e8d4c8; border-radius:8px; font-size:1em; font-weight:bold; color:#5d4037; min-width:160px;">
-            <button id="att-week-next" class="logout-btn" style="padding:8px 14px;">后一天 ▶</button>
+          <div class="dash-toolbar-sm mb-lg">
+            <button id="att-week-prev" class="logout-btn btn-sm">◀ 前一天</button>
+            <input type="date" id="att-date-nav" class="att-date-input">
+            <button id="att-week-next" class="logout-btn btn-sm">后一天 ▶</button>
             <button id="att-today-btn" class="login-btn" style="width:auto; padding:10px 18px;">📅 今天</button>
-            <span id="att-day-label" style="color:#888; font-size:0.9em; margin-left:8px;"></span>
+            <span id="att-day-label" class="text-sub ml-xs"></span>
           </div>
 
           <!-- 当日班级点名表 -->
           <div id="attendance-daily-table">
-            <p style="text-align:center; color:#999; padding:30px;">该日期没有安排课程</p>
+            <p class="empty-state-sm">该日期没有安排课程</p>
           </div>
 
           <!-- 点名操作区（点击班级后展开） -->
-          <div id="attendance-area" style="display:none; margin-top:20px;"></div>
+          <div id="attendance-area" style="display:none;" class="mt-lg"></div>
 
-          <hr style="margin:30px 0; border-color:#e8d4c8;">
+          <hr class="dash-hr">
           <h3>📜 最近点名记录</h3>
           <div id="attendance-history"></div>
 
-          <hr style="margin:30px 0; border-color:#e8d4c8;">
+          <hr class="dash-hr">
           <h3>📊 出勤统计</h3>
           <div id="attendance-stats">
-            <p style="text-align:center; color:#999; padding:20px;">点名后将自动生成统计数据</p>
+            <p class="empty-state-xs">点名后将自动生成统计数据</p>
           </div>
         </div>
 
         <!-- ====== 上课记录 ====== -->
         <div class="sub-page" id="sub-records">
-          <div id="record-form-wrap" style="background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+          <div id="record-form-wrap" class="dash-panel">
             <h4>📝 添加上课记录</h4>
-            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+            <div class="dash-form-row-end">
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">班级</label>
-                <select id="rec-class-select" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:160px;">
+                <label class="dash-label">班级</label>
+                <select id="rec-class-select" class="dash-input" style="min-width:160px; padding-left:12px; padding-right:12px;">
                   <option value="">-- 请选择 --</option>
                 </select>
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">日期</label>
-                <input type="date" id="rec-date" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px;">
+                <label class="dash-label">日期</label>
+                <input type="date" id="rec-date" class="dash-input" style="padding-left:12px; padding-right:12px;">
               </div>
             </div>
-            <div style="margin-top:12px;">
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">📖 教学内容</label>
-              <textarea id="rec-content" rows="3" placeholder="本节课教授的内容..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; resize:vertical;"></textarea>
+            <div class="mt-sm">
+              <label class="dash-label">📖 教学内容</label>
+              <textarea id="rec-content" rows="3" placeholder="本节课教授的内容..." class="dash-textarea"></textarea>
             </div>
-            <div style="margin-top:12px;">
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px;">📌 备注</label>
-              <input type="text" id="rec-notes" placeholder="学生表现、作业等..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px;">
+            <div class="mt-sm">
+              <label class="dash-label">📌 备注</label>
+              <input type="text" id="rec-notes" placeholder="学生表现、作业等..." class="dash-input-full">
             </div>
             <button id="record-save-btn" class="login-btn" style="width:auto; padding:10px 24px; margin-top:12px;">💾 保存记录</button>
-            <span id="rec-msg" style="margin-left:12px; font-size:0.9em;"></span>
+            <span id="rec-msg" class="ml-sm text-sub"></span>
           </div>
           <h3>📜 上课记录列表</h3>
           <div id="records-list">
-            <p style="text-align:center; color:#999; padding:30px;">暂无记录</p>
+            <p class="empty-state-sm">暂无记录</p>
           </div>
         </div>
 
         <!-- ====== 课消日志 ====== -->
         <div class="sub-page" id="sub-lessonlog">
           <!-- 概览卡片 -->
-          <div class="stat-cards" id="lessonlog-summary" style="margin-bottom:20px;">
+          <div class="stat-cards" id="lessonlog-summary" class="mb-lg">
             <div class="stat-card">
               <div class="stat-number" id="log-total-deducted">0</div>
               <div class="stat-label">📉 累计扣课次</div>
@@ -275,149 +277,149 @@
               <div class="stat-label">👨‍🎓 涉及学员</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number" id="log-low-lesson-count" style="color:#e88;">0</div>
+              <div class="stat-number" id="log-low-lesson-count" class="text-warn">0</div>
               <div class="stat-label">⚠️ 课次不足（≤4节）</div>
             </div>
           </div>
 
           <!-- 筛选 + 手动调整 -->
-          <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin-bottom:20px;">
+          <div class="dash-toolbar-end">
             <div>
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">👨‍🎓 学员</label>
-              <select id="log-filter-student" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:150px;">
+              <label class="dash-label-sm">👨‍🎓 学员</label>
+              <select id="log-filter-student" class="dash-input" style="min-width:150px; padding-left:12px; padding-right:12px;">
                 <option value="">全部学员</option>
               </select>
             </div>
             <div>
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📅 开始日期</label>
-              <input type="date" id="log-filter-from" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px;">
+              <label class="dash-label-sm">📅 开始日期</label>
+              <input type="date" id="log-filter-from" class="dash-input" style="padding-left:12px; padding-right:12px;">
             </div>
             <div>
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📅 结束日期</label>
-              <input type="date" id="log-filter-to" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px;">
+              <label class="dash-label-sm">📅 结束日期</label>
+              <input type="date" id="log-filter-to" class="dash-input" style="padding-left:12px; padding-right:12px;">
             </div>
             <button id="log-filter-btn" class="login-btn" style="width:auto; padding:10px 16px;">🔍 筛选</button>
             <button id="log-clear-filter-btn" class="logout-btn">重置</button>
-            <button id="log-add-manual-btn" class="login-btn" style="width:auto; padding:10px 16px; background:#795548; margin-left:auto;">+ 手动调整</button>
+            <button id="log-add-manual-btn" class="login-btn btn-auto ml-auto" style="padding:10px 16px; background:#795548;">+ 手动调整</button>
           </div>
 
           <!-- 手动调整表单 -->
-          <div id="log-manual-form" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#5d4037; margin:0 0 12px;">📝 手动调整课次</h4>
-            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+          <div id="log-manual-form" class="dash-panel" style="display:none;">
+            <h4 class="section-title">📝 手动调整课次</h4>
+            <div class="dash-form-row-end">
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">学员</label>
-                <select id="log-manual-student" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:150px;">
+                <label class="dash-label-sm">学员</label>
+                <select id="log-manual-student" class="dash-input" style="min-width:150px; padding-left:12px; padding-right:12px;">
                   <option value="">-- 选择 --</option>
                 </select>
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">课程</label>
-                <select id="log-manual-course" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:130px;">
+                <label class="dash-label-sm">课程</label>
+                <select id="log-manual-course" class="dash-input" style="min-width:130px; padding-left:12px; padding-right:12px;">
                   <option value="">先选学员</option>
                 </select>
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">日期</label>
-                <input type="date" id="log-manual-date" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px;">
+                <label class="dash-label-sm">日期</label>
+                <input type="date" id="log-manual-date" class="dash-input" style="padding-left:12px; padding-right:12px;">
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">数量（负数扣、正数加）</label>
-                <input type="number" id="log-manual-amount" value="1" style="width:80px; padding:8px; border:2px solid #e8d4c8; border-radius:6px; text-align:center;">
+                <label class="dash-label-sm">数量（负数扣、正数加）</label>
+                <input type="number" id="log-manual-amount" value="1" class="dash-input" style="width:80px; text-align:center;">
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">原因</label>
-                <input type="text" id="log-manual-reason" placeholder="如：补课扣课、赠送课次等" style="padding:8px 12px; border:2px solid #e8d4c8; border-radius:6px; min-width:200px;">
+                <label class="dash-label-sm">原因</label>
+                <input type="text" id="log-manual-reason" placeholder="如：补课扣课、赠送课次等" class="dash-input" style="min-width:200px; padding-left:12px; padding-right:12px;">
               </div>
             </div>
-            <div style="margin-top:12px; display:flex; gap:8px;">
-              <button id="log-manual-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+            <div class="mt-sm flex-gap-sm">
+              <button id="log-manual-save-btn" class="login-btn btn-auto" style="padding:8px 24px;">💾 保存</button>
               <button id="log-manual-cancel-btn" class="logout-btn">取消</button>
-              <span id="log-manual-msg" style="margin-left:8px; font-size:0.9em;"></span>
+              <span id="log-manual-msg" class="ml-xs text-sub"></span>
             </div>
           </div>
 
           <!-- 日志表格 -->
           <div id="lessonlog-table-wrap">
-            <p style="text-align:center; color:#999; padding:40px;">暂无课消记录，点名扣课次后自动生成</p>
+            <p class="empty-state">暂无课消记录，点名扣课次后自动生成</p>
           </div>
 
           <!-- 低课次预警 -->
-          <h3 style="margin-top:30px;">⚠️ 课次不足预警</h3>
+          <h3 class="mt-xl">⚠️ 课次不足预警</h3>
           <div id="low-lesson-alerts">
-            <p style="color:#999; font-size:0.9em;">所有学员课次充足 ✅</p>
+            <p class="text-sub" style="color:#999;">所有学员课次充足 ✅</p>
           </div>
         </div>
 
         <!-- ====== 续费 ====== -->
         <div class="sub-page" id="sub-renewals">
           <!-- 续费表单 -->
-          <div id="renewal-form-wrap" style="background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-            <h4 style="color:#5d4037; margin:0 0 12px;">💰 学员续费</h4>
-            <p style="color:#888; font-size:0.85em; margin-bottom:16px;">为学员的报名课程增加课次，续费记录将被保存并可追溯</p>
-            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:end;">
+          <div id="renewal-form-wrap" class="dash-panel">
+            <h4 class="section-title">💰 学员续费</h4>
+            <p class="text-hint mb-md">为学员的报名课程增加课次，续费记录将被保存并可追溯</p>
+            <div class="dash-form-row-end">
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">👨‍🎓 学员</label>
-                <select id="renewal-student" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; min-width:180px; font-size:0.95em;">
+                <label class="dash-label-sm">👨‍🎓 学员</label>
+                <select id="renewal-student" class="dash-input-lg" style="min-width:180px; font-size:0.95em;">
                   <option value="">-- 选择学员 --</option>
                 </select>
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📖 续费课程</label>
-                <select id="renewal-course" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; min-width:180px; font-size:0.95em;">
+                <label class="dash-label-sm">📖 续费课程</label>
+                <select id="renewal-course" class="dash-input-lg" style="min-width:180px; font-size:0.95em;">
                   <option value="">先选学员</option>
                 </select>
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">🔢 续费课次</label>
-                <input type="number" id="renewal-lessons" placeholder="如：20" min="1" style="width:100px; padding:10px; border:2px solid #e8d4c8; border-radius:8px; text-align:center; font-size:1em;">
+                <label class="dash-label-sm">🔢 续费课次</label>
+                <input type="number" id="renewal-lessons" placeholder="如：20" min="1" class="dash-input-lg" style="width:100px; text-align:center; font-size:1em;">
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📅 日期</label>
-                <input type="date" id="renewal-date" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; font-size:0.95em;">
+                <label class="dash-label-sm">📅 日期</label>
+                <input type="date" id="renewal-date" class="dash-input-lg" style="font-size:0.95em;">
               </div>
               <div>
-                <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:4px; font-size:0.85em;">📝 备注（可选）</label>
-                <input type="text" id="renewal-note" placeholder="如：续费半年40节" style="padding:10px 12px; border:2px solid #e8d4c8; border-radius:8px; min-width:200px;">
+                <label class="dash-label-sm">📝 备注（可选）</label>
+                <input type="text" id="renewal-note" placeholder="如：续费半年40节" class="dash-input-lg" style="min-width:200px;">
               </div>
             </div>
-            <div style="margin-top:16px;">
+            <div class="mt-md">
               <button id="renewal-save-btn" class="login-btn" style="width:auto; padding:10px 28px; font-size:1em;">💰 确认续费</button>
-              <span id="renewal-msg" style="margin-left:12px; font-size:0.95em;"></span>
+              <span id="renewal-msg" class="ml-sm" style="font-size:0.95em;"></span>
             </div>
           </div>
 
           <!-- 续费历史 -->
-          <h3 style="margin-bottom:16px;">📜 续费记录 <span id="renewal-summary" style="font-weight:normal; font-size:0.8em; color:#888; margin-left:8px;"></span></h3>
+          <h3 class="mb-md">📜 续费记录 <span id="renewal-summary" class="text-hint-sm" style="font-weight:normal; margin-left:8px;"></span></h3>
 
           <!-- 筛选栏 -->
-          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:16px;">
+          <div class="dash-toolbar-sm" style="align-items:end;">
             <div>
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">👨‍🎓 学员</label>
-              <select id="renewal-filter-student" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; min-width:140px; font-size:0.9em;">
+              <label class="dash-label-xs">👨‍🎓 学员</label>
+              <select id="renewal-filter-student" class="dash-input text-sub" style="min-width:140px; padding-left:10px; padding-right:10px;">
                 <option value="">全部学员</option>
               </select>
             </div>
             <div>
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">📖 课程</label>
-              <select id="renewal-filter-course" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; min-width:130px; font-size:0.9em;">
+              <label class="dash-label-xs">📖 课程</label>
+              <select id="renewal-filter-course" class="dash-input text-sub" style="min-width:130px; padding-left:10px; padding-right:10px;">
                 <option value="">全部课程</option>
               </select>
             </div>
             <div>
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">📅 开始</label>
-              <input type="date" id="renewal-filter-from" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; font-size:0.9em;">
+              <label class="dash-label-xs">📅 开始</label>
+              <input type="date" id="renewal-filter-from" class="dash-input text-sub" style="padding-left:10px; padding-right:10px;">
             </div>
             <div>
-              <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:2px; font-size:0.8em;">📅 结束</label>
-              <input type="date" id="renewal-filter-to" style="padding:8px 10px; border:2px solid #e8d4c8; border-radius:6px; font-size:0.9em;">
+              <label class="dash-label-xs">📅 结束</label>
+              <input type="date" id="renewal-filter-to" class="dash-input text-sub" style="padding-left:10px; padding-right:10px;">
             </div>
             <button id="renewal-filter-btn" class="login-btn" style="width:auto; padding:8px 16px; font-size:0.9em;">🔍 筛选</button>
-            <button id="renewal-filter-clear-btn" class="logout-btn" style="font-size:0.9em;">重置</button>
+            <button id="renewal-filter-clear-btn" class="logout-btn text-sub" style="font-size:0.9em;">重置</button>
           </div>
 
           <div id="renewal-history-list">
-            <p style="text-align:center; color:#999; padding:40px;">暂无续费记录</p>
+            <p class="empty-state">暂无续费记录</p>
           </div>
         </div>
       </section>
@@ -428,10 +430,10 @@
 
         <!-- 工具栏 -->
         <div class="artwork-toolbar">
-          <button id="add-artwork-btn" class="login-btn" style="width:auto; padding:10px 20px;">+ 添加作品</button>
-          <span style="color:#888; font-size:0.9em;">共 <strong id="artwork-count">0</strong> 件</span>
-          <span id="artwork-filter-result" style="display:none; color:#d7a86e; font-size:0.85em;"></span>
-          <div style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+          <button id="add-artwork-btn" class="login-btn btn-auto" style="padding:10px 20px;">+ 添加作品</button>
+          <span class="text-sub">共 <strong id="artwork-count">0</strong> 件</span>
+          <span id="artwork-filter-result" class="text-hint" style="display:none; color:#d7a86e;"></span>
+          <div class="ml-auto flex-gap-sm" style="align-items:center;">
             <button id="export-artworks-btn" class="logout-btn" style="padding:8px 16px;">📥 导出CSV</button>
             <div class="view-toggle">
               <button class="view-btn active" data-view="card" id="view-card-btn">📱 卡片</button>
@@ -464,86 +466,87 @@
         <div id="artwork-batch-bar" class="batch-bar" style="display:none;">
           <span>已选 <strong id="batch-count">0</strong> 件</span>
           <button id="batch-delete-btn" class="logout-btn" style="padding:6px 16px;">🗑️ 批量删除</button>
-          <button id="batch-clear-btn" style="padding:6px 12px; background:none; border:1px solid #ccc; border-radius:6px; cursor:pointer; font-size:0.85em;">取消选择</button>
+          <button id="batch-clear-btn" class="btn-batch-clear">取消选择</button>
         </div>
 
         <!-- 表单（添加/编辑共用） -->
-        <div id="artwork-form-wrap" style="display:none; background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+        <div id="artwork-form-wrap" class="dash-panel" style="display:none;">
           <h4 id="artwork-form-title">添加作品</h4>
           <input type="hidden" id="aw-edit-id" value="">
-          <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <input type="text" id="a-title" placeholder="作品名称" style="flex:2; min-width:150px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
-            <input type="text" id="a-student" list="student-list" placeholder="学生姓名（输入或选择）" autocomplete="off" style="flex:1.5; min-width:130px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+          <div class="dash-form-row">
+            <input type="text" id="a-title" placeholder="作品名称" class="dash-input" style="flex:2; min-width:150px;">
+            <input type="text" id="a-student" list="student-list" placeholder="学生姓名（输入或选择）" autocomplete="off" class="dash-input" style="flex:1.5; min-width:130px;">
             <datalist id="student-list"></datalist>
             <input type="hidden" id="a-student-id" value="">
-            <select id="a-type" style="flex:1; min-width:100px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+            <select id="a-type" class="dash-input" style="flex:1; min-width:100px;">
               <option value="美术">美术</option><option value="书法">书法</option><option value="课堂剪影">课堂剪影</option><option value="家长端">家长端</option>
             </select>
           </div>
           <!-- 图片上传 -->
-          <div style="margin-top:12px;">
-            <label style="display:block; font-weight:bold; color:#5d4037; margin-bottom:6px;">📷 作品照片</label>
-            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-              <label style="display:inline-block; padding:10px 20px; background:#5d4037; color:#fff; border-radius:8px; cursor:pointer; font-size:0.9em; white-space:nowrap;">
+          <div class="mt-sm">
+            <label class="dash-label" style="margin-bottom:6px;">📷 作品照片</label>
+            <div class="dash-toolbar-sm" style="margin-bottom:0;">
+              <label class="file-upload-label">
                 📱 拍照/选照片
                 <input type="file" id="a-image-file" accept="image/*" style="display:none;">
               </label>
-              <span style="color:#888; font-size:0.85em;">或</span>
-              <input type="url" id="a-image" placeholder="粘贴图片链接（可选）" style="flex:1; min-width:200px; padding:8px; border:2px solid #e8d4c8; border-radius:6px;">
+              <span class="text-hint">或</span>
+              <input type="url" id="a-image" placeholder="粘贴图片链接（可选）" class="dash-input" style="flex:1; min-width:200px;">
             </div>
             <!-- 上传进度 -->
-            <div id="artwork-upload-progress" style="display:none; margin-top:8px; color:#d7a86e; font-size:0.85em;">⏳ 正在上传到云端...</div>
+            <div id="artwork-upload-progress" class="text-hint" style="display:none; margin-top:8px; color:#d7a86e;">⏳ 正在上传到云端...</div>
             <!-- 预览区 -->
             <div id="artwork-preview-wrap" style="display:none; margin-top:10px; position:relative; max-width:300px;">
-              <img id="artwork-preview-img" src="" style="width:100%; border-radius:8px; border:2px solid #d7a86e;">
-              <button id="artwork-preview-clear" style="position:absolute; top:4px; right:4px; background:#e88; color:#fff; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px;">✕</button>
-              <span id="artwork-preview-size" style="display:block; color:#888; font-size:0.75em; margin-top:4px;"></span>
+              <img id="artwork-preview-img" src="" class="preview-thumb">
+              <button id="artwork-preview-clear" class="preview-clear-btn">✕</button>
+              <span id="artwork-preview-size" class="text-hint-sm" style="display:block; margin-top:4px;"></span>
             </div>
           </div>
-          <div style="margin-top:12px; display:flex; gap:8px;">
-            <button id="artwork-save-btn" class="login-btn" style="width:auto; padding:8px 24px;">💾 保存</button>
+          <div class="mt-sm flex-gap-sm">
+            <button id="artwork-save-btn" class="login-btn btn-auto" style="padding:8px 24px;">💾 保存</button>
             <button id="artwork-cancel-btn" class="logout-btn">取消</button>
           </div>
         </div>
 
         <!-- 内容区（卡片/表格动态渲染） -->
         <div id="artworks-list">
-          <p style="text-align:center; color:#999; padding:40px; width:100%;">暂无作品，点击"+ 添加作品"开始</p>
+          <p class="empty-state" style="width:100%;">暂无作品，点击"+ 添加作品"开始</p>
         </div>
       </section>
 
       <!-- 预约查询 -->
       <section id="page-inquiries" class="dash-page">
         <h2>📩 预约查询</h2>
-        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
-          <span style="color:#888;">家长填写的免费试听预约，点击卡片标记已读</span>
-          <button id="clear-inquiries" class="logout-btn" style="margin-left:auto;">🗑️ 清空全部</button>
+        <div class="dash-toolbar">
+          <span class="text-sub" style="font-size:inherit;">家长填写的免费试听预约，点击卡片标记已读</span>
+          <button id="clear-inquiries" class="logout-btn ml-auto">🗑️ 清空全部</button>
         </div>
         <div id="inquiries-list">
-          <p style="text-align:center; color:#999; padding:40px;">暂无预约记录</p>
+          <p class="empty-state">暂无预约记录</p>
         </div>
       </section>
 
       <!-- 发布通知 -->
       <section id="page-announcements" class="dash-page">
         <h2>📢 发布通知</h2>
-        <div id="announce-form-wrap" style="background:#fff; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-          <input type="text" id="ann-title" placeholder="通知标题，如：本周六课程调整通知" style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; margin-bottom:12px; font-size:1em;">
-          <textarea id="ann-content" rows="4" placeholder="请输入通知内容..." style="width:100%; padding:10px; border:2px solid #e8d4c8; border-radius:8px; resize:vertical; font-size:1em;"></textarea>
+        <div id="announce-form-wrap" class="dash-panel">
+          <input type="text" id="ann-title" placeholder="通知标题，如：本周六课程调整通知" class="dash-input-full mb-sm" style="font-size:1em;">
+          <textarea id="ann-content" rows="4" placeholder="请输入通知内容..." class="dash-textarea" style="font-size:1em;"></textarea>
           <button id="publish-ann-btn" class="login-btn" style="width:auto; padding:10px 24px; margin-top:12px;">📤 发布通知</button>
-          <span id="ann-msg" style="margin-left:12px; font-size:0.9em;"></span>
+          <span id="ann-msg" class="ml-sm text-sub"></span>
         </div>
         <h3>📋 已发布通知</h3>
         <div id="announcements-list">
-          <p style="text-align:center; color:#999; padding:30px;">暂无通知</p>
+          <p class="empty-state-sm">暂无通知</p>
         </div>
       </section>
 
       <!-- 课程管理 -->
       <section id="page-courses" class="dash-page">
         <h2>📚 课程管理</h2>
-        <p style="color:#888; margin-bottom:15px;">点击"编辑"修改课程信息，修改后自动保存</p>
+        <p class="text-sub" style="margin-bottom:15px;">点击"编辑"修改课程信息，修改后自动保存</p>
         <table id="courses-table">
+          <caption class="sr-only">课程信息管理</caption>
           <thead>
             <tr><th>课程名称</th><th>年龄段</th><th>时长</th><th>时段</th><th>名额</th><th>操作</th></tr>
           </thead>
@@ -554,46 +557,47 @@
       <!-- 数据管理 -->
       <section id="page-datamgmt" class="dash-page">
         <h2>💾 数据管理</h2>
-        <p style="color:#888; margin-bottom:20px;">数据备份与恢复 · 请定期下载备份文件保存到安全位置</p>
+        <p class="text-sub mb-lg">数据备份与恢复 · 请定期下载备份文件保存到安全位置</p>
 
         <!-- 消息提示 -->
-        <div id="datamgmt-msg" class="dm-msg" style="display:none; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-weight:bold;"></div>
+        <div id="datamgmt-msg" class="dm-msg"></div>
 
         <!-- 操作栏 -->
-        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:20px;">
+        <div class="dash-toolbar">
           <button id="datamgmt-backup-btn" class="login-btn" style="width:auto; padding:12px 28px; font-size:1em;">📥 一键备份全部数据</button>
-          <label class="login-btn" style="width:auto; padding:12px 28px; font-size:1em; cursor:pointer; background:#795548; display:inline-block;">
+          <label class="login-btn btn-auto" style="padding:12px 28px; font-size:1em; cursor:pointer; background:#795548; display:inline-block;">
             📤 恢复数据
             <input type="file" id="datamgmt-restore-input" accept=".json" style="display:none;">
           </label>
         </div>
 
         <!-- 统计面板 -->
-        <div style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:20px;">
-          <h3 style="margin:0 0 4px; color:#5d4037;">📊 数据总览</h3>
-          <p style="color:#888; font-size:0.9em; margin-bottom:16px;">共 <strong id="datamgmt-total-records">-</strong> 条记录</p>
-          <div style="overflow-x:auto;">
+        <div class="dash-panel">
+          <h3 class="dash-label" style="margin:0 0 4px; display:inline;">📊 数据总览</h3>
+          <p class="text-sub mb-md">共 <strong id="datamgmt-total-records">-</strong> 条记录</p>
+          <div class="schedule-grid-scroll">
             <table style="width:100%; border-collapse:collapse;">
+              <caption class="sr-only">数据库集合统计</caption>
               <thead>
-                <tr style="background:#f5f0eb;">
-                  <th style="padding:10px; text-align:left;">集合</th>
-                  <th style="padding:10px; text-align:left;">数据量</th>
-                  <th style="padding:10px; text-align:left;">最后同步</th>
-                  <th style="padding:10px; text-align:left;">操作</th>
+                <tr class="tr-header">
+                  <th class="dm-th">集合</th>
+                  <th class="dm-th">数据量</th>
+                  <th class="dm-th">最后同步</th>
+                  <th class="dm-th">操作</th>
                 </tr>
               </thead>
               <tbody id="datamgmt-stats-tbody">
-                <tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">加载中...</td></tr>
+                <tr><td colspan="4" class="empty-state-xs">加载中...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
         <!-- 危险操作区 -->
-        <div style="background:#fff; padding:20px; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); border-left:4px solid #e88;">
-          <h3 style="margin:0 0 8px; color:#c55;">⚠️ 危险操作</h3>
-          <p style="color:#888; font-size:0.85em; margin-bottom:16px;">以下操作不可恢复，请在操作前务必备份数据</p>
-          <div id="datamgmt-danger-list" style="display:flex; flex-direction:column; gap:8px;">
+        <div class="danger-zone">
+          <h3 class="text-danger" style="margin:0 0 8px;">⚠️ 危险操作</h3>
+          <p class="text-hint mb-md">以下操作不可恢复，请在操作前务必备份数据</p>
+          <div id="datamgmt-danger-list" class="flex-col">
           </div>
         </div>
       </section>
