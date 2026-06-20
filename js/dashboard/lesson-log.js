@@ -136,8 +136,9 @@ function renderLessonLog() {
   html += '</tr></thead><tbody>';
 
   log.forEach(function(l) {
-    var amountColor = l.type === '手动调整' && l.amount < 0 ? '#5a9' : '#e88';
-    var amountText = l.amount > 0 ? '-' + l.amount : ('+' + Math.abs(l.amount));
+    // 手动调整：负数=扣课(红)，正数=加课(绿)；点名扣课永远为正(红)
+    var amountColor = l.type === '手动调整' ? (l.amount < 0 ? '#e88' : '#5a9') : '#e88';
+    var amountText = l.type === '手动调整' ? (l.amount < 0 ? l.amount : ('+' + l.amount)) : ('-' + l.amount);
     var corrId = l.id.replace('corr-', '');
     html += '<tr id="log-row-' + l.id + '">';
     html += '<td>' + l.date + '</td>';
@@ -264,24 +265,23 @@ function saveEditCorrection(corrId) {
   if (!newCourse || !newDate || newAmount === 0) { alert('请填写完整的修改信息'); return; }
   if (!newReason) { alert('请填写调整原因'); return; }
 
-  // 1. 撤销旧调整对学员课次的影响
+  // 1. 撤销旧调整：consumed += oldAmount（还原 save 时做的 consumed -= oldAmount）
   var students = getStudents();
   var s = students.find(function(x) { return x.id === c.studentId; });
   if (s) {
     normalizeStudentEnrollments(s);
     var oldEnr = (s.enrollments || []).find(function(e) { return e.course === c.course; });
     if (oldEnr) {
-      oldEnr.consumedLessons = (oldEnr.consumedLessons || 0) - c.amount;
+      oldEnr.consumedLessons = (oldEnr.consumedLessons || 0) + c.amount;
     }
   }
 
-  // 2. 应用新调整
+  // 2. 应用新调整：consumed -= newAmount（负数=扣课 → consumed增加）
   var newEnr = (s.enrollments || []).find(function(e) { return e.course === newCourse; });
   if (!newEnr) {
-    // 新课程不存在，创建
-    s.enrollments.push({ course: newCourse, totalLessons: 0, consumedLessons: newAmount });
+    s.enrollments.push({ course: newCourse, totalLessons: 0, consumedLessons: 0 - newAmount });
   } else {
-    newEnr.consumedLessons = (newEnr.consumedLessons || 0) + newAmount;
+    newEnr.consumedLessons = (newEnr.consumedLessons || 0) - newAmount;
   }
 
   normalizeStudentEnrollments(s);
@@ -308,14 +308,14 @@ function undoManualCorrection(id) {
   var c = corrections.find(function(x) { return x.id === id; });
   if (!c) return;
 
-  // 撤销课次变动
+  // 撤销课次变动：还原 save 时的 consumed -= amount，即 consumed += amount
   var students = getStudents();
   var s = students.find(function(x) { return x.id === c.studentId; });
   if (s) {
     normalizeStudentEnrollments(s);
     var enr = c.course ? (s.enrollments || []).find(function(e) { return e.course === c.course; }) : (s.enrollments && s.enrollments[0]);
     if (enr) {
-      enr.consumedLessons = (enr.consumedLessons || 0) - c.amount;
+      enr.consumedLessons = (enr.consumedLessons || 0) + c.amount;
     }
     normalizeStudentEnrollments(s);
     saveStudents(students);
@@ -362,12 +362,13 @@ function saveManualCorrection() {
   var enr = (s.enrollments || []).find(function(e) { return e.course === course; });
   if (!enr) { msgEl.textContent = '⚠️ 未找到对应课程报名记录'; msgEl.style.color = '#e88'; return; }
 
-  // 直接更新 consumedLessons（允许为负值，不再 clamp 到 0）
-  enr.consumedLessons = (enr.consumedLessons || 0) + amount;
+  // 负数=扣课时(增加consumed)，正数=加课时(减少consumed)
+  var newConsumed = (enr.consumedLessons || 0) - amount;
 
-  if ((enr.consumedLessons || 0) > (enr.totalLessons || 0) && amount > 0) {
-    if (!confirm('该操作将使' + course + '已消耗(' + enr.consumedLessons + ')超过总课次(' + enr.totalLessons + ')，确定继续？')) return;
+  if (newConsumed > (enr.totalLessons || 0) && amount < 0) {
+    if (!confirm('该操作将使' + course + '已消耗(' + newConsumed + ')超过总课次(' + enr.totalLessons + ')，确定继续？')) return;
   }
+  enr.consumedLessons = newConsumed;
 
   // 重新计算顶层字段
   normalizeStudentEnrollments(s);
@@ -386,7 +387,7 @@ function saveManualCorrection() {
   });
   saveLessonCorrections(corrections);
 
-  msgEl.textContent = '✅ 已保存（' + (amount > 0 ? '扣' + amount + '课次' : '退' + Math.abs(amount) + '课次') + ' · ' + course + '）';
+  msgEl.textContent = '✅ 已保存（' + (amount < 0 ? '扣' + Math.abs(amount) + '课次' : '加' + amount + '课次') + ' · ' + course + '）';
   msgEl.style.color = '#5a9';
   document.getElementById('log-manual-form').style.display = 'none';
 
@@ -402,12 +403,13 @@ function updateLessonLogSummary() {
   var log = getFilteredLog();
   var students = getStudents();
 
-  var totalDeducted = log.reduce(function(sum, l) { return sum + Math.max(0, l.amount); }, 0);
+  // 点名扣课 amount 永远为正；手动调整 amount<0 为扣课
+  var totalDeducted = log.reduce(function(sum, l) { return sum + (l.type === '手动调整' ? Math.max(0, -l.amount) : Math.max(0, l.amount)); }, 0);
 
   var now = new Date();
   var thisMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   var monthDeducted = log.filter(function(l) { return l.date.startsWith(thisMonth); })
-    .reduce(function(sum, l) { return sum + Math.max(0, l.amount); }, 0);
+    .reduce(function(sum, l) { return sum + (l.type === '手动调整' ? Math.max(0, -l.amount) : Math.max(0, l.amount)); }, 0);
 
   var studentIds = {};
   log.forEach(function(l) { studentIds[l.studentId] = true; });
