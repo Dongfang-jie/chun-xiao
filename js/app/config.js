@@ -6,9 +6,9 @@
 var CLOUDBASE_CONFIG = {
   env: 'chunxiao-d8ghfaw3y0781da11',
   // 云函数 HTTP 访问地址（绕过 SDK callFunction 的网络问题）
-  // 路径格式与 login.js 中 verify-code 一致，仅末尾函数名不同
-  // 如果 404，请到 CloudBase 控制台 → HTTP 访问服务 → 查看 dbProxy 的实际路径并更新此处
   dbProxyUrl: 'https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/dbProxy',
+  // dbProxy API Key（与云函数环境变量 DB_PROXY_API_KEY 一致）
+  dbProxyApiKey: 'chunxiao-dbproxy-2026',
   // 数据集合名（跟 localStorage key 对应）
   collections: {
     students: 'students',
@@ -55,4 +55,17 @@ function getAuth() {
     if (app) _auth = app.auth({ persistence: 'local' });
   }
   return _auth;
+}
+
+// HTML 转义工具函数 — 防止 XSS 攻击
+// 使用方式: '&lt;h4&gt;' + escapeHtml(userName) + '&lt;/h4&gt;'
+function escapeHtml(str) {
+  if (!str) return '';
+  if (typeof str !== 'string') str = String(str);
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

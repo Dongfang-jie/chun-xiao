@@ -141,13 +141,13 @@ function renderLessonLog() {
     var amountText = l.type === '手动调整' ? (l.amount < 0 ? l.amount : ('+' + l.amount)) : ('-' + l.amount);
     var corrId = l.id.replace('corr-', '');
     html += '<tr id="log-row-' + l.id + '">';
-    html += '<td>' + l.date + '</td>';
-    html += '<td><a href="#" class="log-student-link" data-sid="' + l.studentId + '">' + l.studentName + '</a></td>';
-    html += '<td>' + l.className + '</td>';
-    html += '<td><span class="log-type-badge ' + (l.type === '手动调整' ? 'log-type-manual' : 'log-type-att') + '">' + l.type + '</span></td>';
+    html += '<td>' + escapeHtml(l.date || '') + '</td>';
+    html += '<td><a href="#" class="log-student-link" data-sid="' + l.studentId + '">' + escapeHtml(l.studentName || '') + '</a></td>';
+    html += '<td>' + escapeHtml(l.className || '') + '</td>';
+    html += '<td><span class="log-type-badge ' + (l.type === '手动调整' ? 'log-type-manual' : 'log-type-att') + '">' + escapeHtml(l.type || '') + '</span></td>';
     html += '<td style="font-weight:bold; color:' + amountColor + ';">' + amountText + '</td>';
-    var reasonText = l.course ? '[' + l.course + '] ' + l.reason : l.reason;
-    html += '<td style="font-size:0.85em; color:#888;">' + reasonText + (l.operator ? ' <span style="color:#bbb; font-size:0.85em;">· ' + l.operator + '</span>' : '') + '</td>';
+    var reasonText = l.course ? '[' + escapeHtml(l.course || '') + '] ' + escapeHtml(l.reason || '') : escapeHtml(l.reason || '');
+    html += '<td style="font-size:0.85em; color:#888;">' + reasonText + (l.operator ? ' <span style="color:#bbb; font-size:0.85em;">· ' + escapeHtml(l.operator || '') + '</span>' : '') + '</td>';
     html += '<td>';
     if (l.type === '手动调整' && hasAdminPermission()) {
       html += '<a href="#" class="edit-correction" data-id="' + corrId + '" style="color:#d7a86e; margin-right:8px;">✏️修改</a>';

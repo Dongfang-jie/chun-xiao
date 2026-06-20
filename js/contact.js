@@ -84,12 +84,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 
   function sendPhoneNotify(data) {
-    var keys = (typeof AUTH_CONFIG !== 'undefined' && AUTH_CONFIG.notifyKeys) ? AUTH_CONFIG.notifyKeys : [];
-    keys = keys.filter(function(k) { return k && k.trim(); });
-    if (!keys.length) return;
+    // 通过 dbProxy 云函数转发微信通知（ServerChan Key 仅存于云函数环境变量）
+    var url = (typeof CLOUDBASE_CONFIG !== 'undefined' && CLOUDBASE_CONFIG.dbProxyUrl) ? CLOUDBASE_CONFIG.dbProxyUrl : '';
+    if (!url) return;
 
-    var title = encodeURIComponent('🌸 春晓画室 - 新预约提醒');
-    var content = encodeURIComponent(
+    var title = '🌸 春晓画室 - 新预约提醒';
+    var content =
       '## 有人预约了免费试听课！\n\n' +
       '| 项目 | 内容 |\n|------|------|\n' +
       '| 👤 家长 | ' + data.parentName + ' |\n' +
@@ -98,12 +98,18 @@ document.addEventListener('DOMContentLoaded', async function() {
       '| 🎯 课程 | ' + data.courses + ' |\n' +
       '| 💬 留言 | ' + data.message + ' |\n' +
       '| 🕐 时间 | ' + data.time + ' |\n\n' +
-      '> 请尽快联系家长确认试听时间哦～'
-    );
+      '> 请尽快联系家长确认试听时间哦～';
 
-    keys.forEach(function(key) {
-      var img = new Image();
-      img.src = 'https://sctapi.ftqq.com/' + key.trim() + '.send?title=' + title + '&desp=' + content;
+    var apiKey = (typeof CLOUDBASE_CONFIG !== 'undefined' && CLOUDBASE_CONFIG.dbProxyApiKey) ? CLOUDBASE_CONFIG.dbProxyApiKey : '';
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey
+      },
+      body: JSON.stringify({ action: 'notify', title: title, content: content })
+    }).catch(function (e) {
+      console.warn('微信通知发送失败:', e.message);
     });
   }
 })();

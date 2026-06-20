@@ -77,10 +77,10 @@ function renderDailyAttendanceTable(date) {
     var rowClass = isDone ? 'att-row-done' : 'att-row-pending';
 
     html += '<tr class="' + rowClass + '">';
-    html += '<td><strong style="color:#5d4037;">' + cls.name + '</strong></td>';
-    html += '<td>' + (cls.course || '--') + '</td>';
-    html += '<td>' + (cls.timeSlot || '--') + '</td>';
-    html += '<td>' + (cls.room || '--') + '</td>';
+    html += '<td><strong style="color:#5d4037;">' + escapeHtml(cls.name || '') + '</strong></td>';
+    html += '<td>' + escapeHtml(cls.course || '--') + '</td>';
+    html += '<td>' + escapeHtml(cls.timeSlot || '--') + '</td>';
+    html += '<td>' + escapeHtml(cls.room || '--') + '</td>';
     html += '<td>' + totalStudents + '人</td>';
     html += '<td><span class="att-status-badge ' + (isDone ? 'att-status-done' : 'att-status-pending') + '">' + (isDone ? '✅ 已点名 ' + presentCount + '/' + totalStudents : '⚪ 未点名') + '</span></td>';
     html += '<td><button class="login-btn att-start-btn" data-cid="' + cls.id + '" data-date="' + date + '" style="width:auto; padding:7px 16px; font-size:0.85em;">' + (isDone ? '📝 重新点名' : '📋 开始点名') + '</button></td>';
@@ -121,8 +121,8 @@ function startAttendanceForClass(classId, date) {
   var existingRecords = existing ? existing.records : [];
 
   var html = '<div style="background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06); border:2px solid #d7a86e;">';
-  html += '<h4 style="color:#5d4037; margin-bottom:4px;">📋 ' + cls.name + '</h4>';
-  html += '<p style="color:#888; margin:0 0 12px; font-size:0.9em;">' + date + ' · ' + cls.day + ' ' + (cls.timeSlot || '') + ' · ' + (cls.room || '') + '</p>';
+  html += '<h4 style="color:#5d4037; margin-bottom:4px;">📋 ' + escapeHtml(cls.name || '') + '</h4>';
+  html += '<p style="color:#888; margin:0 0 12px; font-size:0.9em;">' + escapeHtml(date || '') + ' · ' + escapeHtml(cls.day || '') + ' ' + escapeHtml(cls.timeSlot || '') + ' · ' + escapeHtml(cls.room || '') + '</p>';
   html += '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">';
   html += '<button id="att-all-present" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em;">✅ 全部出勤</button>';
   html += '<button id="att-all-leave" class="login-btn" style="width:auto; padding:6px 16px; font-size:0.85em; background:#e8a040; border-color:#e8a040;">⭕ 全部请假</button>';
@@ -161,9 +161,9 @@ function startAttendanceForClass(classId, date) {
     var lastDate = getLastDeductDate(s.id);
     var lastDateDisplay = lastDate ? lastDate : '<span style="color:#ccc;">无记录</span>';
     // 多课程时显示课程名
-    var courseLabel = (s.enrollments && s.enrollments.length > 1 && enrollment) ? '<span style="font-size:0.7em; color:#888;">' + enrollment.course + '</span> ' : '';
+    var courseLabel = (s.enrollments && s.enrollments.length > 1 && enrollment) ? '<span style="font-size:0.7em; color:#888;">' + escapeHtml(enrollment.course || '') + '</span> ' : '';
     html += '<tr>';
-    html += '<td><strong>' + s.name + '</strong></td>';
+    html += '<td><strong>' + escapeHtml(s.name || '') + '</strong></td>';
     html += '<td style="font-size:0.85em;">' + courseLabel + '总' + total + ' / <span style="color:#e88;">消' + consumed + '</span> / <span style="color:' + remainColor + ';">剩' + remaining + '</span></td>';
     html += '<td style="font-size:0.8em; color:#888;">' + lastDateDisplay + '</td>';
     html += '<td><button class="att-btn att-present' + (status === 'present' ? ' active' : '') + '" data-sid="' + s.id + '" data-st="present">✅</button></td>';

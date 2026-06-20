@@ -17,7 +17,26 @@ const app = cloudbase.init({
 
 const db = app.database();
 
+// API Key 认证 — 仅对 HTTP 访问服务生效（callFunction 自带 CloudBase Auth）
+const API_KEY = process.env.DB_PROXY_API_KEY || 'chunxiao-dbproxy-2026';
+
+function isHttpAccess(event) {
+  // HTTP 访问服务: event.body 是 JSON 字符串, event.headers 存在
+  // callFunction: event 直接是数据对象
+  return typeof event.body === 'string' && event.headers;
+}
+
+function checkHttpAuth(event) {
+  var headers = event.headers || {};
+  var token = headers['x-api-key'] || headers['X-API-Key'] || '';
+  return token === API_KEY;
+}
+
 exports.main = async (event, context) => {
+  // HTTP 访问服务需要 API Key 认证
+  if (isHttpAccess(event) && !checkHttpAuth(event)) {
+    return { success: false, message: '未授权访问：缺少有效的 API Key' };
+  }
   // 兼容 HTTP 访问服务模式：event.body 是 JSON 字符串，需要解析
   var body = event;
   if (typeof event.body === 'string') {
@@ -74,6 +93,50 @@ exports.main = async (event, context) => {
         failed: failed,
         backup: backup
       };
+    }
+
+    if (action === 'notify') {
+      // 微信通知转发 — 通过 ServerChan 发送预约提醒
+      // ServerChan Key 存储在云函数环境变量，不暴露到客户端
+      var serverKey = process.env.SERVERCHAN_KEY || '';
+      if (!serverKey) {
+        return { success: false, message: '通知服务未配置' };
+      }
+      var notifyTitle = body.title || '';
+      var notifyContent = body.content || '';
+      if (!notifyTitle || !notifyContent) {
+        return { success: false, message: '标题和内容不能为空' };
+      }
+      try {
+        var https = require('https');
+        var qs = require('querystring');
+        var postData = qs.stringify({ title: notifyTitle, desp: notifyContent });
+        var notifyResult = await new Promise(function (resolve, reject) {
+          var req = https.request({
+            hostname: 'sctapi.ftqq.com',
+            path: '/' + serverKey + '.send',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Content-Length': Buffer.byteLength(postData, 'utf-8')
+            },
+            timeout: 10000
+          }, function (res) {
+            var chunks = [];
+            res.on('data', function (c) { chunks.push(c); });
+            res.on('end', function () {
+              resolve({ status: res.statusCode, body: Buffer.concat(chunks).toString('utf-8') });
+            });
+          });
+          req.on('error', function (e) { reject(e); });
+          req.on('timeout', function () { req.destroy(); reject(new Error('timeout')); });
+          req.write(postData);
+          req.end();
+        });
+        return { success: true, serverStatus: notifyResult.status };
+      } catch (e) {
+        return { success: false, message: '通知发送失败: ' + (e.message || String(e)) };
+      }
     }
 
     if (action === 'ping') {

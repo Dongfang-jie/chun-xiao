@@ -19,11 +19,11 @@ function renderCourses() {
   var editHint = hasAdminPermission() ? '点击单元格编辑' : '仅管理员可编辑';
   list.forEach(function(c, idx) {
     html += '<tr>';
-    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="name">' + c.name + '</td>';
-    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="age">' + c.age + '</td>';
-    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="duration">' + c.duration + '</td>';
-    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="time">' + c.time + '</td>';
-    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="capacity">' + c.capacity + '</td>';
+    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="name">' + escapeHtml(c.name || '') + '</td>';
+    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="age">' + escapeHtml(c.age || '') + '</td>';
+    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="duration">' + escapeHtml(c.duration || '') + '</td>';
+    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="time">' + escapeHtml(c.time || '') + '</td>';
+    html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="capacity">' + escapeHtml(c.capacity || '') + '</td>';
     html += '<td><span style="color:#999; font-size:0.8em;">' + editHint + '</span></td>';
     html += '</tr>';
   });

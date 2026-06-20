@@ -20,12 +20,16 @@ function buildArtworkCard(a) {
     displayUrl = 'https://placehold.co/400x300/e8d8c8/5d4037?text=' + encodeURIComponent(a.title || '作品');
   }
 
+  var safeTitle = escapeHtml(a.title || '');
+  var safeStudent = escapeHtml(a.student || '');
+  var safeType = escapeHtml(a.type || '');
+  var safeImage = escapeHtml(a.image || '');
   return [
     '<div class="card">',
-    '<img src="' + displayUrl + '" alt="' + a.title + '" class="card-img gallery-artwork-img" data-fileid="' + (a.image || '') + '" loading="lazy" onerror="var p=this.parentNode;var d=document.createElement(\'div\');d.className=\'card-img card-placeholder\';d.style.background=\'linear-gradient(135deg,#e8d8c8,#d4c0a8)\';d.textContent=this.alt;p.replaceChild(d,this)">',
+    '<img src="' + escapeHtml(displayUrl) + '" alt="' + safeTitle + '" class="card-img gallery-artwork-img" data-fileid="' + safeImage + '" loading="lazy" onerror="var p=this.parentNode;var d=document.createElement(\'div\');d.className=\'card-img card-placeholder\';d.style.background=\'linear-gradient(135deg,#e8d8c8,#d4c0a8)\';d.textContent=this.alt;p.replaceChild(d,this)">',
     '<div class="card-body">',
-    '<h4>' + a.title + '</h4>',
-    '<p>👦 ' + a.student + ' | ' + a.type + '</p>',
+    '<h4>' + safeTitle + '</h4>',
+    '<p>👦 ' + safeStudent + ' | ' + safeType + '</p>',
     '</div></div>'
   ].join('');
 }

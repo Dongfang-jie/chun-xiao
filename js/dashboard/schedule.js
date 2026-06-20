@@ -58,8 +58,8 @@ function renderSchedule() {
           if (!(c.course in courseColors)) { courseColors[c.course] = colorIdx++ % 6; }
           var cc = courseColors[c.course];
           html += '<div class="schedule-class-card sc-color-' + cc + '">';
-          html += '<span class="sc-name">' + c.name + '</span>';
-          html += '<span class="sc-meta">' + (c.room || '') + '</span>';
+          html += '<span class="sc-name">' + escapeHtml(c.name || '') + '</span>';
+          html += '<span class="sc-meta">' + escapeHtml(c.room || '') + '</span>';
           html += '<span class="sc-count">' + studentCount + '人</span>';
           html += '</div>';
         });
@@ -92,8 +92,8 @@ function renderSchedule() {
           if (!(c.course in courseColors)) { courseColors[c.course] = colorIdx++ % 6; }
           var cc = courseColors[c.course];
           html += '<div class="schedule-class-card sc-color-' + cc + '">';
-          html += '<span class="sc-name">' + c.name + '</span>';
-          html += '<span class="sc-meta">' + (c.room || '') + '</span>';
+          html += '<span class="sc-name">' + escapeHtml(c.name || '') + '</span>';
+          html += '<span class="sc-meta">' + escapeHtml(c.room || '') + '</span>';
           html += '<span class="sc-count">' + studentCount + '人</span>';
           html += '</div>';
         });

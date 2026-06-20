@@ -17,7 +17,7 @@ function renderAttendanceHistory() {
     var cls = classes.find(function(c) { return c.id == a.classId; });
     var presentCount = a.records.filter(function(r) { return r.status === 'present'; }).length;
     html += '<div style="background:#fff; border-radius:8px; padding:12px 16px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.04);">';
-    html += '<strong>' + (cls ? cls.name : '(已删)') + '</strong> · ' + a.date;
+    html += '<strong>' + escapeHtml(cls ? cls.name : '(已删)') + '</strong> · ' + escapeHtml(a.date || '');
     html += ' · ✅' + presentCount + '/' + a.records.length;
     if (a.operator) html += ' · <span style="color:#999; font-size:0.75em;">' + a.operator + '</span>';
     if (hasAdminPermission()) html += ' <a href="#" class="del-att" data-id="' + a.id + '" style="color:#e88; font-size:0.8em;">删除</a>';
@@ -133,7 +133,7 @@ function renderAttendanceStats() {
       var cls = classes.find(function(c) { return c.id == parseInt(cid); });
       var rateColor = rate >= 90 ? '#5a9' : rate >= 70 ? '#e8a040' : '#e88';
       html += '<div style="flex:1 1 220px; min-width:180px; background:#fff; border-radius:10px; padding:14px 18px; box-shadow:0 1px 6px rgba(0,0,0,0.05);">';
-      html += '<strong style="color:#5d4037;">' + (cls ? cls.name : '(已删)') + '</strong>';
+      html += '<strong style="color:#5d4037;">' + escapeHtml(cls ? cls.name : '(已删)') + '</strong>';
       html += '<div style="margin-top:6px; font-size:2em; font-weight:bold; color:' + rateColor + ';">' + rate + '%</div>';
       html += '<div style="font-size:0.8em; color:#888;">✅' + cs.present + ' ⭕' + cs.leave + ' ❌' + cs.absent + '（共' + cs.total + '次）</div>';
       html += '</div>';
@@ -161,7 +161,7 @@ function renderAttendanceStats() {
       var s = students.find(function(x) { return x.id == parseInt(sid); });
       var rateColor = rate >= 90 ? '#5a9' : rate >= 70 ? '#e8a040' : '#e88';
       html += '<tr>';
-      html += '<td><strong>' + (s ? s.name : '(已删)') + '</strong></td>';
+      html += '<td><strong>' + escapeHtml(s ? s.name : '(已删)') + '</strong></td>';
       html += '<td style="font-weight:bold; color:' + rateColor + ';">' + rate + '%</td>';
       html += '<td>✅ ' + ss.present + '</td>';
       html += '<td>⭕ ' + ss.leave + '</td>';

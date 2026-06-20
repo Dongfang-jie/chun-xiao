@@ -6,13 +6,11 @@
 
 var AUTH_CONFIG = {
   teachers: [
-    { email: '756924037@qq.com', password: '756924', name: '张校长', role: 'admin' },
-    { email: '953034984@qq.com', password: '454657', name: '郑校长', role: 'teacher' }
+    { email: '756924037@qq.com', passwordHash: 'fc9c07fdd12e7a7c153f8ec5b291461a28b0cabe1b4ea6f474f5b24a4cdbb049', name: '张校长', role: 'admin' },
+    { email: '953034984@qq.com', passwordHash: '4274727476bba9a9211eee11fee0ea32fa1823ccd42f14d680db634ad444ca69', name: '郑校长', role: 'teacher' }
   ],
   sessionKey: 'chunxiao_session',
-  notifyKeys: [
-    'SCT364390TgpWv9nIL4dE2g1frC1DCIrzq'
-  ]
+  passwordSalt: 'chunxiao_teacher_2026'
 };
 
 function getTeacherByEmail(email) {
@@ -42,12 +40,13 @@ var Auth = {
   login: async function (email, password) {
     var teacher = getTeacherByEmail(email);
     if (teacher) {
-      // 老师：本地密码校验优先
-      if (teacher.password !== password) {
+      // 老师：SHA-256 哈希校验（密码不存储明文）
+      var inputHash = await Auth.sha256(password, AUTH_CONFIG.passwordSalt);
+      if (inputHash !== teacher.passwordHash) {
         throw new Error('邮箱或密码错误');
       }
 
-      // CloudBase 后台同步（非阻塞）
+      // CloudBase 后台同步（使用用户输入的明文密码，非阻塞）
       var uid = null;
       var auth = getAuth();
       if (auth) {
@@ -227,7 +226,22 @@ var Auth = {
     }
   },
 
-  // 密码哈希（简单但有效的 ES5 兼容哈希）
+  // SHA-256 安全哈希（使用 Web Crypto API）
+  sha256: async function (password, salt) {
+    var input = password + ':' + (salt || '');
+    var encoder = new TextEncoder();
+    var msgBuffer = encoder.encode(input);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    var hashArray = new Uint8Array(hashBuffer);
+    var hashHex = '';
+    for (var i = 0; i < hashArray.length; i++) {
+      var hex = hashArray[i].toString(16);
+      hashHex += (hex.length === 1 ? '0' : '') + hex;
+    }
+    return hashHex;
+  },
+
+  // 密码哈希（ES5 兼容，用于家长密码 — 旧格式兼容）
   hashPassword: function (password) {
     var salt = 'chunxiao_2026';
     var input = password + salt;

@@ -40,9 +40,9 @@ function renderDataStats() {
     var status = syncedTime !== '-' ? '✅' : '⚠️';
 
     html += '<tr>';
-    html += '<td>' + col.icon + ' ' + col.label + '</td>';
+    html += '<td>' + escapeHtml(col.icon + ' ' + col.label) + '</td>';
     html += '<td><strong>' + count + '</strong> 条</td>';
-    html += '<td style="font-size:0.8em;color:#888;">' + status + ' ' + syncedTime + '</td>';
+    html += '<td style="font-size:0.8em;color:#888;">' + escapeHtml(status + ' ' + syncedTime) + '</td>';
     html += '<td>';
     html += '<button class="dm-export-json-btn" data-key="' + col.key + '" style="padding:4px 10px; font-size:0.8em; border:1px solid #d7a86e; background:#fff; border-radius:4px; cursor:pointer; margin-right:4px;">📥 JSON</button>';
     html += '<button class="dm-export-csv-btn" data-key="' + col.key + '" style="padding:4px 10px; font-size:0.8em; border:1px solid #d7a86e; background:#fff; border-radius:4px; cursor:pointer;">📊 CSV</button>';

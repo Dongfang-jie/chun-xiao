@@ -102,7 +102,7 @@ function loadParentOverview(user) {
       if (next) {
         var month = next.date.getMonth() + 1;
         var day = next.date.getDate();
-        elNextClass.innerHTML = '<span style="font-size:0.5em;">' + month + '月' + day + '日</span><br>' + next.cls.day + ' ' + (next.cls.timeSlot || '');
+        elNextClass.innerHTML = '<span style="font-size:0.5em;">' + month + '月' + day + '日</span><br>' + escapeHtml(next.cls.day || '') + ' ' + escapeHtml(next.cls.timeSlot || '');
         elNextClass.style.fontSize = '1.6em';
       } else {
         elNextClass.innerHTML = '<span style="font-size:0.7em;">待排课</span>';
@@ -179,8 +179,8 @@ function loadParentOverviewNotices() {
   recent.forEach(function (a) {
     html += [
       '<div class="parent-notice-mini">',
-      '<span class="parent-notice-title">' + a.title + '</span>',
-      '<span class="parent-notice-time">' + a.time + '</span>',
+      '<span class="parent-notice-title">' + escapeHtml(a.title || '') + '</span>',
+      '<span class="parent-notice-time">' + escapeHtml(a.time || '') + '</span>',
       '</div>'
     ].join('');
   });
@@ -241,7 +241,7 @@ function renderParentWeeklySchedule(wrap, classes) {
   html += '</tr></thead><tbody>';
 
   allSlots.forEach(function (slot) {
-    html += '<tr><td class="schedule-time-cell">' + slot + '</td>';
+    html += '<tr><td class="schedule-time-cell">' + escapeHtml(slot || '') + '</td>';
     for (var d = 0; d < 7; d++) {
       var dayName = DAY_NAMES[d];
       var match = null;
@@ -254,8 +254,8 @@ function renderParentWeeklySchedule(wrap, classes) {
       if (match) {
         var colorIdx = (match.course || '').length % 6;
         html += '<td><span class="schedule-class-card sc-color-' + colorIdx + '">';
-        html += '<span class="sc-name">' + match.name + '</span>';
-        html += '<span class="sc-meta">' + (match.course || '') + ' · ' + (match.room || '未设教室') + '</span>';
+        html += '<span class="sc-name">' + escapeHtml(match.name || '') + '</span>';
+        html += '<span class="sc-meta">' + escapeHtml(match.course || '') + ' · ' + escapeHtml(match.room || '未设教室') + '</span>';
         html += '</span></td>';
       } else {
         html += '<td class="schedule-empty-cell">—</td>';
@@ -279,10 +279,10 @@ function renderParentClassCards(container, classes) {
   classes.forEach(function (c) {
     html += [
       '<div class="parent-class-card">',
-      '<h4>' + c.name + '</h4>',
-      '<p>📖 ' + (c.course || '--') + '</p>',
-      '<p>📅 ' + c.day + ' ' + (c.timeSlot || '--') + '</p>',
-      '<p>📍 ' + (c.room || '未设教室') + '</p>',
+      '<h4>' + escapeHtml(c.name || '') + '</h4>',
+      '<p>📖 ' + escapeHtml(c.course || '--') + '</p>',
+      '<p>📅 ' + escapeHtml(c.day || '') + ' ' + escapeHtml(c.timeSlot || '--') + '</p>',
+      '<p>📍 ' + escapeHtml(c.room || '未设教室') + '</p>',
       '<p style="color:#999; margin:4px 0; font-size:0.85em;">👥 ' + (studentCounts[c.id] || '--') + ' 名同学</p>',
       '</div>'
     ].join('');
@@ -355,8 +355,8 @@ function renderParentAttendanceList(studentId) {
     else { statusLabel = '❌ 缺勤'; statusColor = '#e88'; }
 
     html += '<tr>';
-    html += '<td>' + e.date + ' <span style="color:#999; font-size:0.8em;">' + getDayOfWeek(e.date) + '</span></td>';
-    html += '<td>' + e.className + '</td>';
+    html += '<td>' + escapeHtml(e.date || '') + ' <span style="color:#999; font-size:0.8em;">' + getDayOfWeek(e.date) + '</span></td>';
+    html += '<td>' + escapeHtml(e.className || '') + '</td>';
     html += '<td><span style="font-weight:bold; color:' + statusColor + ';">' + statusLabel + '</span></td>';
     html += '<td>' + (e.deducted > 0 ? '<span style="color:#e88; font-weight:bold;">-' + e.deducted + '</span>' : '0') + '</td>';
     html += '</tr>';
@@ -472,8 +472,8 @@ function renderParentLessonLog(studentId) {
   var html = '<table><thead><tr><th>日期</th><th>事由</th><th>类型</th><th>扣除</th></tr></thead><tbody>';
   entries.forEach(function (e) {
     html += '<tr>';
-    html += '<td>' + e.date + '</td>';
-    html += '<td>' + e.reason + '</td>';
+    html += '<td>' + escapeHtml(e.date || '') + '</td>';
+    html += '<td>' + escapeHtml(e.reason || '') + '</td>';
     html += '<td><span class="log-type-badge ' + (e.type === 'att' ? 'log-type-att' : 'log-type-manual') + '">' + (e.type === 'att' ? '点名扣课' : '手动调整') + '</span></td>';
     html += '<td><span style="color:#e88; font-weight:bold;">-' + e.amount + '</span></td>';
     html += '</tr>';
@@ -509,7 +509,7 @@ function loadParentArtworks(user) {
   var overviewContainer = document.getElementById('parent-overview-works');
   if (overviewContainer) {
     if (childWorks.length === 0) {
-      overviewContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + childName + '」的作品，老师添加后自动展示</p>';
+      overviewContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + escapeHtml(childName || '') + '」的作品，老师添加后自动展示</p>';
     } else {
       var html = '';
       childWorks.slice(0, 4).forEach(function (a) { html += buildParentArtworkCard(a); });
@@ -522,7 +522,7 @@ function loadParentArtworks(user) {
   if (worksContainer) {
     if (subtitleEl) subtitleEl.textContent = '👶 ' + childName + ' 的课堂作品 · 共 ' + childWorks.length + ' 件';
     if (childWorks.length === 0) {
-      worksContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + childName + '」的作品，老师添加后自动展示</p>';
+      worksContainer.innerHTML = '<p style="text-align:center; color:#999; padding:40px; width:100%;">还没有「' + escapeHtml(childName || '') + '」的作品，老师添加后自动展示</p>';
     } else {
       var allHtml = '';
       childWorks.forEach(function (a) { allHtml += buildParentArtworkCard(a); });
@@ -549,10 +549,10 @@ function buildParentArtworkCard(a) {
 
   return [
     '<div class="card">',
-    '<img src="' + displayUrl + '" alt="' + a.title + '" class="card-img parent-artwork-img" data-fileid="' + (a.image || '') + '" onerror="this.src=\'https://placehold.co/400x300/e8d8c8/5d4037?text=作品\'">',
+    '<img src="' + displayUrl + '" alt="' + escapeHtml(a.title || '') + '" class="card-img parent-artwork-img" data-fileid="' + (a.image || '') + '" onerror="this.src=\'https://placehold.co/400x300/e8d8c8/5d4037?text=作品\'">',
     '<div class="card-body">',
-    '<h4>' + a.title + '</h4>',
-    '<p>' + a.type + (a.addedAt ? ' | ' + new Date(a.addedAt).toLocaleDateString('zh-CN') : '') + '</p>',
+    '<h4>' + escapeHtml(a.title || '') + '</h4>',
+    '<p>' + escapeHtml(a.type || '') + (a.addedAt ? ' | ' + new Date(a.addedAt).toLocaleDateString('zh-CN') : '') + '</p>',
     '</div></div>'
   ].join('');
 }
@@ -633,10 +633,10 @@ function loadParentAnnouncements() {
     html += [
       '<div style="background:#fff; border-radius:10px; padding:16px 20px; margin-bottom:12px; box-shadow:0 1px 6px rgba(0,0,0,0.05); border-left:4px solid #d7a86e;">',
       '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">',
-      '<h4 style="color:#5d4037; margin:0;">📢 ' + a.title + '</h4>',
-      '<span style="color:#999; font-size:0.8em;">' + a.time + '</span>',
+      '<h4 style="color:#5d4037; margin:0;">📢 ' + escapeHtml(a.title || '') + '</h4>',
+      '<span style="color:#999; font-size:0.8em;">' + escapeHtml(a.time || '') + '</span>',
       '</div>',
-      '<p style="margin-top:8px; color:#666; line-height:1.7;">' + a.content.replace(/\n/g, '<br>') + '</p>',
+      '<p style="margin-top:8px; color:#666; line-height:1.7;">' + escapeHtml(a.content || '').replace(/\n/g, '<br>') + '</p>',
       '</div>'
     ].join('');
   });
@@ -655,17 +655,17 @@ function loadParentInfo(user) {
   var currentChild = Auth.currentChild();
 
   var html = '';
-  html += '<p><strong>👤 家长姓名：</strong>' + (user.name || '--') + '</p>';
-  html += '<p><strong>📧 邮箱：</strong>' + (user.email || '--') + '</p>';
-  html += '<p><strong>👶 当前孩子：</strong>' + (currentChild ? currentChild.name : '--') + '</p>';
+  html += '<p><strong>👤 家长姓名：</strong>' + escapeHtml(user.name || '--') + '</p>';
+  html += '<p><strong>📧 邮箱：</strong>' + escapeHtml(user.email || '--') + '</p>';
+  html += '<p><strong>👶 当前孩子：</strong>' + escapeHtml(currentChild ? currentChild.name : '--') + '</p>';
   if (user.children && user.children.length > 1) {
     html += '<p style="font-size:0.85em; color:#999;">共 ' + user.children.length + ' 个孩子</p>';
   }
 
   if (student) {
     html += '<hr style="border:none; border-top:1px solid #e8d4c8; margin:16px 0;">';
-    html += '<p><strong>📊 在读状态：</strong>' + (student.status || '--') + '</p>';
-    html += '<p><strong>📖 主修课程：</strong>' + (student.course || '--') + '</p>';
+    html += '<p><strong>📊 在读状态：</strong>' + escapeHtml(student.status || '--') + '</p>';
+    html += '<p><strong>📖 主修课程：</strong>' + escapeHtml(student.course || '--') + '</p>';
     html += '<p><strong>📚 总课次：</strong>' + (student.totalLessons || 0) + '</p>';
     html += '<p><strong>✅ 已消耗：</strong>' + (student.consumedLessons || 0) + '</p>';
     html += '<p><strong>⭐ 剩余：</strong>' + ((student.totalLessons || 0) - (student.consumedLessons || 0)) + '</p>';
@@ -775,8 +775,8 @@ function loadChildManagement(user) {
     var linked = !!student;
 
     html += '<div class="child-row' + (isActive ? ' active' : '') + '">';
-    html += '<span class="child-row-name">👶 ' + child.name + '</span>';
-    html += '<span class="child-row-badge ' + (linked ? 'linked' : 'unlinked') + '">' + (linked ? '已关联 ' + student.name : '未关联学生') + '</span>';
+    html += '<span class="child-row-name">👶 ' + escapeHtml(child.name || '') + '</span>';
+    html += '<span class="child-row-badge ' + (linked ? 'linked' : 'unlinked') + '">' + (linked ? '已关联 ' + escapeHtml(student.name || '') : '未关联学生') + '</span>';
     if (!isActive) {
       html += '<button class="child-row-switch" data-index="' + i + '">设为当前</button>';
     } else {
@@ -859,7 +859,7 @@ function renderChildDropdown(user) {
   var activeIdx = user.activeChildIndex || 0;
   var html = '';
   user.children.forEach(function (child, i) {
-    html += '<div class="child-dropdown-item' + (i === activeIdx ? ' active' : '') + '" data-index="' + i + '">👶 ' + child.name + '</div>';
+    html += '<div class="child-dropdown-item' + (i === activeIdx ? ' active' : '') + '" data-index="' + i + '">👶 ' + escapeHtml(child.name || '') + '</div>';
   });
   dropdown.innerHTML = html;
 

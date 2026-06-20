@@ -190,12 +190,12 @@ function renderRenewalHistory() {
     var s = students.find(function(x) { return x.id === r.studentId; });
     var sName = s ? s.name : (r.studentName || '(已删)');
     html += '<tr>';
-    html += '<td>' + r.date + '</td>';
-    html += '<td>' + sName + '</td>';
-    html += '<td>' + r.course + '</td>';
+    html += '<td>' + escapeHtml(r.date || '') + '</td>';
+    html += '<td>' + escapeHtml(sName || '') + '</td>';
+    html += '<td>' + escapeHtml(r.course || '') + '</td>';
     html += '<td style="font-weight:bold; color:#5a9;">+' + r.addedLessons + ' 课次</td>';
-    html += '<td style="font-size:0.85em; color:#888;">' + (r.note || '--') + '</td>';
-    html += '<td style="font-size:0.85em; color:#bbb;">' + (r.operator || '') + '</td>';
+    html += '<td style="font-size:0.85em; color:#888;">' + escapeHtml(r.note || '--') + '</td>';
+    html += '<td style="font-size:0.85em; color:#bbb;">' + escapeHtml(r.operator || '') + '</td>';
     if (hasAdminPermission()) {
       html += '<td><a href="#" class="del-renewal" data-id="' + r.id + '" style="color:#e88; font-size:0.85em;">删除</a></td>';
     }

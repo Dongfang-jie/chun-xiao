@@ -114,8 +114,10 @@ async function ensureCollection() {
 
 function generateCode() {
   var code = '';
+  // 使用 crypto.randomInt 替代 Math.random()，提供密码学安全的随机数
+  var crypto = require('crypto');
   for (var i = 0; i < CODE_LENGTH; i++) {
-    code += Math.floor(Math.random() * 10);
+    code += crypto.randomInt(0, 10);
   }
   return code;
 }

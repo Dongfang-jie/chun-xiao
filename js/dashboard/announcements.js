@@ -51,10 +51,10 @@ function renderAnnouncements() {
     html += [
       '<div style="background:#fff; border-radius:10px; padding:16px 20px; margin-bottom:12px; box-shadow:0 1px 6px rgba(0,0,0,0.05);">',
       '<div style="display:flex; justify-content:space-between; align-items:center;">',
-      '<h4 style="color:#5d4037; margin:0;">📢 ' + a.title + '</h4>',
-      '<span style="color:#999; font-size:0.8em;">' + a.time + ' · ' + a.author + '</span>',
+      '<h4 style="color:#5d4037; margin:0;">📢 ' + escapeHtml(a.title || '') + '</h4>',
+      '<span style="color:#999; font-size:0.8em;">' + escapeHtml(a.time || '') + ' · ' + escapeHtml(a.author || '') + '</span>',
       '</div>',
-      '<p style="margin-top:8px; color:#666; line-height:1.7;">' + a.content.replace(/\n/g, '<br>') + '</p>',
+      '<p style="margin-top:8px; color:#666; line-height:1.7;">' + escapeHtml(a.content || '').replace(/\n/g, '<br>') + '</p>',
       (hasAdminPermission() ? '<a href="#" class="del-ann" data-id="' + a.id + '" style="color:#e88; font-size:0.8em;">🗑️ 删除</a>' : ''),
       '</div>'
     ].join('');

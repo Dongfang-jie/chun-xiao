@@ -88,11 +88,11 @@ function renderClasses() {
     }).filter(Boolean).join('、');
     html += [
       '<div style="flex:1 1 340px; min-width:280px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(0,0,0,0.06);">',
-      '<h4 style="color:#5d4037; margin:0 0 8px;">📦 ' + c.name + '</h4>',
-      '<p style="margin:4px 0; color:#666;"><strong>课程：</strong>' + (c.course || '--') + '</p>',
-      '<p style="margin:4px 0; color:#666;"><strong>时间：</strong>' + (c.day || '--') + ' ' + (c.timeSlot || '') + '</p>',
-      '<p style="margin:4px 0; color:#666;"><strong>教室：</strong>' + (c.room || '--') + '</p>',
-      '<p style="margin:4px 0; color:#666;"><strong>学员：</strong>' + (studentNames || '（未分配）') + '</p>',
+      '<h4 style="color:#5d4037; margin:0 0 8px;">📦 ' + escapeHtml(c.name || '') + '</h4>',
+      '<p style="margin:4px 0; color:#666;"><strong>课程：</strong>' + escapeHtml(c.course || '--') + '</p>',
+      '<p style="margin:4px 0; color:#666;"><strong>时间：</strong>' + escapeHtml(c.day || '--') + ' ' + escapeHtml(c.timeSlot || '') + '</p>',
+      '<p style="margin:4px 0; color:#666;"><strong>教室：</strong>' + escapeHtml(c.room || '--') + '</p>',
+      '<p style="margin:4px 0; color:#666;"><strong>学员：</strong>' + escapeHtml(studentNames || '（未分配）') + '</p>',
       '<div style="margin-top:8px;">',
       '<a href="#" class="edit-class" data-id="' + c.id + '">✏️ 编辑</a> ',
       (hasAdminPermission() ? '<a href="#" class="del-class" data-id="' + c.id + '" style="color:#e88;">🗑️ 删除</a>' : ''),

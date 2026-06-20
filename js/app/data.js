@@ -61,7 +61,10 @@ var DataStore = {
 
       var response = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': CLOUDBASE_CONFIG.dbProxyApiKey || ''
+        },
         body: JSON.stringify(httpData)
       });
       if (!response.ok) {
@@ -109,8 +112,17 @@ var DataStore = {
       console.warn('🔍 数据库直连失败:', e.message);
     }
 
-    // dbProxy 后备通道（仅直接数据库失败时才触发，不提前测试）
+    // dbProxy 后备通道 — 先测试 HTTP 可达性
     var dbProxyOk = false;
+    try {
+      var proxyPing = await DataStore._callDbProxy('ping', 'students');
+      if (proxyPing && proxyPing.success) {
+        dbProxyOk = true;
+        console.log('🔧 dbProxy HTTP 通道: ✅ 可达');
+      }
+    } catch (e) {
+      console.warn('🔧 dbProxy HTTP 通道: ❌ 不可达');
+    }
 
     var _ = CLOUDBASE_CONFIG.collections;
     var map = [

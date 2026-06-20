@@ -296,11 +296,11 @@ function renderCardView(list, container) {
 
     html += '<div class="card artwork-card" style="flex:0 1 280px; max-width:280px;" data-aw-id="' + a.id + '">';
     html += '<input type="checkbox" class="card-checkbox aw-check" data-id="' + a.id + '"' + checked + '>';
-    html += '<img src="' + displayUrl + '" alt="' + a.title + '" class="card-img aw-card-img" style="height:180px;" data-fileid="' + a.image + '" loading="lazy" onclick="openArtworkLightbox(\'' + a.id + '\')">';
+    html += '<img src="' + escapeHtml(displayUrl) + '" alt="' + escapeHtml(a.title || '') + '" class="card-img aw-card-img" style="height:180px;" data-fileid="' + escapeHtml(a.image || '') + '" loading="lazy" onclick="openArtworkLightbox(\'' + a.id + '\')">';
     html += '<div class="card-body">';
-    html += '<h4>' + a.title + '</h4>';
-    html += '<p>👦 ' + a.student + ' | ' + a.type + '</p>';
-    html += '<p style="font-size:0.8em; color:#999;">📅 ' + dateStr + (a.addedBy ? ' | 🖊️ ' + a.addedBy : '') + '</p>';
+    html += '<h4>' + escapeHtml(a.title || '') + '</h4>';
+    html += '<p>👦 ' + escapeHtml(a.student || '') + ' | ' + escapeHtml(a.type || '') + '</p>';
+    html += '<p style="font-size:0.8em; color:#999;">📅 ' + escapeHtml(dateStr || '') + (a.addedBy ? ' | 🖊️ ' + escapeHtml(a.addedBy || '') : '') + '</p>';
     html += '<div class="card-actions">';
     html += '<a href="#" class="edit-link edit-artwork" data-id="' + a.id + '">✏️ 编辑</a>';
     html += '<a href="#" class="del-link del-artwork" data-id="' + a.id + '">🗑️ 删除</a>';
@@ -360,11 +360,11 @@ function renderTableView(list, container) {
 
     html += '<tr data-aw-id="' + a.id + '">';
     html += '<td><input type="checkbox" class="table-checkbox aw-check" data-id="' + a.id + '"' + checked + '></td>';
-    html += '<td><img src="' + displayUrl + '" class="table-thumb aw-card-img" data-fileid="' + a.image + '" onclick="openArtworkLightbox(\'' + a.id + '\')" loading="lazy"></td>';
-    html += '<td><span class="table-name-link" onclick="openArtworkLightbox(\'' + a.id + '\')">' + a.title + '</span></td>';
-    html += '<td>' + a.student + '</td>';
-    html += '<td>' + a.type + '</td>';
-    html += '<td>' + dateStr + '</td>';
+    html += '<td><img src="' + escapeHtml(displayUrl) + '" class="table-thumb aw-card-img" data-fileid="' + escapeHtml(a.image || '') + '" onclick="openArtworkLightbox(\'' + a.id + '\')" loading="lazy"></td>';
+    html += '<td><span class="table-name-link" onclick="openArtworkLightbox(\'' + a.id + '\')">' + escapeHtml(a.title || '') + '</span></td>';
+    html += '<td>' + escapeHtml(a.student || '') + '</td>';
+    html += '<td>' + escapeHtml(a.type || '') + '</td>';
+    html += '<td>' + escapeHtml(dateStr || '') + '</td>';
     html += '<td class="table-actions">';
     html += '<a href="#" class="edit-link edit-artwork" data-id="' + a.id + '" title="编辑">✏️</a> ';
     html += '<a href="#" class="del-link del-artwork" data-id="' + a.id + '" title="删除">🗑️</a>';

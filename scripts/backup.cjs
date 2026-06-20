@@ -40,7 +40,8 @@ function httpPost(urlString, data) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body, 'utf-8')
+        'Content-Length': Buffer.byteLength(body, 'utf-8'),
+        'X-API-Key': 'chunxiao-dbproxy-2026'
       },
       timeout: REQUEST_TIMEOUT_MS
     };

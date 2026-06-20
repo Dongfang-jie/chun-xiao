@@ -57,11 +57,11 @@ function renderRecordsList() {
     html += [
       '<div style="background:#fff; border-radius:10px; padding:16px 20px; margin-bottom:10px; box-shadow:0 1px 6px rgba(0,0,0,0.05); border-left:3px solid #5d4037;">',
       '<div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">',
-      '<strong style="color:#5d4037;">' + (cls ? cls.name : '(已删)') + ' · ' + r.date + '</strong>',
-      '<span style="color:#999; font-size:0.8em;">' + r.time + ' · ' + r.teacherName + '</span>',
+      '<strong style="color:#5d4037;">' + escapeHtml(cls ? cls.name : '(已删)') + ' · ' + escapeHtml(r.date || '') + '</strong>',
+      '<span style="color:#999; font-size:0.8em;">' + escapeHtml(r.time || '') + ' · ' + escapeHtml(r.teacherName || '') + '</span>',
       '</div>',
-      '<p style="margin-top:8px; color:#444;">📖 ' + r.content + '</p>',
-      (r.notes ? '<p style="color:#888; font-size:0.9em;">📌 ' + r.notes + '</p>' : ''),
+      '<p style="margin-top:8px; color:#444;">📖 ' + escapeHtml(r.content || '') + '</p>',
+      (r.notes ? '<p style="color:#888; font-size:0.9em;">📌 ' + escapeHtml(r.notes || '') + '</p>' : ''),
       (hasAdminPermission() ? '<a href="#" class="del-rec" data-id="' + r.id + '" style="color:#e88; font-size:0.8em;">🗑️ 删除</a>' : ''),
       '</div>'
     ].join('');

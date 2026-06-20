@@ -353,10 +353,10 @@ function renderStudents() {
     var remainColor = remaining <= 4 ? '#e88' : remaining <= 8 ? '#e8a040' : '#5a9';
     var statusColor = s.status === '在读' ? '#5a9' : s.status === '休学' ? '#e88' : '#999';
     html += '<tr>';
-    html += '<td><a href="#" class="view-student-detail" data-sid="' + s.id + '">' + s.name + '</a></td>';
-    html += '<td>' + s.age + '</td>';
-    html += '<td>' + s.course + '</td>';
-    html += '<td>' + s.parent + '</td>';
+    html += '<td><a href="#" class="view-student-detail" data-sid="' + s.id + '">' + escapeHtml(s.name || '') + '</a></td>';
+    html += '<td>' + escapeHtml(s.age || '') + '</td>';
+    html += '<td>' + escapeHtml(s.course || '') + '</td>';
+    html += '<td>' + escapeHtml(s.parent || '') + '</td>';
     html += '<td>' + total + '</td>';
     html += '<td>' + consumed + '</td>';
     html += '<td style="color:' + remainColor + '; font-weight:bold;">' + remaining + '</td>';
@@ -480,7 +480,7 @@ function showStudentDetail(studentId) {
   html += '<div class="student-detail-overlay" id="student-detail-overlay">';
   html += '<div class="student-detail-panel">';
   html += '<div class="student-detail-header">';
-  html += '<h3>👨‍🎓 ' + s.name + ' <span style="font-size:0.65em; color:' + statusColor + '; background:rgba(255,255,255,0.2); padding:2px 10px; border-radius:10px;">' + s.status + '</span></h3>';
+  html += '<h3>👨‍🎓 ' + escapeHtml(s.name || '') + ' <span style="font-size:0.65em; color:' + statusColor + '; background:rgba(255,255,255,0.2); padding:2px 10px; border-radius:10px;">' + escapeHtml(s.status || '') + '</span></h3>';
   html += '<button class="student-detail-close" id="student-detail-close">✕</button>';
   html += '</div>';
   html += '<div class="student-detail-body">';
@@ -504,7 +504,7 @@ function showStudentDetail(studentId) {
       var eRemainColor = eRemaining <= 4 ? '#e88' : eRemaining <= 8 ? '#e8a040' : '#5a9';
       html += '<div style="margin-bottom:12px;">';
       html += '<div style="display:flex; justify-content:space-between; margin-bottom:2px; font-size:0.9em;">';
-      html += '<span><strong>' + enr.course + '</strong></span>';
+      html += '<span><strong>' + escapeHtml(enr.course || '') + '</strong></span>';
       html += '<span style="color:' + eRemainColor + ';">剩余 <strong>' + eRemaining + '</strong> / ' + eTotal + ' 课次（已消 ' + eConsumed + '）</span>';
       html += '</div>';
       html += '<div class="student-lesson-bar" style="height:8px;"><div class="student-lesson-bar-fill' + eBarClass + '" style="width:' + ePercent + '%; height:8px;"></div></div>';
@@ -515,20 +515,20 @@ function showStudentDetail(studentId) {
   // 基本信息
   html += '<div class="detail-section-title">📋 基本信息</div>';
   html += '<div class="detail-info-grid">';
-  html += '<div class="detail-info-item"><span class="detail-info-label">年龄</span><span class="detail-info-value">' + (s.age || '--') + '</span></div>';
-  html += '<div class="detail-info-item"><span class="detail-info-label">课程</span><span class="detail-info-value">' + (s.course || '--') + '</span></div>';
-  html += '<div class="detail-info-item"><span class="detail-info-label">家长姓名</span><span class="detail-info-value">' + (s.parent || '--') + '</span></div>';
-  html += '<div class="detail-info-item"><span class="detail-info-label">家长电话</span><span class="detail-info-value">' + (s.phone || '--') + '</span></div>';
+  html += '<div class="detail-info-item"><span class="detail-info-label">年龄</span><span class="detail-info-value">' + escapeHtml(s.age || '--') + '</span></div>';
+  html += '<div class="detail-info-item"><span class="detail-info-label">课程</span><span class="detail-info-value">' + escapeHtml(s.course || '--') + '</span></div>';
+  html += '<div class="detail-info-item"><span class="detail-info-label">家长姓名</span><span class="detail-info-value">' + escapeHtml(s.parent || '--') + '</span></div>';
+  html += '<div class="detail-info-item"><span class="detail-info-label">家长电话</span><span class="detail-info-value">' + escapeHtml(s.phone || '--') + '</span></div>';
   html += '<div class="detail-info-item"><span class="detail-info-label">总课次</span><span class="detail-info-value">' + total + '</span></div>';
   html += '<div class="detail-info-item"><span class="detail-info-label">已消耗</span><span class="detail-info-value" style="color:#e88;">' + consumed + '</span></div>';
-  if (s.lastModifiedBy) html += '<div class="detail-info-item"><span class="detail-info-label">最后修改</span><span class="detail-info-value" style="font-size:0.85em;">🖊️ ' + s.lastModifiedBy + '</span></div>';
+  if (s.lastModifiedBy) html += '<div class="detail-info-item"><span class="detail-info-label">最后修改</span><span class="detail-info-value" style="font-size:0.85em;">🖊️ ' + escapeHtml(s.lastModifiedBy || '') + '</span></div>';
   html += '</div>';
 
   // 所属班级
   html += '<div class="detail-section-title">📦 所属班级 <span class="count-badge">(' + studentClasses.length + '个)</span></div>';
   if (studentClasses.length > 0) {
     html += '<div class="detail-class-chips">';
-    studentClasses.forEach(function(cls) { html += '<span class="detail-class-chip">' + cls.name + ' · ' + cls.day + ' ' + cls.timeSlot + '</span>'; });
+    studentClasses.forEach(function(cls) { html += '<span class="detail-class-chip">' + escapeHtml(cls.name || '') + ' · ' + escapeHtml(cls.day || '') + ' ' + escapeHtml(cls.timeSlot || '') + '</span>'; });
     html += '</div>';
   } else {
     html += '<p style="color:#999; font-size:0.9em;">尚未分配到班级</p>';
@@ -550,7 +550,7 @@ function showStudentDetail(studentId) {
     html += '<table class="detail-log-table"><thead><tr><th>日期</th><th>班级</th><th>状态</th><th>扣课次</th></tr></thead><tbody>';
     lessonLog.forEach(function(log) {
       var statusLabel = log.status === 'present' ? '✅ 出勤' : log.status === 'leave' ? '⭕ 请假' : '❌ 缺勤';
-      html += '<tr><td>' + log.date + '</td><td>' + log.className + '</td><td>' + statusLabel + '</td><td style="font-weight:bold; color:' + (log.deducted > 0 ? '#e88' : '#999') + ';">' + (log.deducted > 0 ? '-' + log.deducted : '0') + '</td></tr>';
+      html += '<tr><td>' + escapeHtml(log.date || '') + '</td><td>' + escapeHtml(log.className || '') + '</td><td>' + statusLabel + '</td><td style="font-weight:bold; color:' + (log.deducted > 0 ? '#e88' : '#999') + ';">' + (log.deducted > 0 ? '-' + log.deducted : '0') + '</td></tr>';
     });
     html += '</tbody></table>';
   } else {
@@ -566,7 +566,7 @@ function showStudentDetail(studentId) {
   if (studentRenewals.length > 0) {
     html += '<table class="detail-log-table"><thead><tr><th>日期</th><th>课程</th><th>续费课次</th><th>备注</th><th>操作人</th></tr></thead><tbody>';
     studentRenewals.forEach(function(r) {
-      html += '<tr><td>' + r.date + '</td><td>' + r.course + '</td><td style="font-weight:bold; color:#5a9;">+' + r.addedLessons + ' 课次</td><td style="font-size:0.85em; color:#888;">' + (r.note || '--') + '</td><td style="font-size:0.85em; color:#bbb;">' + (r.operator || '') + '</td></tr>';
+      html += '<tr><td>' + escapeHtml(r.date || '') + '</td><td>' + escapeHtml(r.course || '') + '</td><td style="font-weight:bold; color:#5a9;">+' + r.addedLessons + ' 课次</td><td style="font-size:0.85em; color:#888;">' + escapeHtml(r.note || '--') + '</td><td style="font-size:0.85em; color:#bbb;">' + escapeHtml(r.operator || '') + '</td></tr>';
     });
     html += '</tbody></table>';
   } else {
@@ -578,9 +578,9 @@ function showStudentDetail(studentId) {
   if (classRecords.length > 0) {
     classRecords.forEach(function(rec) {
       html += '<div class="detail-record-card">';
-      html += '<div class="rec-meta"><span>' + rec.className + ' · ' + rec.date + '</span><span>' + rec.time + ' · ' + rec.teacherName + '</span></div>';
-      html += '<div class="rec-content">📖 ' + rec.content + '</div>';
-      if (rec.notes) html += '<div class="rec-notes">📌 ' + rec.notes + '</div>';
+      html += '<div class="rec-meta"><span>' + escapeHtml(rec.className || '') + ' · ' + escapeHtml(rec.date || '') + '</span><span>' + escapeHtml(rec.time || '') + ' · ' + escapeHtml(rec.teacherName || '') + '</span></div>';
+      html += '<div class="rec-content">📖 ' + escapeHtml(rec.content || '') + '</div>';
+      if (rec.notes) html += '<div class="rec-notes">📌 ' + escapeHtml(rec.notes || '') + '</div>';
       html += '</div>';
     });
   } else {

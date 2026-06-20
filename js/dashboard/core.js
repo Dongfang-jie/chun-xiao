@@ -115,14 +115,13 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
-  console.log('✅ 已登录：' + user.email);
-
-  // 显示用户名
+  // 显示用户名（避免日志泄露邮箱，仅显示用户名）
   var userNameEl = document.getElementById(isTeacher ? 'teacher-name' : 'parent-name');
   if (userNameEl) {
     var icon = isTeacher ? '👩‍🏫 ' : '👨‍👩‍👧 ';
+    var displayName = escapeHtml(user.name || user.email || '用户');
     var roleBadge = isTeacher ? (hasAdminPermission() ? ' <span style="font-size:0.65em; background:#5d4037; color:#fff; padding:2px 8px; border-radius:10px;">管理员</span>' : ' <span style="font-size:0.65em; background:#d7a86e; color:#5d4037; padding:2px 8px; border-radius:10px;">老师</span>') : '';
-    userNameEl.innerHTML = icon + (user.name || user.email) + roleBadge;
+    userNameEl.innerHTML = icon + displayName + roleBadge;
   }
 
   // 老师端：先绑定事件（不依赖数据），再等 CloudBase 同步后渲染
