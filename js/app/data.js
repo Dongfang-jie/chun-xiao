@@ -45,9 +45,9 @@ var DataStore = {
           logDebug('🔧 dbProxy(callFunction) ' + action + ' 成功:', collection);
           return result.result;
         }
-        if (result) console.warn('⚠️ dbProxy callFunction 返回异常:', collection, JSON.stringify(result).substring(0, 200));
+        if (result) logDebug('⚠️ dbProxy callFunction 返回异常:', collection, JSON.stringify(result).substring(0, 200));
       } catch (e) {
-        console.warn('dbProxy callFunction 失败:', collection, e.message);
+        logDebug('dbProxy callFunction 失败 (' + collection + '):', e.message);
       }
     }
 
