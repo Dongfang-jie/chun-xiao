@@ -320,7 +320,12 @@ section h3 {
   line-height: 1.8;
   color: var(--color-text-secondary, #555);
   text-align: left;
-  margin: 0 0 14px;
+  margin: 0 0 6px;
+  padding-left: 1.2em;
+}
+
+.teacher-bio li {
+  margin-bottom: 6px;
 }
 
 .teacher-motto {
