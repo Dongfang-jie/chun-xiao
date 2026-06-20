@@ -71,6 +71,35 @@
           <div class="about-photo"><img src="images/studio-1.jpg" alt="画室环境" loading="lazy"></div>
         </div>
       </div>
+
+      <!-- ---- 师资介绍 ---- -->
+      <h3 style="text-align:center; margin-top:50px; margin-bottom:30px;">👩‍🏫 师资介绍</h3>
+      <div class="teacher-profiles">
+        <div class="teacher-card">
+          <div class="teacher-avatar">张</div>
+          <h4 class="teacher-name">张校长</h4>
+          <p class="teacher-role">创始人 · 主教老师</p>
+          <p class="teacher-bio">
+            毕业于专业美术院校，拥有<strong>十余年少儿美术教学经验</strong>。
+            擅长素描、水粉、创意美术等多个领域，注重培养孩子的观察力与创造力。
+            亲和力强，善于根据每个孩子的特点因材施教，深受学生和家长的喜爱。
+          </p>
+          <p class="teacher-motto">「用画笔点亮童心，让每个孩子都能自信地表达自己。」</p>
+          <div class="teacher-awards" id="awards-zhang"></div>
+        </div>
+        <div class="teacher-card">
+          <div class="teacher-avatar">郑</div>
+          <h4 class="teacher-name">郑校长</h4>
+          <p class="teacher-role">创始人 · 主教老师</p>
+          <p class="teacher-bio">
+            深耕<strong>书法与国画教育</strong>多年，教学风格严谨而不失趣味。
+            擅长硬笔书法、软笔书法及国画入门教学，引导孩子在笔墨之间感受传统文化的魅力。
+            耐心细致，关注每一位孩子的成长与进步。
+          </p>
+          <p class="teacher-motto">「一笔一画，静心养性；墨香之中，见证成长。」</p>
+          <div class="teacher-awards" id="awards-zheng"></div>
+        </div>
+      </div>
     </section>
 
     <!-- ---- 联系我们 ---- -->
@@ -121,6 +150,146 @@
   <script defer src="js/app/sync-status.js"></script>
   <script defer src="js/app/ui.js"></script>
   <script defer src="js/app/gallery.js"></script>
+
+  <!-- 证书轮播 & 灯箱 -->
+  <script>
+  (function () {
+    // ========== 荣誉证书数据 ==========
+    var TEACHER_AWARDS = {
+      zhang: {
+        dir: 'images/张校长/',
+        awards: [
+          { file: '1a5ad7908b605c96c972c7ecef5f1b73.jpg', caption: '国画《亭亭芙蓉在秋水》二等奖（2017）' },
+          { file: '1d6da41b6e91bfdc88167244bcbc7ddc.jpg', caption: '书法《古文三篇》一等奖（2021）' },
+          { file: '20ce0d8124c190deea4ed615adc66ea5.jpg', caption: '书法《古文三篇》一等奖（2021）' },
+          { file: '5af4ecd8667afd21843dcf381ba210b4.jpg', caption: '书法《赤壁赋》优秀奖（2024）' },
+          { file: '5d799b17b0f0854730cb7cdce1e4ad88.jpg', caption: '书法《赤壁赋》优秀奖（2024）' },
+          { file: '79e78f978fff6602b0b1759c790439f2.jpg', caption: '书法 三等奖（2024）' },
+          { file: '7bffcae45ffd74cec50edc2d9179713c.jpg', caption: '书法 三等奖（2024）' },
+          { file: 'ab65c86eeaa772b01534cbf2143c81a6.jpg', caption: '书画艺术教育名师（2026）' },
+          { file: 'bfcc8eae8d125663807606e5a4021319.jpg', caption: '书画艺术教育名师（2026）' },
+          { file: 'f635d5307c4488fc34d218e22737b8fa.jpg', caption: '国画《亭亭芙蓉在秋水》二等奖（2017）' }
+        ]
+      },
+      zheng: {
+        dir: 'images/郑校长/',
+        awards: [
+          { file: '24a710d50c020f50f6d20c1944bfc441.jpg', caption: '国画《紫藤》三等奖（2024）' },
+          { file: '6a8e242917e1ff13e02cfc1fc514e17a.jpg', caption: '国画《紫藤》三等奖（2024）' },
+          { file: '7660db9d95e89176cdb29675849b52f4.jpg', caption: '书画艺术教育名师（2026）' },
+          { file: 'cf2afca14d31cc2fd2200ab929fdb381.jpg', caption: '国画 铜奖（2026）' },
+          { file: 'efd9826a608b52dc4151d5acf5264d61.jpg', caption: '书画艺术教育名师（2026）' }
+        ]
+      }
+    };
+
+    // ========== 生成证书缩略图 ==========
+    function buildAwardsHTML(containerId, data) {
+      var container = document.getElementById(containerId);
+      if (!container) return;
+
+      var html = '<h5 class="awards-title">🏆 荣誉证书</h5><div class="awards-scroll">';
+      data.awards.forEach(function (a, i) {
+        var src = data.dir + a.file;
+        html += '<div class="award-item" data-index="' + i + '" data-teacher="' + containerId + '">'
+          + '<img class="award-thumb" src="' + src + '" alt="' + a.caption + '" loading="lazy">'
+          + '<p class="award-caption">' + a.caption + '</p>'
+          + '</div>';
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    // ========== 证书灯箱（带左右导航） ==========
+    var certState = { teacher: null, index: 0, overlay: null };
+
+    function openCertLightbox(teacherKey, index) {
+      var data = teacherKey === 'awards-zhang' ? TEACHER_AWARDS.zhang : TEACHER_AWARDS.zheng;
+      certState.teacher = teacherKey;
+      certState.index = index;
+
+      // 复用已有灯箱或创建
+      var overlay = document.getElementById('cert-lightbox');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'cert-lightbox';
+        overlay.className = 'lightbox-overlay';
+        overlay.innerHTML = ''
+          + '<span class="cert-lightbox-nav cert-lightbox-prev" id="cert-lb-prev">&#8249;</span>'
+          + '<span class="cert-lightbox-nav cert-lightbox-next" id="cert-lb-next">&#8250;</span>'
+          + '<span id="cert-lb-close" style="position:absolute; top:16px; right:28px; font-size:2.5em; color:#fff; cursor:pointer; z-index:11; line-height:1;">&times;</span>'
+          + '<img class="lightbox-img" id="cert-lb-img" src="" alt="">'
+          + '<p class="lightbox-caption" id="cert-lb-caption"></p>';
+        document.body.appendChild(overlay);
+
+        overlay.querySelector('#cert-lb-close').addEventListener('click', closeCertLightbox);
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) closeCertLightbox();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (!certState.overlay || !certState.overlay.classList.contains('active')) return;
+          if (e.key === 'Escape') closeCertLightbox();
+          if (e.key === 'ArrowLeft') navigateCert(-1);
+          if (e.key === 'ArrowRight') navigateCert(1);
+        });
+
+        overlay.querySelector('#cert-lb-prev').addEventListener('click', function (e) { e.stopPropagation(); navigateCert(-1); });
+        overlay.querySelector('#cert-lb-next').addEventListener('click', function (e) { e.stopPropagation(); navigateCert(1); });
+      }
+
+      certState.overlay = overlay;
+      updateCertLightboxImage(data);
+      overlay.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function updateCertLightboxImage(data) {
+      var a = data.awards[certState.index];
+      var src = data.dir + a.file;
+      document.getElementById('cert-lb-img').src = src;
+      document.getElementById('cert-lb-caption').textContent = a.caption;
+
+      // 更新导航箭头显示
+      var prevBtn = document.getElementById('cert-lb-prev');
+      var nextBtn = document.getElementById('cert-lb-next');
+      prevBtn.style.display = certState.index > 0 ? 'flex' : 'none';
+      nextBtn.style.display = certState.index < data.awards.length - 1 ? 'flex' : 'none';
+    }
+
+    function navigateCert(delta) {
+      var data = certState.teacher === 'awards-zhang' ? TEACHER_AWARDS.zhang : TEACHER_AWARDS.zheng;
+      var newIndex = certState.index + delta;
+      if (newIndex < 0 || newIndex >= data.awards.length) return;
+      certState.index = newIndex;
+      updateCertLightboxImage(data);
+    }
+
+    function closeCertLightbox() {
+      if (certState.overlay) {
+        certState.overlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    // ========== 初始化 ==========
+    document.addEventListener('DOMContentLoaded', function () {
+      buildAwardsHTML('awards-zhang', TEACHER_AWARDS.zhang);
+      buildAwardsHTML('awards-zheng', TEACHER_AWARDS.zheng);
+
+      // 委托点击事件
+      document.getElementById('awards-zhang').addEventListener('click', function (e) {
+        var item = e.target.closest('.award-item');
+        if (!item) return;
+        openCertLightbox('awards-zhang', parseInt(item.getAttribute('data-index')));
+      });
+      document.getElementById('awards-zheng').addEventListener('click', function (e) {
+        var item = e.target.closest('.award-item');
+        if (!item) return;
+        openCertLightbox('awards-zheng', parseInt(item.getAttribute('data-index')));
+      });
+    });
+  })();
+  </script>
 
 </body>
 </html>
