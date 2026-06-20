@@ -18,7 +18,12 @@ const app = cloudbase.init({
 const db = app.database();
 
 exports.main = async (event, context) => {
-  const { action, collection, items } = event;
+  // 兼容 HTTP 访问服务模式：event.body 是 JSON 字符串，需要解析
+  var body = event;
+  if (typeof event.body === 'string') {
+    try { body = JSON.parse(event.body); } catch (_) { body = event; }
+  }
+  const { action, collection, items } = body;
 
   try {
     // 一次性备份全部 10 个集合（供 GitHub Actions 脚本调用）
