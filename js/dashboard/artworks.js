@@ -142,8 +142,8 @@ function loadArtworks() {
 //  填充学生筛选下拉 + datalist
 // ============================================================
 function populateStudentFilter() {
-  var students = getStudents();
-  students.sort(function (a, b) { return a.name.localeCompare(b.name, 'zh'); });
+  var students = getStudents().filter(function(s) { return s && s.name; });
+  students.sort(function (a, b) { return (a.name || '').localeCompare(b.name || '', 'zh'); });
 
   // 筛选下拉
   var filterSelect = document.getElementById('aw-filter-student');
