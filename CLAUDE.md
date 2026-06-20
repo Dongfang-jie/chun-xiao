@@ -33,7 +33,7 @@
 - 同步通道: CloudBase Web SDK 直接数据库访问（匿名登录），**不经过云函数**
 - 依赖 CloudBase 数据库安全规则对所有业务集合开放 `read: true, write: "auth != null"`
 - parents / email_codes 集合保持仅 owner 可读写（保护隐私）
-- 9 个数据集合: students / classes / attendance / records / corrections / artworks / announcements / inquiries / renewals + email_codes(验证码) / parents(家长)
+- 10 个数据集合: students / classes / attendance / records / corrections / artworks / announcements / inquiries / renewals / courses + email_codes(验证码) / parents(家长)
 - 认证: 教师硬编码(AUTH_CONFIG.teachers) / 家长 CloudBase 邮箱登录 或 邮箱验证码注册
 - 权限: admin(张校长 756924037@qq.com) / teacher(郑校长 953034984@qq.com) / parent
 - hasAdminPermission() 覆盖 admin+teacher
@@ -66,11 +66,27 @@ GitHub Issues，通过 `gh` CLI 操作。See `docs/agents/issue-tracker.md`.
 
 | 集合 | read | write | 说明 |
 |------|------|-------|------|
-| students / classes / attendance / records / corrections / artworks / announcements / inquiries / renewals | `true` | `"auth != null"` | 业务数据，双端同步 |
+| students / classes / attendance / records / corrections / artworks / announcements / inquiries / renewals / courses | `true` | `"auth != null"` | 业务数据，双端同步 |
 | parents | `"doc._openid == auth.uid"` | `"doc._openid == auth.uid"` | 家长密码，仅 owner |
 | email_codes | `"doc._openid == auth.uid"` | `"doc._openid == auth.uid"` | 邮箱验证码，仅 owner |
 
 **不要开放 parents 和 email_codes** — 它们存敏感数据。如双端同步出 PERMISSION_DENIED，检查对应集合安全规则是否配置。
+
+## CSP 注意事项
+
+所有 7 个 HTML 页面的 `<meta http-equiv="Content-Security-Policy">` 需保持一致。当前 `connect-src`：
+
+```
+connect-src 'self' https://*.tcloudbase.com https://*.app.tcloudbase.com https://*.tencentcloudapi.com
+```
+
+| 域名 | 用途 |
+|------|------|
+| `*.tcloudbase.com` | CloudBase SDK 直接数据库操作 |
+| `*.app.tcloudbase.com` | HTTP 访问服务（dbProxy 云函数回退） |
+| `*.tencentcloudapi.com` | Auth 认证（匿名登录、令牌签发） |
+
+⚠️ **CSP 的 `*` 通配符只匹配一级子域名**。`*.tcloudbase.com` 能匹配 `foo.tcloudbase.com`，但**不能**匹配 `ap-shanghai.app.tcloudbase.com`（两级）。需要 `*.app.tcloudbase.com` 单独覆盖。新增云函数 HTTP 端点或 SDK 域名时，务必检查通配符覆盖。删除任何一个都会导致相应功能完全不可用。
 
 ## 作品管理要点
 
