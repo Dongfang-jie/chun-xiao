@@ -1,0 +1,477 @@
+{
+  "version": "2.0",
+  "exportedAt": "2026-06-20T07:47:31.063Z",
+  "exportedBy": "GitHub Actions 自动备份",
+  "collections": {
+    "chunxiao-students": [
+      {
+        "status": "在读",
+        "addedBy": "张校长",
+        "consumedLessons": 0,
+        "course": "儿童创意画",
+        "id": 1781937749265,
+        "totalLessons": 45,
+        "addedAt": "2026-03-01",
+        "age": 5,
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ],
+        "name": "王泓博",
+        "parent": "",
+        "parentEmail": "",
+        "phone": ""
+      },
+      {
+        "totalLessons": 45,
+        "age": 5,
+        "consumedLessons": 0,
+        "course": "儿童创意画",
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ],
+        "id": 1781937749266,
+        "name": "段清月",
+        "parent": "",
+        "parentEmail": "",
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长",
+        "phone": "",
+        "status": "在读"
+      },
+      {
+        "consumedLessons": 0,
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ],
+        "name": "韩林轩",
+        "parentEmail": "",
+        "phone": "",
+        "totalLessons": 45,
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长",
+        "age": 5,
+        "course": "儿童创意画",
+        "id": 1781937749267,
+        "parent": "",
+        "status": "在读"
+      },
+      {
+        "addedBy": "张校长",
+        "consumedLessons": 0,
+        "course": "软笔书法、中国画",
+        "id": 1781937749268,
+        "parent": "",
+        "parentEmail": "",
+        "phone": "",
+        "addedAt": "2026-03-01",
+        "age": 11,
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "软笔书法",
+            "totalLessons": 45
+          },
+          {
+            "consumedLessons": 0,
+            "course": "中国画",
+            "totalLessons": 45
+          }
+        ],
+        "name": "彭启浩",
+        "status": "在读",
+        "totalLessons": 90
+      },
+      {
+        "totalLessons": 45,
+        "addedBy": "张校长",
+        "age": 5,
+        "consumedLessons": 0,
+        "course": "儿童创意画",
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ],
+        "id": 1781937749269,
+        "parentEmail": "",
+        "status": "在读",
+        "addedAt": "2026-03-01",
+        "name": "邴一漫",
+        "parent": "",
+        "phone": ""
+      },
+      {
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长",
+        "course": "儿童创意画",
+        "name": "单提阳",
+        "parent": "李晓杰",
+        "phone": "",
+        "age": 5,
+        "consumedLessons": 0,
+        "enrollments": [
+          {
+            "course": "儿童创意画",
+            "totalLessons": 45,
+            "consumedLessons": 0
+          }
+        ],
+        "id": 1781937749270,
+        "parentEmail": "",
+        "status": "在读",
+        "totalLessons": 45
+      },
+      {
+        "addedBy": "张校长",
+        "consumedLessons": 0,
+        "course": "儿童创意画",
+        "id": 1781937749271,
+        "parentEmail": "",
+        "phone": "",
+        "totalLessons": 45,
+        "addedAt": "2026-03-01",
+        "age": 5,
+        "enrollments": [
+          {
+            "totalLessons": 45,
+            "consumedLessons": 0,
+            "course": "儿童创意画"
+          }
+        ],
+        "name": "来沐泽",
+        "parent": "",
+        "status": "在读"
+      },
+      {
+        "parentEmail": "",
+        "totalLessons": 1000,
+        "addedAt": "2026-03-01",
+        "consumedLessons": 0,
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 1000
+          }
+        ],
+        "id": 1781937749272,
+        "name": "楚柏然",
+        "parent": "",
+        "phone": "",
+        "status": "在读",
+        "addedBy": "张校长",
+        "age": 4,
+        "course": "儿童创意画"
+      },
+      {
+        "name": "李沐泽",
+        "parent": "",
+        "parentEmail": "",
+        "totalLessons": 45,
+        "consumedLessons": 0,
+        "course": "儿童创意画",
+        "id": 1781937749273,
+        "phone": "",
+        "status": "在读",
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长",
+        "age": 5,
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ]
+      },
+      {
+        "enrollments": [
+          {
+            "totalLessons": 45,
+            "consumedLessons": 0,
+            "course": "儿童创意画"
+          }
+        ],
+        "parentEmail": "",
+        "phone": "",
+        "addedBy": "张校长",
+        "consumedLessons": 0,
+        "course": "儿童创意画",
+        "id": 1781937749274,
+        "name": "冯厚元",
+        "parent": "",
+        "status": "在读",
+        "totalLessons": 45,
+        "addedAt": "2026-03-01",
+        "age": 5
+      },
+      {
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ],
+        "parent": "徐姐",
+        "parentEmail": "",
+        "status": "在读",
+        "totalLessons": 45,
+        "age": 5,
+        "consumedLessons": 0,
+        "course": "儿童创意画",
+        "id": 1781937749275,
+        "name": "庄正",
+        "phone": "",
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长"
+      },
+      {
+        "parent": "",
+        "status": "在读",
+        "totalLessons": 90,
+        "consumedLessons": 0,
+        "course": "硬笔书法、儿童创意画",
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "硬笔书法",
+            "totalLessons": 45
+          },
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ],
+        "name": "彭启然",
+        "parentEmail": "",
+        "phone": "",
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长",
+        "age": 7,
+        "id": 1781937749276
+      },
+      {
+        "consumedLessons": 0,
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "硬笔书法",
+            "totalLessons": 23
+          },
+          {
+            "consumedLessons": 0,
+            "course": "儿童创意画",
+            "totalLessons": 23
+          }
+        ],
+        "name": "刘志尚",
+        "parent": "龙燕",
+        "phone": "",
+        "status": "在读",
+        "age": 7,
+        "course": "硬笔书法、儿童创意画",
+        "id": 1781937749277,
+        "parentEmail": "",
+        "totalLessons": 46,
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长"
+      },
+      {
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长",
+        "course": "硬笔书法",
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "硬笔书法",
+            "totalLessons": 45
+          }
+        ],
+        "parent": "",
+        "phone": "",
+        "status": "在读",
+        "totalLessons": 45,
+        "age": 10,
+        "consumedLessons": 0,
+        "id": 1781937749278,
+        "name": "孔令通",
+        "parentEmail": ""
+      },
+      {
+        "enrollments": [
+          {
+            "consumedLessons": 0,
+            "course": "软笔书法",
+            "totalLessons": 45
+          },
+          {
+            "consumedLessons": 0,
+            "course": "中国画",
+            "totalLessons": 45
+          }
+        ],
+        "parent": "",
+        "phone": "",
+        "age": 11,
+        "consumedLessons": 0,
+        "course": "软笔书法、中国画",
+        "id": 1781937749279,
+        "name": "张一然",
+        "parentEmail": "",
+        "status": "在读",
+        "totalLessons": 90,
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长"
+      },
+      {
+        "status": "在读",
+        "course": "儿童创意画",
+        "enrollments": [
+          {
+            "consumedLessons": 1,
+            "course": "儿童创意画",
+            "totalLessons": 45
+          }
+        ],
+        "id": 1781937749280,
+        "parent": "",
+        "phone": "",
+        "totalLessons": 45,
+        "addedAt": "2026-03-01",
+        "addedBy": "张校长",
+        "age": 8,
+        "consumedLessons": 1,
+        "name": "张承宇",
+        "parentEmail": ""
+      }
+    ],
+    "chunxiao-classes": [],
+    "chunxiao-attendance": [],
+    "chunxiao-records": [],
+    "chunxiao-lesson-corrections": [],
+    "chunxiao-artworks": [
+      {
+        "id": 1781511335161,
+        "title": "春天的小鸟",
+        "student": "小明",
+        "type": "美术",
+        "image": "https://placehold.co/400x300/ffccbc/d84315?text=%E6%98%A5%E5%A4%A9%E7%9A%84%E5%B0%8F%E9%B8%9F",
+        "addedAt": "2026-06-15T08:15:35.161Z",
+        "addedBy": "张校长"
+      },
+      {
+        "image": "https://placehold.co/400x300/e0e0e0/424242?text=%E9%9D%99%E7%89%A9%E7%B4%A0%E6%8F%8F",
+        "addedAt": "2026-06-14T08:15:35.161Z",
+        "addedBy": "张校长",
+        "id": 1781511334161,
+        "title": "静物素描·陶罐",
+        "student": "小红",
+        "type": "美术"
+      },
+      {
+        "image": "https://placehold.co/400x300/b3e5fc/01579b?text=%E6%B0%B4%E5%BD%A9%E6%B1%9F%E5%8D%97",
+        "addedAt": "2026-06-13T08:15:35.161Z",
+        "addedBy": "张校长",
+        "id": 1781511333161,
+        "title": "水彩·江南水乡",
+        "student": "小华",
+        "type": "美术"
+      },
+      {
+        "title": "动漫人物·魔法少女",
+        "student": "小雪",
+        "type": "美术",
+        "image": "https://placehold.co/400x300/f3e5f5/7b1fa2?text=%E9%AD%94%E6%B3%95%E5%B0%91%E5%A5%B3",
+        "addedAt": "2026-06-12T08:15:35.161Z",
+        "addedBy": "张校长",
+        "id": 1781511332161
+      },
+      {
+        "addedBy": "张校长",
+        "id": 1781511331161,
+        "title": "硬笔·《静夜思》",
+        "student": "小刚",
+        "type": "书法",
+        "image": "https://placehold.co/400x300/fff8e1/f9a825?text=%E9%9D%99%E5%A4%9C%E6%80%9D",
+        "addedAt": "2026-06-11T08:15:35.161Z"
+      },
+      {
+        "id": 1781511330161,
+        "title": "软笔·春联",
+        "student": "小丽",
+        "type": "书法",
+        "image": "https://placehold.co/400x300/fbe9e7/bf360c?text=%E6%98%A5%E8%81%94",
+        "addedAt": "2026-06-10T08:15:35.161Z",
+        "addedBy": "张校长"
+      },
+      {
+        "addedBy": "张校长",
+        "id": 1781511329161,
+        "title": "儿童画·海底世界",
+        "student": "小明",
+        "type": "美术",
+        "image": "https://placehold.co/400x300/b2dfdb/00695c?text=%E6%B5%B7%E5%BA%95%E4%B8%96%E7%95%8C",
+        "addedAt": "2026-06-09T08:15:35.161Z"
+      },
+      {
+        "addedBy": "张校长",
+        "id": 1781511328161,
+        "title": "素描·石膏几何体",
+        "student": "小红",
+        "type": "美术",
+        "image": "https://placehold.co/400x300/d7ccc8/4e342e?text=%E7%9F%B3%E8%86%8F%E5%87%A0%E4%BD%95%E4%BD%93",
+        "addedAt": "2026-06-08T08:15:35.161Z"
+      },
+      {
+        "addedBy": "张校长",
+        "id": 1781511327161,
+        "title": "创意画·彩虹城堡",
+        "student": "小雪",
+        "type": "美术",
+        "image": "https://placehold.co/400x300/e1bee7/6a1b9a?text=%E5%BD%A9%E8%99%B9%E5%9F%8E%E5%A0%A1",
+        "addedAt": "2026-06-07T08:15:35.161Z"
+      },
+      {
+        "addedBy": "张校长",
+        "id": 1781511326161,
+        "title": "水彩·向日葵",
+        "student": "小华",
+        "type": "美术",
+        "image": "https://placehold.co/400x300/fff9c4/f57f17?text=%E5%90%91%E6%97%A5%E8%91%B5",
+        "addedAt": "2026-06-06T08:15:35.161Z"
+      }
+    ],
+    "chunxiao-announcements": [],
+    "chunxiao-inquiries": [
+      {
+        "message": "(无)",
+        "parentName": "洁洁",
+        "read": true,
+        "childAge": "3-4",
+        "phone": "18863396366",
+        "time": "2026/6/16 10:52:57",
+        "childName": "仞雪",
+        "courses": "素描基础",
+        "id": 1781578377903
+      }
+    ],
+    "chunxiao-renewals": [],
+    "chunxiao-courses": []
+  }
+}

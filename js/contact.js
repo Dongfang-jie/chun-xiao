@@ -54,8 +54,15 @@ document.addEventListener('DOMContentLoaded', async function() {
       read: false
     };
 
-    // 存 localStorage
-    var inquiries = JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]');
+    // 存 localStorage（异常降级：解析失败备份损坏数据并重置）
+    var inquiries = [];
+    try {
+      inquiries = JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]');
+    } catch (e) {
+      console.warn('JSON 解析失败(chunxiao-inquiries):', e.message);
+      var raw = localStorage.getItem('chunxiao-inquiries');
+      if (raw) localStorage.setItem('chunxiao-inquiries_corrupted', raw);
+    }
     inquiries.unshift(inquiry);
     localStorage.setItem('chunxiao-inquiries', JSON.stringify(inquiries));
 

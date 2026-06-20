@@ -169,6 +169,11 @@ document.addEventListener('DOMContentLoaded', function () {
       renderArtworks();
       renderAnnouncements();
       renderCourses();
+      // 首次初始化：同步后仍无课程数据 → 写入默认值（此时云端也无数据，不会冲突）
+      if (!localStorage.getItem('chunxiao-courses')) {
+        saveCourses(DEFAULT_COURSES);
+        renderCourses();
+      }
       updateOverview();
     } else {
       // 家长端：同步后加载所有模块
@@ -204,6 +209,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // 记住当前页面，刷新后恢复
       localStorage.setItem('chunxiao_dashboard_page', pageName);
+
+      // 切换到数据管理页时加载统计
+      if (pageName === 'datamgmt' && typeof loadDataMgmt === 'function') {
+        loadDataMgmt();
+      }
     });
   });
 
@@ -218,6 +228,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     var target = document.getElementById('page-' + savedPage);
     if (target) target.classList.add('active');
+
+    // 恢复到数据管理页时加载统计
+    if (savedPage === 'datamgmt' && typeof loadDataMgmt === 'function') {
+      loadDataMgmt();
+    }
   }
 
   // ==========================================================

@@ -147,7 +147,9 @@ function collectionMap(collection) {
     'corrections': '课消日志',
     'artworks': '作品',
     'announcements': '通知',
-    'inquiries': '预约查询'
+    'inquiries': '预约查询',
+    'renewals': '续费',
+    'courses': '课程设置'
   };
   return map[collection] || '';
 }

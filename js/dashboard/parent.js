@@ -169,7 +169,7 @@ function calcAttendanceStats(studentId) {
 function loadParentOverviewNotices() {
   var container = document.getElementById('parent-overview-notices');
   if (!container) return;
-  var list = JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]');
+  var list = safeParseJSON('chunxiao-announcements', []);
   if (list.length === 0) {
     container.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">📭 暂无通知</p>';
     return;
@@ -621,7 +621,7 @@ function loadParentAnnouncements() {
   var container = document.getElementById('parent-announcements');
   if (!container) return;
 
-  var list = JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]');
+  var list = safeParseJSON('chunxiao-announcements', []);
 
   if (list.length === 0) {
     container.innerHTML = '<p style="text-align:center; color:#999; padding:30px;">📭 暂无通知</p>';

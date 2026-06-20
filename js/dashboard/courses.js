@@ -1,30 +1,12 @@
 /*
   春晓画室 - 管理端课程管理模块
+  依赖：data.js（getCourses/saveCourses/DEFAULT_COURSES）
 */
 
-var DEFAULT_COURSES = [
-  { name: '儿童创意画', age: '4岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '中国画',     age: '8岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '素描',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '色彩',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '硬笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '软笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' }
-];
-
-function getCourses() {
-  var saved = localStorage.getItem('chunxiao-courses');
-  return saved ? JSON.parse(saved) : DEFAULT_COURSES;
-}
-function saveCourses(list) {
-  localStorage.setItem('chunxiao-courses', JSON.stringify(list));
-}
-
 function loadCourses() {
+  // 仅渲染，不写默认值。默认值初始化推迟到 CloudBase 同步之后，
+  // 防止刚刚写入的默认值用最新时间戳覆盖云端已有的自定义课程。
   renderCourses();
-
-  if (!localStorage.getItem('chunxiao-courses')) {
-    saveCourses(DEFAULT_COURSES);
-  }
 }
 
 function renderCourses() {
@@ -55,7 +37,7 @@ function renderCourses() {
       var list = getCourses();
       if (list[idx]) {
         list[idx][field] = value;
-        saveCourses(list);
+        saveCourses(list);  // 自动同步 CloudBase
         cell.style.background = '#f0ffe0';
         setTimeout(function() { cell.style.background = ''; }, 1500);
       }

@@ -4,7 +4,28 @@
   - 每次页面加载从 CloudBase 拉取，比较时间戳决定用谁的
   - 每次保存本地写 + 标记 _synced + 异步推 CloudBase
   - 推送失败 _synced 已标记 → 下次 pullFromCloud 检测到本地更新 → 自动重试
+  - JSON 解析异常时备份损坏数据，防止数据丢失
 */
+
+// ========== JSON 安全解析（异常降级，防止数据损坏扩散） ==========
+function safeParseJSON(key, fallback) {
+  fallback = fallback || [];
+  var raw = localStorage.getItem(key);
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    console.error('❌ JSON 解析失败 (' + key + '):', e.message);
+    // 备份损坏数据以便手动恢复
+    var backupKey = key + '_corrupted_' + new Date().toISOString().replace(/[:.]/g, '-');
+    try { localStorage.setItem(backupKey, raw); } catch (e2) { /* storage full */ }
+    // 显示错误提示
+    if (typeof SyncBubble !== 'undefined') {
+      SyncBubble.show('<strong>数据读取异常</strong> ' + key + '，原始数据已备份至 ' + backupKey, 'error');
+    }
+    return fallback;
+  }
+}
 
 var DataStore = {
   // ========== 通过云函数 dbProxy 访问数据库（绕过安全规则） ==========
@@ -101,7 +122,8 @@ var DataStore = {
       { key: 'chunxiao-artworks',           col: _.artworks },
       { key: 'chunxiao-announcements',      col: _.announcements },
       { key: 'chunxiao-inquiries',          col: _.inquiries },
-      { key: 'chunxiao-renewals',           col: _.renewals }
+      { key: 'chunxiao-renewals',           col: _.renewals },
+      { key: 'chunxiao-courses',            col: _.courses }
     ];
 
     for (var i = 0; i < map.length; i++) {
@@ -225,7 +247,7 @@ var DataStore = {
   _pushToCloudDirect: async function (collection, key, rawData) {
     var db = getDB();
     if (!db) return false;
-    var list = JSON.parse(rawData || localStorage.getItem(key) || '[]');
+    var list = safeParseJSON(key, []);
     var now = new Date().toISOString();
 
     try {
@@ -254,7 +276,7 @@ var DataStore = {
 
   // ========== 通过 dbProxy 云函数推送（绕过安全规则，回退方案） ==========
   _pushToCloudViaFn: async function (collection, key, rawData) {
-    var list = JSON.parse(rawData || localStorage.getItem(key) || '[]');
+    var list = safeParseJSON(key, []);
     var now = new Date().toISOString();
 
     console.log('🔄 通过 dbProxy 云函数推送:', collection);
@@ -299,15 +321,73 @@ var DataStore = {
         SyncBubble.show('<strong>推送失败</strong> ' + (label || collection) + '（3次重试耗尽，下次页面加载时自动重试）', 'error');
       }
     }
+  },
+
+  // ========== 一键导出全部数据为 JSON（供数据管理页使用） ==========
+  exportAllData: function () {
+    var keys = [
+      'chunxiao-students', 'chunxiao-classes', 'chunxiao-attendance',
+      'chunxiao-records', 'chunxiao-lesson-corrections', 'chunxiao-artworks',
+      'chunxiao-announcements', 'chunxiao-inquiries', 'chunxiao-renewals',
+      'chunxiao-courses'
+    ];
+    var data = { version: '2.0', exportedAt: new Date().toISOString(), exportedBy: '', collections: {}, syncedTimestamps: {} };
+    var user = (typeof Auth !== 'undefined' && Auth.currentUser) ? Auth.currentUser() : null;
+    if (user) data.exportedBy = user.name || user.email || '';
+
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var raw = localStorage.getItem(k);
+      data.collections[k] = raw ? safeParseJSON(k, []) : [];
+      var ts = localStorage.getItem(k + '_synced');
+      if (ts) data.syncedTimestamps[k + '_synced'] = ts;
+    }
+    return data;
+  },
+
+  // ========== 一键恢复全部数据（供数据管理页使用） ==========
+  importAllData: function (jsonData) {
+    if (!jsonData || !jsonData.collections) {
+      return { success: false, message: '备份文件格式不正确（缺少 collections 字段）' };
+    }
+    var keys = Object.keys(jsonData.collections);
+    var restored = 0;
+    var now = new Date().toISOString();
+
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      var items = jsonData.collections[k];
+      if (!Array.isArray(items)) continue;
+      localStorage.setItem(k, JSON.stringify(items));
+      var ts = (jsonData.syncedTimestamps && jsonData.syncedTimestamps[k + '_synced']) || now;
+      localStorage.setItem(k + '_synced', ts);
+      restored++;
+
+      // 异步推送到 CloudBase
+      var col = null;
+      var map = {
+        'chunxiao-students': 'students', 'chunxiao-classes': 'classes',
+        'chunxiao-attendance': 'attendance', 'chunxiao-records': 'records',
+        'chunxiao-lesson-corrections': 'corrections', 'chunxiao-artworks': 'artworks',
+        'chunxiao-announcements': 'announcements', 'chunxiao-inquiries': 'inquiries',
+        'chunxiao-renewals': 'renewals', 'chunxiao-courses': 'courses'
+      };
+      col = map[k];
+      if (col) {
+        DataStore._pushToCloud(col, k);
+      }
+    }
+    return { success: true, message: '成功恢复 ' + restored + ' 个数据集合', count: restored };
   }
 };
 
 // ========== 数据操作方法 ==========
 // 每次保存：立即写 localStorage + 标记 _synced + 异步推 CloudBase
 // _synced 在保存时立即标记，确保推送失败后下次 pullFromCloud 能检测并重试
+// 所有读取使用 safeParseJSON 防止 JSON 损坏导致数据丢失
 
 function getStudents() {
-  return JSON.parse(localStorage.getItem('chunxiao-students') || '[]');
+  return safeParseJSON('chunxiao-students', []);
 }
 function saveStudents(list) {
   var now = new Date().toISOString();
@@ -317,7 +397,7 @@ function saveStudents(list) {
 }
 
 function getClasses() {
-  return JSON.parse(localStorage.getItem('chunxiao-classes') || '[]');
+  return safeParseJSON('chunxiao-classes', []);
 }
 function saveClasses(list) {
   var now = new Date().toISOString();
@@ -327,7 +407,7 @@ function saveClasses(list) {
 }
 
 function getAttendance() {
-  return JSON.parse(localStorage.getItem('chunxiao-attendance') || '[]');
+  return safeParseJSON('chunxiao-attendance', []);
 }
 function saveAttendance(list) {
   var now = new Date().toISOString();
@@ -337,7 +417,7 @@ function saveAttendance(list) {
 }
 
 function getRecords() {
-  return JSON.parse(localStorage.getItem('chunxiao-records') || '[]');
+  return safeParseJSON('chunxiao-records', []);
 }
 function saveRecords(list) {
   var now = new Date().toISOString();
@@ -347,7 +427,7 @@ function saveRecords(list) {
 }
 
 function getLessonCorrections() {
-  return JSON.parse(localStorage.getItem('chunxiao-lesson-corrections') || '[]');
+  return safeParseJSON('chunxiao-lesson-corrections', []);
 }
 function saveLessonCorrections(list) {
   var now = new Date().toISOString();
@@ -357,7 +437,7 @@ function saveLessonCorrections(list) {
 }
 
 function getArtworks() {
-  return JSON.parse(localStorage.getItem('chunxiao-artworks') || '[]');
+  return safeParseJSON('chunxiao-artworks', []);
 }
 function saveArtworks(list) {
   var now = new Date().toISOString();
@@ -367,7 +447,7 @@ function saveArtworks(list) {
 }
 
 function getAnnouncements() {
-  return JSON.parse(localStorage.getItem('chunxiao-announcements') || '[]');
+  return safeParseJSON('chunxiao-announcements', []);
 }
 function saveAnnouncements(list) {
   var now = new Date().toISOString();
@@ -377,7 +457,7 @@ function saveAnnouncements(list) {
 }
 
 function getInquiries() {
-  return JSON.parse(localStorage.getItem('chunxiao-inquiries') || '[]');
+  return safeParseJSON('chunxiao-inquiries', []);
 }
 function saveInquiries(list) {
   var now = new Date().toISOString();
@@ -387,7 +467,7 @@ function saveInquiries(list) {
 }
 
 function getRenewals() {
-  return JSON.parse(localStorage.getItem('chunxiao-renewals') || '[]');
+  return safeParseJSON('chunxiao-renewals', []);
 }
 function saveRenewals(list) {
   var now = new Date().toISOString();
@@ -395,3 +475,23 @@ function saveRenewals(list) {
   localStorage.setItem('chunxiao-renewals_synced', now);
   DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.renewals, 'chunxiao-renewals');
 }
+
+function getCourses() {
+  return safeParseJSON('chunxiao-courses', DEFAULT_COURSES);
+}
+function saveCourses(list) {
+  var now = new Date().toISOString();
+  localStorage.setItem('chunxiao-courses', JSON.stringify(list));
+  localStorage.setItem('chunxiao-courses_synced', now);
+  DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.courses, 'chunxiao-courses');
+}
+
+// DEFAULT_COURSES 作为兜底（当 courses 数据全部丢失时）
+var DEFAULT_COURSES = [
+  { name: '儿童创意画', age: '4岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '中国画',     age: '8岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '素描',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '色彩',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '硬笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '软笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' }
+];

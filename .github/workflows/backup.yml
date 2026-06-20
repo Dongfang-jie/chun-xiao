@@ -1,0 +1,45 @@
+name: 数据自动备份
+
+on:
+  schedule:
+    # 每天 19:19 UTC = 03:19 北京时间（UTC+8）
+    # 避开整点，减少 GitHub 排队
+    - cron: '19 19 * * *'
+  workflow_dispatch:
+    # 支持手动触发（GitHub Actions 页面 → Run workflow）
+
+permissions:
+  contents: write  # 需要 git push 权限
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 检出仓库
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: 安装 CloudBase SDK
+        run: npm install @cloudbase/js-sdk
+
+      - name: 运行备份脚本
+        run: node scripts/backup.cjs
+
+      - name: 提交备份到仓库
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add backups/
+          if git diff --staged --quiet; then
+            echo "📭 无新增变更，跳过提交"
+          else
+            git commit -m "backup: $(date +%Y-%m-%d) 自动备份 [skip ci]"
+            git push
+            echo "✅ 备份已提交"
+          fi
