@@ -14,7 +14,7 @@ function updateOverview() {
   var statNumbers = document.querySelectorAll('.stat-number');
   if (statNumbers.length >= 4) {
     statNumbers[0].textContent = students.length;
-    statNumbers[1].textContent = '6'; // 固定 6 门课
+    statNumbers[1].textContent = getCourses().length;
     statNumbers[2].textContent = artworks.length;
     statNumbers[3].textContent = unread;
   }

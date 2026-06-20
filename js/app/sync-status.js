@@ -19,14 +19,23 @@ var SyncBubble = {
       '<div class="sync-bubble-inner sync-hidden" id="sync-bubble-inner">' +
         '<div class="sync-bubble-icon idle" id="sync-bubble-icon">☁️</div>' +
         '<div class="sync-bubble-body" id="sync-bubble-body"></div>' +
+        '<button class="sync-bubble-close" id="sync-bubble-close" title="关闭">×</button>' +
       '</div>';
     document.body.appendChild(bubble);
     this._el = {
       root: bubble,
       inner: document.getElementById('sync-bubble-inner'),
       icon: document.getElementById('sync-bubble-icon'),
-      body: document.getElementById('sync-bubble-body')
+      body: document.getElementById('sync-bubble-body'),
+      close: document.getElementById('sync-bubble-close')
     };
+
+    // 手动关闭按钮
+    var self = this;
+    this._el.close.addEventListener('click', function (e) {
+      e.stopPropagation();
+      self.hide();
+    });
   },
 
   // ========== 显示消息 ==========
@@ -85,11 +94,11 @@ var SyncBubble = {
     var self = this;
     setTimeout(function () { inner.classList.remove('pulse'); }, 3600);
 
-    // 自动隐藏
+    // 自动隐藏（8s，给用户足够时间阅读）
     clearTimeout(this._timer);
     this._timer = setTimeout(function () {
       self.hide();
-    }, 4000);
+    }, 8000);
   },
 
   // ========== 快捷方法 ==========

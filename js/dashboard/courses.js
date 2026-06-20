@@ -29,6 +29,8 @@ function renderCourses() {
   });
   tbody.innerHTML = html;
 
+  var _coursesSaveTimer = null;
+
   tbody.querySelectorAll('.editable').forEach(function(cell) {
     cell.addEventListener('blur', function() {
       var idx = parseInt(cell.dataset.idx);
@@ -37,9 +39,14 @@ function renderCourses() {
       var list = getCourses();
       if (list[idx]) {
         list[idx][field] = value;
-        saveCourses(list);  // 自动同步 CloudBase
+        // 即时视觉反馈
         cell.style.background = '#f0ffe0';
         setTimeout(function() { cell.style.background = ''; }, 1500);
+        // 防抖保存：300ms 内连续编辑只保存最后一次
+        clearTimeout(_coursesSaveTimer);
+        _coursesSaveTimer = setTimeout(function() {
+          saveCourses(list);  // 自动同步 CloudBase
+        }, 300);
       }
     });
   });

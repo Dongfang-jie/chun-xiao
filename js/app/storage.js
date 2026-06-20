@@ -37,7 +37,7 @@ var ArtworkStorage = {
       'image/gif': 'gif', 'image/bmp': 'bmp', 'image/svg+xml': 'svg'
     };
     var ext = mimeToExt[file.type] || 'jpg';
-    var path = 'artworks/' + Date.now() + '_' + Math.random().toString(36).substring(2, 8) + '.' + ext;
+    var path = 'artworks/' + Date.now() + '_' + (ArtworkStorage._counter = (ArtworkStorage._counter || 0) + 1) + '_' + Math.random().toString(36).substring(2, 6) + '.' + ext;
 
     try {
       var result = await app.storage.from().upload(path, file, {

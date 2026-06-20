@@ -2,12 +2,16 @@
   春晓画室 - 管理端预约查询模块
 */
 
+var _inquiryTimer = null;
+
 function loadInquiries() {
   renderInquiries();
   updateInquiryStats();
   updateInquiryBadge();
 
-  setInterval(function() {
+  // 清理旧定时器，避免多次调用堆积
+  if (_inquiryTimer) { clearInterval(_inquiryTimer); }
+  _inquiryTimer = setInterval(function() {
     renderInquiries();
     updateInquiryStats();
     updateInquiryBadge();
