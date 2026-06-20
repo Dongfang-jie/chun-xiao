@@ -320,19 +320,31 @@ section h3 {
   line-height: 1.8;
   color: var(--color-text-secondary, #555);
   text-align: left;
-  margin: 0 0 6px;
-  padding-left: 1.2em;
-}
-
-.teacher-bio li {
-  margin-bottom: 6px;
+  margin: 0 0 14px;
 }
 
 .teacher-motto {
   font-size: 0.88em;
   color: var(--color-accent-light, #f0a0a0);
   font-style: italic;
-  margin: 0;
+  margin: 0 0 14px;
+}
+
+.teacher-award-list {
+  font-size: 0.88em;
+  line-height: 1.8;
+  color: var(--color-text-secondary, #555);
+  text-align: left;
+  margin: 0 0 6px;
+  padding-left: 1.2em;
+}
+
+.teacher-award-list li {
+  margin-bottom: 4px;
+}
+
+body.dark-mode .teacher-award-list {
+  color: #aaa;
 }
 
 /* 荣誉证书轮播 */
