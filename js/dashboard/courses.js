@@ -6,10 +6,37 @@
 function loadCourses() {
   // 仅渲染，不写默认值。默认值初始化推迟到 CloudBase 同步之后，
   // 防止刚刚写入的默认值用最新时间戳覆盖云端已有的自定义课程。
+  populateCoursesClassFilter();
   renderCourses();
 }
 
-function renderCourses() {
+/* 填充班级筛选下拉框 */
+function populateCoursesClassFilter() {
+  var select = document.getElementById('courses-class-filter');
+  if (!select) return;
+
+  var classes = getClasses();
+  var currentVal = select.value;
+
+  var html = '<option value="">全部课程</option>';
+  classes.forEach(function(cls) {
+    if (!cls.course) return;
+    var sel = currentVal === cls.course ? ' selected' : '';
+    html += '<option value="' + escapeHtml(cls.course) + '"' + sel + '>' + escapeHtml(cls.name) + '（' + escapeHtml(cls.course) + '）</option>';
+  });
+  select.innerHTML = html;
+
+  // 绑定变更事件（只绑一次）
+  if (!select._coursesFilterBound) {
+    select._coursesFilterBound = true;
+    select.addEventListener('change', function () {
+      renderCourses(this.value);
+    });
+  }
+}
+
+/* 渲染课程表，可选按 courseName 筛选 */
+function renderCourses(filterCourseName) {
   var tbody = document.querySelector('#courses-table tbody');
   if (!tbody) return;
 
@@ -18,6 +45,9 @@ function renderCourses() {
   var editable = hasAdminPermission() ? ' contenteditable="true"' : '';
   var editHint = hasAdminPermission() ? '点击单元格编辑' : '仅管理员可编辑';
   list.forEach(function(c, idx) {
+    // 如果设了班级筛选，只显示该班级关联的课程
+    if (filterCourseName && c.name !== filterCourseName) return;
+
     html += '<tr>';
     html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="name">' + escapeHtml(c.name || '') + '</td>';
     html += '<td' + editable + ' class="editable" data-idx="' + idx + '" data-field="age">' + escapeHtml(c.age || '') + '</td>';

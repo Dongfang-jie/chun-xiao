@@ -545,7 +545,13 @@
       <!-- 课程管理 -->
       <section id="page-courses" class="dash-page">
         <h2>📚 课程管理</h2>
-        <p class="text-sub" style="margin-bottom:15px;">点击"编辑"修改课程信息，修改后自动保存</p>
+        <p class="text-sub" style="margin-bottom:15px;">点击单元格编辑课程信息，修改后自动保存</p>
+        <div style="margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+          <label for="courses-class-filter" style="white-space:nowrap; font-weight:500;">筛选班级：</label>
+          <select id="courses-class-filter" class="dash-input" style="min-width:200px;">
+            <option value="">全部课程</option>
+          </select>
+        </div>
         <table id="courses-table">
           <caption class="sr-only">课程信息管理</caption>
           <thead>
