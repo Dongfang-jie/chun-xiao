@@ -201,9 +201,9 @@
 
       var html = '<h5 class="awards-title">🏆 荣誉证书</h5><div class="awards-scroll">';
       data.awards.forEach(function (a, i) {
-        var src = data.dir + a.file;
+        var thumbSrc = data.dir + a.file.replace('.jpg', '_thumb.jpg');
         html += '<div class="award-item" data-index="' + i + '" data-teacher="' + containerId + '">'
-          + '<img class="award-thumb" src="' + src + '" alt="' + a.caption + '" loading="lazy">'
+          + '<img class="award-thumb" src="' + thumbSrc + '" alt="' + a.caption + '" loading="lazy">'
           + '</div>';
       });
       html += '</div>';
