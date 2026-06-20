@@ -311,7 +311,7 @@ function startAttendanceForClass(classId, date) {
     saveStudents(studentList);
 
     var all = getAttendance().filter(function(a) { return !(a.classId == classId && a.date == date); });
-    all.push({ id: Date.now(), classId: classId, date: date, records: records, operator: getOperatorName() });
+    all.push({ id: Date.now() + '-' + Math.random().toString(36).substr(2, 9), classId: classId, date: date, records: records, operator: getOperatorName() });
     saveAttendance(all);
     document.getElementById('att-msg').textContent = '✅ 点名已保存，课次已更新';
     document.getElementById('att-msg').style.color = '#5a9';

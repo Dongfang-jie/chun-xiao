@@ -3,6 +3,7 @@
   功能：学员 CRUD / 筛选 / CSV导出 / 详情弹窗
   支持多课程报名（enrollments 数组）
 */
+var _studentDetailEscHandler = null;
 
 // ============================================================
 //  课程选项 & Enrollment 工具函数
@@ -593,14 +594,12 @@ function showStudentDetail(studentId) {
 
   document.body.insertAdjacentHTML('beforeend', html);
 
-  var escHandler = function(e) { if (e.key === 'Escape') { hideStudentDetail(); } };
-  document.addEventListener('keydown', escHandler);
-
-  var _origHide = hideStudentDetail;
-  hideStudentDetail = function() {
-    document.removeEventListener('keydown', escHandler);
-    _origHide();
-  };
+  // 移除旧的 ESC 监听器，防止重复绑定
+  if (_studentDetailEscHandler) {
+    document.removeEventListener('keydown', _studentDetailEscHandler);
+  }
+  _studentDetailEscHandler = function(e) { if (e.key === 'Escape') { hideStudentDetail(); } };
+  document.addEventListener('keydown', _studentDetailEscHandler);
 
   document.getElementById('student-detail-close').addEventListener('click', hideStudentDetail);
   document.getElementById('student-detail-overlay').addEventListener('click', function(e) {
@@ -620,6 +619,10 @@ function showStudentDetail(studentId) {
 }
 
 function hideStudentDetail() {
+  if (_studentDetailEscHandler) {
+    document.removeEventListener('keydown', _studentDetailEscHandler);
+    _studentDetailEscHandler = null;
+  }
   var overlay = document.getElementById('student-detail-overlay');
   if (overlay) overlay.remove();
 }

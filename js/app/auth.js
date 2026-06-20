@@ -9,7 +9,7 @@ var AUTH_CONFIG = {
     { email: '756924037@qq.com', passwordHash: 'fc9c07fdd12e7a7c153f8ec5b291461a28b0cabe1b4ea6f474f5b24a4cdbb049', name: '张校长', role: 'admin' },
     { email: '953034984@qq.com', passwordHash: '4274727476bba9a9211eee11fee0ea32fa1823ccd42f14d680db634ad444ca69', name: '郑校长', role: 'teacher' }
   ],
-  sessionKey: 'chunxiao_session',
+  sessionKey: 'chunxiao-session',
   passwordSalt: 'chunxiao_teacher_2026'
 };
 
@@ -89,7 +89,7 @@ var Auth = {
         children = [{ name: p.childName, studentId: null }];
         // 异步更新 CloudBase doc（不阻塞登录）
         try {
-          db.collection(CLOUDBASE_CONFIG.collections.parents).doc(p._id).update({
+          await db.collection(CLOUDBASE_CONFIG.collections.parents).doc(p._id).update({
             children: children, activeChildIndex: 0
           });
         } catch (migErr) { console.warn('迁移 children 失败:', migErr.message); }
@@ -142,6 +142,7 @@ var Auth = {
         await db.collection(CLOUDBASE_CONFIG.collections.parents).add(parentDoc);
       } catch (dbErr) {
         console.error('保存家长信息失败:', dbErr);
+        throw new Error('账号已创建，但保存家长信息失败，请重新登录或联系画室');
       }
     }
 
@@ -167,8 +168,10 @@ var Auth = {
     } catch (e) { /* 忽略 */ }
   },
 
-  // 获取当前用户（自动迁移旧 childName 格式）
+  // 获取当前用户（自动迁移旧 childName 格式 + 旧 localStorage key）
   currentUser: function () {
+    // 自动迁移旧 localStorage key（仅首次执行，幂等）
+    if (typeof migrateStorageKeys === 'function') { migrateStorageKeys(); }
     var data = localStorage.getItem(AUTH_CONFIG.sessionKey) || sessionStorage.getItem(AUTH_CONFIG.sessionKey);
     if (!data) return null;
     try {

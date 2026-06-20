@@ -4,19 +4,11 @@
   依赖：data.js（DataStore.exportAllData / DataStore.importAllData）
 */
 
-// 集合元数据（col 字段对应 CloudBase 集合名，用于同步操作）
-var DATA_COLLECTIONS = [
-  { key: 'chunxiao-students',           col: 'students',      label: '👨‍🎓 学员',           icon: '👨‍🎓' },
-  { key: 'chunxiao-classes',            col: 'classes',       label: '📦 班级',           icon: '📦' },
-  { key: 'chunxiao-attendance',         col: 'attendance',    label: '📋 考勤',           icon: '📋' },
-  { key: 'chunxiao-records',            col: 'records',       label: '📝 上课记录',       icon: '📝' },
-  { key: 'chunxiao-lesson-corrections', col: 'corrections',   label: '🔧 课次调整',       icon: '🔧' },
-  { key: 'chunxiao-artworks',           col: 'artworks',      label: '🖼️ 作品',           icon: '🖼️' },
-  { key: 'chunxiao-announcements',      col: 'announcements', label: '📢 通知',           icon: '📢' },
-  { key: 'chunxiao-inquiries',          col: 'inquiries',     label: '📩 预约',           icon: '📩' },
-  { key: 'chunxiao-renewals',           col: 'renewals',      label: '💰 续费',           icon: '💰' },
-  { key: 'chunxiao-courses',            col: 'courses',       label: '📚 课程设置',       icon: '📚' }
-];
+// 集合元数据 — 基于 config.js 的 STORAGE_KEY_MAP 扩展 icon 字段
+var ICON_MAP = { 'students': '👨‍🎓', 'classes': '📦', 'attendance': '📋', 'records': '📝', 'corrections': '🔧', 'artworks': '🖼️', 'announcements': '📢', 'inquiries': '📩', 'renewals': '💰', 'courses': '📚' };
+var DATA_COLLECTIONS = STORAGE_KEY_MAP.map(function (m) {
+  return { key: m.key, col: m.col, label: (ICON_MAP[m.col] || '📄') + ' ' + m.label, icon: ICON_MAP[m.col] || '📄' };
+});
 
 // ========== 加载数据管理页面 ==========
 function loadDataMgmt() {

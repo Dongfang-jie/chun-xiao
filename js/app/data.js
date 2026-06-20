@@ -124,19 +124,7 @@ var DataStore = {
       console.warn('🔧 dbProxy HTTP 通道: ❌ 不可达');
     }
 
-    var _ = CLOUDBASE_CONFIG.collections;
-    var map = [
-      { key: 'chunxiao-students',           col: _.students },
-      { key: 'chunxiao-classes',            col: _.classes },
-      { key: 'chunxiao-attendance',         col: _.attendance },
-      { key: 'chunxiao-records',            col: _.records },
-      { key: 'chunxiao-lesson-corrections', col: _.corrections },
-      { key: 'chunxiao-artworks',           col: _.artworks },
-      { key: 'chunxiao-announcements',      col: _.announcements },
-      { key: 'chunxiao-inquiries',          col: _.inquiries },
-      { key: 'chunxiao-renewals',           col: _.renewals },
-      { key: 'chunxiao-courses',            col: _.courses }
-    ];
+    var map = STORAGE_KEY_MAP;
 
     for (var i = 0; i < map.length; i++) {
       var m = map[i];
@@ -263,18 +251,21 @@ var DataStore = {
     var now = new Date().toISOString();
 
     try {
-      // 删旧写新
-      var old = await db.collection(collection).where({ _type: '_sync' }).get();
-      if (old.data) {
-        for (var i = 0; i < old.data.length; i++) {
-          try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch (e) {}
-        }
-      }
-      await db.collection(collection).add({
+      // 先写新文档，再删旧文档 — 防止写失败导致数据永久丢失
+      var addResult = await db.collection(collection).add({
         _type: '_sync',
         items: list,
         updatedAt: now
       });
+      // 新文档写入成功后，删除旧文档（静默失败也不影响数据完整性）
+      var old = await db.collection(collection).where({ _type: '_sync' }).get();
+      if (old.data) {
+        for (var i = 0; i < old.data.length; i++) {
+          if (old.data[i]._id !== addResult.id) {
+            try { await db.collection(collection).doc(old.data[i]._id).remove(); } catch (e) {}
+          }
+        }
+      }
       // 推送成功：_synced 更新为推送完成时间
       localStorage.setItem(key + '_synced', now);
       console.log('📤 已推送:', collection, list.length + '条');
@@ -337,14 +328,9 @@ var DataStore = {
 
   // ========== 一键导出全部数据为 JSON（供数据管理页使用） ==========
   exportAllData: function () {
-    var keys = [
-      'chunxiao-students', 'chunxiao-classes', 'chunxiao-attendance',
-      'chunxiao-records', 'chunxiao-lesson-corrections', 'chunxiao-artworks',
-      'chunxiao-announcements', 'chunxiao-inquiries', 'chunxiao-renewals',
-      'chunxiao-courses'
-    ];
+    var keys = STORAGE_KEY_MAP.map(function (m) { return m.key; });
     var data = { version: '2.0', exportedAt: new Date().toISOString(), exportedBy: '', collections: {}, syncedTimestamps: {} };
-    var user = (typeof Auth !== 'undefined' && Auth.currentUser) ? Auth.currentUser() : null;
+    var user = (typeof Auth !== 'undefined' && typeof Auth.currentUser === 'function') ? Auth.currentUser() : null;
     if (user) data.exportedBy = user.name || user.email || '';
 
     for (var i = 0; i < keys.length; i++) {
@@ -376,15 +362,7 @@ var DataStore = {
       restored++;
 
       // 异步推送到 CloudBase
-      var col = null;
-      var map = {
-        'chunxiao-students': 'students', 'chunxiao-classes': 'classes',
-        'chunxiao-attendance': 'attendance', 'chunxiao-records': 'records',
-        'chunxiao-lesson-corrections': 'corrections', 'chunxiao-artworks': 'artworks',
-        'chunxiao-announcements': 'announcements', 'chunxiao-inquiries': 'inquiries',
-        'chunxiao-renewals': 'renewals', 'chunxiao-courses': 'courses'
-      };
-      col = map[k];
+      var col = getCollectionName(k);
       if (col) {
         DataStore._pushToCloud(col, k);
       }
@@ -392,6 +370,18 @@ var DataStore = {
     return { success: true, message: '成功恢复 ' + restored + ' 个数据集合', count: restored };
   }
 };
+
+// ========== 共享工具函数 ==========
+
+// 查找学生的课程报名记录（enrollments 数组中匹配 course 的条目）
+// 用法: var enr = findEnrollment(student, '儿童创意画');
+function findEnrollment(student, course) {
+  if (!student || !student.enrollments) return null;
+  for (var i = 0; i < student.enrollments.length; i++) {
+    if (student.enrollments[i].course === course) return student.enrollments[i];
+  }
+  return null;
+}
 
 // ========== 数据操作方法 ==========
 // 每次保存：立即写 localStorage + 标记 _synced + 异步推 CloudBase
@@ -488,6 +478,17 @@ function saveRenewals(list) {
   DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.renewals, 'chunxiao-renewals');
 }
 
+// DEFAULT_COURSES 作为兜底（当 courses 数据全部丢失时）
+// 必须定义在 getCourses() 之前 — var hoisting 只提升声明不提升赋值
+var DEFAULT_COURSES = [
+  { name: '儿童创意画', age: '4岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '中国画',     age: '8岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '素描',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '色彩',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '硬笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
+  { name: '软笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' }
+];
+
 function getCourses() {
   return safeParseJSON('chunxiao-courses', DEFAULT_COURSES);
 }
@@ -497,13 +498,3 @@ function saveCourses(list) {
   localStorage.setItem('chunxiao-courses_synced', now);
   DataStore._pushToCloud(CLOUDBASE_CONFIG.collections.courses, 'chunxiao-courses');
 }
-
-// DEFAULT_COURSES 作为兜底（当 courses 数据全部丢失时）
-var DEFAULT_COURSES = [
-  { name: '儿童创意画', age: '4岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '中国画',     age: '8岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '素描',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '色彩',       age: '10岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '硬笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' },
-  { name: '软笔书法',   age: '6岁以上', duration: '120分钟', time: '咨询画室安排', capacity: '0/8' }
-];

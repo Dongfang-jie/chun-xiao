@@ -41,25 +41,24 @@ function initLightbox() {
   var lightboxImg = overlay.querySelector('.lightbox-img');
   var lightboxCaption = overlay.querySelector('.lightbox-caption');
 
-  // 给所有卡片图片绑定点击事件（仅 img 标签，跳过占位 div）
-  var images = document.querySelectorAll('img.card-img');
-  images.forEach(function (img) {
-    img.style.cursor = 'pointer';  // 鼠标变手型，暗示可点击
-    img.addEventListener('click', function () {
-      lightboxImg.src = img.src;
-      // 尝试获取图片下方的文字作为说明
-      var cardBody = img.closest('.card');
-      if (cardBody) {
-        var title = cardBody.querySelector('h4');
-        var desc = cardBody.querySelector('p');
-        var captionText = '';
-        if (title) captionText += title.textContent;
-        if (desc) captionText += (captionText ? ' — ' : '') + desc.textContent;
-        lightboxCaption.textContent = captionText;
-      }
-      overlay.classList.add('active');
-      document.body.style.overflow = 'hidden';  // 防止背景滚动
-    });
+  // 使用事件委托绑定图片点击 — 画廊等动态渲染的图片也能触发灯箱
+  document.body.addEventListener('click', function (e) {
+    var img = e.target.closest ? e.target.closest('img.card-img') : null;
+    if (!img || !img.src) return;
+    e.stopPropagation();
+    lightboxImg.src = img.src;
+    // 尝试获取图片下方的文字作为说明
+    var cardBody = img.closest('.card');
+    if (cardBody) {
+      var title = cardBody.querySelector('h4');
+      var desc = cardBody.querySelector('p');
+      var captionText = '';
+      if (title) captionText += title.textContent;
+      if (desc) captionText += (captionText ? ' — ' : '') + desc.textContent;
+      lightboxCaption.textContent = captionText;
+    }
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';  // 防止背景滚动
   });
 
   // 关闭灯箱的方式 1：点 × 按钮

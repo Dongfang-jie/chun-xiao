@@ -363,7 +363,7 @@ function saveManualCorrection() {
   if (!enr) { msgEl.textContent = '⚠️ 未找到对应课程报名记录'; msgEl.style.color = '#e88'; return; }
 
   // 负数=扣课时(增加consumed)，正数=加课时(减少consumed)
-  var newConsumed = (enr.consumedLessons || 0) - amount;
+  var newConsumed = Math.max(0, (enr.consumedLessons || 0) - amount);
 
   if (newConsumed > (enr.totalLessons || 0) && amount < 0) {
     if (!confirm('该操作将使' + course + '已消耗(' + newConsumed + ')超过总课次(' + enr.totalLessons + ')，确定继续？')) return;

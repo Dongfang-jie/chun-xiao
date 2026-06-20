@@ -77,7 +77,7 @@ function initStudentSubTabs() {
       if (target) target.classList.add('active');
 
       // 记住当前子标签
-      localStorage.setItem('chunxiao_dashboard_subtab', sub);
+      localStorage.setItem('chunxiao-dashboard-subtab', sub);
 
       // 切换到对应子页面时刷新数据
       if (sub === 'schedule') renderSchedule();
@@ -90,7 +90,7 @@ function initStudentSubTabs() {
   });
 
   // 恢复到上次的子标签
-  var savedSub = localStorage.getItem('chunxiao_dashboard_subtab');
+  var savedSub = localStorage.getItem('chunxiao-dashboard-subtab');
   if (savedSub) {
     document.querySelectorAll('.sub-tab').forEach(function(t) { t.classList.remove('active'); });
     var savedSubTab = document.querySelector('.sub-tab[data-sub="' + savedSub + '"]');
@@ -105,6 +105,9 @@ function initStudentSubTabs() {
 //  页面入口
 // ============================================================
 document.addEventListener('DOMContentLoaded', function () {
+
+  // 迁移旧 localStorage key 命名（chunxiao_session → chunxiao-session 等）
+  migrateStorageKeys();
 
   var isTeacher = window.location.pathname.includes('teacher');
 
@@ -207,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       // 记住当前页面，刷新后恢复
-      localStorage.setItem('chunxiao_dashboard_page', pageName);
+      localStorage.setItem('chunxiao-dashboard-page', pageName);
 
       // 切换到数据管理页时加载统计
       if (pageName === 'datamgmt' && typeof loadDataMgmt === 'function') {
@@ -217,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // 刷新后恢复到上次的页面
-  var savedPage = localStorage.getItem('chunxiao_dashboard_page');
+  var savedPage = localStorage.getItem('chunxiao-dashboard-page');
   if (savedPage) {
     sidebarLinks.forEach(function (l) { l.classList.remove('active'); });
     var savedLink = document.querySelector('.sidebar-link[data-page="' + savedPage + '"]');

@@ -31,12 +31,17 @@ var ArtworkStorage = {
     var authed = await ArtworkStorage._ensureAuth();
     if (!authed) return { success: false, error: '登录失败' };
 
-    var ext = (file.type === 'image/png') ? 'png' : 'jpg';
+    // MIME 类型 → 扩展名映射（支持常见图片格式）
+    var mimeToExt = {
+      'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp',
+      'image/gif': 'gif', 'image/bmp': 'bmp', 'image/svg+xml': 'svg'
+    };
+    var ext = mimeToExt[file.type] || 'jpg';
     var path = 'artworks/' + Date.now() + '_' + Math.random().toString(36).substring(2, 8) + '.' + ext;
 
     try {
       var result = await app.storage.from().upload(path, file, {
-        contentType: 'image/' + (ext === 'png' ? 'png' : 'jpeg')
+        contentType: file.type || 'image/' + (ext === 'png' ? 'png' : 'jpeg')
       });
       if (result.error) {
         console.error('ArtworkStorage 上传失败:', result.error);

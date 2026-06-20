@@ -45,9 +45,7 @@ function getStudentClasses(studentId) {
   });
 }
 
-/** 星期映射：中文 → 数字 (0=周日) */
-var DAY_MAP = { '周日': 0, '周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6 };
-var DAY_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+// WEEKDAY_MAP / WEEKDAY_NAMES 已迁移至 js/app/config.js 全局常量 WEEKWEEKDAY_MAP / WEEKWEEKDAY_NAMES
 
 /** 计算下次上课日期 */
 function calcNextClassDate(classes) {
@@ -57,7 +55,7 @@ function calcNextClassDate(classes) {
   var bestDate = null;
   var bestClass = null;
   classes.forEach(function (cls) {
-    var targetDay = DAY_MAP[cls.day];
+    var targetDay = WEEKDAY_MAP[cls.day];
     if (targetDay === undefined) return;
     var daysUntil = targetDay - today;
     if (daysUntil < 0) daysUntil += 7;
@@ -236,14 +234,14 @@ function renderParentWeeklySchedule(wrap, classes) {
   var html = '<table class="schedule-table"><thead><tr><th class="schedule-time-header">时间</th>';
   for (var d = 0; d < 7; d++) {
     var isToday = (d === today);
-    html += '<th' + (isToday ? ' class="schedule-today-header"' : '') + '>' + DAY_NAMES[d] + '</th>';
+    html += '<th' + (isToday ? ' class="schedule-today-header"' : '') + '>' + WEEKDAY_NAMES[d] + '</th>';
   }
   html += '</tr></thead><tbody>';
 
   allSlots.forEach(function (slot) {
     html += '<tr><td class="schedule-time-cell">' + escapeHtml(slot || '') + '</td>';
     for (var d = 0; d < 7; d++) {
-      var dayName = DAY_NAMES[d];
+      var dayName = WEEKDAY_NAMES[d];
       var match = null;
       for (var i = 0; i < classes.length; i++) {
         if (classes[i].day === dayName && classes[i].timeSlot === slot) {
@@ -368,7 +366,7 @@ function renderParentAttendanceList(studentId) {
 /** 从日期字符串获取星期 */
 function getDayOfWeek(dateStr) {
   var d = new Date(dateStr + 'T00:00:00');
-  return DAY_NAMES[d.getDay()];
+  return WEEKDAY_NAMES[d.getDay()];
 }
 
 // ============================================================
@@ -757,7 +755,7 @@ async function changePassword() {
 function loadChildManagement(user) {
   var listEl = document.getElementById('child-list');
   if (!listEl) return;
-  if (!user || !user.children) return;
+  if (!user || !Array.isArray(user.children)) return;
 
   var students = getStudents();
   var activeIdx = user.activeChildIndex || 0;
@@ -878,10 +876,14 @@ function renderChildDropdown(user) {
     dropdown.style.display = dropdown.style.display === 'none' ? '' : 'none';
   };
 
-  // 点击其他地方关闭
-  document.addEventListener('click', function () {
+  // 点击其他地方关闭（先移除旧监听器，防止重复绑定）
+  if (dropdown._closeHandler) {
+    document.removeEventListener('click', dropdown._closeHandler);
+  }
+  dropdown._closeHandler = function () {
     dropdown.style.display = 'none';
-  });
+  };
+  document.addEventListener('click', dropdown._closeHandler);
 }
 
 /** 切换当前孩子 */
