@@ -21,6 +21,56 @@ exports.main = async (event, context) => {
   const { action, collection, items } = event;
 
   try {
+    // 一次性备份全部 10 个集合（供 GitHub Actions 脚本调用）
+    if (action === 'backupAll') {
+      const COLLECTIONS = [
+        'students', 'classes', 'attendance', 'records', 'corrections',
+        'artworks', 'announcements', 'inquiries', 'renewals', 'courses'
+      ];
+
+      const backup = {
+        version: '2.0',
+        exportedAt: new Date().toISOString(),
+        exportedBy: 'CloudBase 云函数自动备份 (dbProxy)',
+        collections: {}
+      };
+
+      let totalItems = 0;
+      const failed = [];
+
+      for (const colName of COLLECTIONS) {
+        const key = 'chunxiao-' + (colName === 'corrections' ? 'lesson-corrections' : colName);
+        try {
+          const res = await db.collection(colName).where({ _type: '_sync' }).get();
+
+          if (res.data && res.data.length > 0 && res.data[0].items) {
+            backup.collections[key] = res.data[0].items;
+            totalItems += res.data[0].items.length;
+          } else {
+            backup.collections[key] = [];
+          }
+        } catch (e) {
+          backup.collections[key] = [];
+          const isNotExist = e.message && (
+            e.message.indexOf('not exist') >= 0 ||
+            e.message.indexOf('not found') >= 0 ||
+            e.message.indexOf('does not exist') >= 0
+          );
+          if (!isNotExist) {
+            failed.push({ collection: colName, error: e.message || String(e) });
+          }
+        }
+      }
+
+      return {
+        success: failed.length === 0,
+        totalItems: totalItems,
+        totalCollections: COLLECTIONS.length,
+        failed: failed,
+        backup: backup
+      };
+    }
+
     if (action === 'ping') {
       // 诊断：检查凭证和数据库连通性
       var hasSecretId = !!process.env.TENCENTCLOUD_SECRETID;

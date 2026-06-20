@@ -1,208 +1,168 @@
 /*
   春晓画室 - CloudBase 数据自动备份脚本
-  使用 @cloudbase/js-sdk 匿名登录直连数据库（与浏览器端方式一致）
+  通过 CloudBase HTTP 访问服务调用 dbProxy 云函数的 backupAll action
+  dbProxy 使用 @cloudbase/node-sdk admin 权限，可读取全部集合
+
   用法: node scripts/backup.cjs
-  依赖: Node.js 18+, @cloudbase/js-sdk
+  依赖: Node.js 18+（仅用内置模块，无需 npm install）
 */
 
 'use strict';
 
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
 // ========== 配置 ==========
-const ENV_ID = 'chunxiao-d8ghfaw3y0781da11';
+// CloudBase HTTP 访问服务地址（与 js/app/config.js 中 dbProxyUrl 一致）
+const DB_PROXY_URL = 'https://chunxiao-d8ghfaw3y0781da11-1443528450.ap-shanghai.app.tcloudbase.com/dbProxy';
 const BACKUP_DIR = path.join(__dirname, '..', 'backups');
 const MAX_BACKUP_AGE_DAYS = 30;
-
-// 10 个数据集合 — 输出使用 localStorage key，查询使用 CloudBase 集合名
-const COLLECTIONS = [
-  { key: 'chunxiao-students',           col: 'students' },
-  { key: 'chunxiao-classes',            col: 'classes' },
-  { key: 'chunxiao-attendance',         col: 'attendance' },
-  { key: 'chunxiao-records',            col: 'records' },
-  { key: 'chunxiao-lesson-corrections', col: 'corrections' },
-  { key: 'chunxiao-artworks',           col: 'artworks' },
-  { key: 'chunxiao-announcements',      col: 'announcements' },
-  { key: 'chunxiao-inquiries',          col: 'inquiries' },
-  { key: 'chunxiao-renewals',           col: 'renewals' },
-  { key: 'chunxiao-courses',            col: 'courses' }
-];
-
-// ========== Node.js polyfills（js-sdk 需要的浏览器 API） ==========
-
-// localStorage
-class NodeStorage {
-  constructor() { this._data = new Map(); }
-  getItem(key) { return this._data.get(key) || null; }
-  setItem(key, value) { this._data.set(key, value); }
-  removeItem(key) { this._data.delete(key); }
-  clear() { this._data.clear(); }
-  get length() { return this._data.size; }
-  key(index) { return Array.from(this._data.keys())[index] || null; }
-}
-
-// XMLHttpRequest（js-sdk 内部可能用于网络请求）
-class NodeXMLHttpRequest {
-  constructor() {
-    this.readyState = 0;
-    this.status = 0;
-    this.responseText = '';
-    this.onreadystatechange = null;
-    this._method = 'GET';
-    this._url = '';
-    this._headers = {};
-    this._body = null;
-  }
-  open(method, url) {
-    this._method = method;
-    this._url = url;
-    this.readyState = 1;
-  }
-  setRequestHeader(key, value) {
-    this._headers[key] = value;
-  }
-  send(body) {
-    this._body = body;
-    const self = this;
-    (async () => {
-      try {
-        const opts = { method: self._method, headers: self._headers };
-        if (body) opts.body = body;
-        const res = await fetch(self._url, opts);
-        self.status = res.status;
-        self.responseText = await res.text();
-        self.readyState = 4;
-        if (self.onreadystatechange) self.onreadystatechange();
-      } catch (e) {
-        self.status = 0;
-        self.responseText = '';
-        self.readyState = 4;
-        if (self.onreadystatechange) self.onreadystatechange();
-      }
-    })();
-  }
-}
-
-// 注入全局
-if (typeof globalThis.window === 'undefined') globalThis.window = globalThis;
-if (typeof globalThis.localStorage === 'undefined') globalThis.localStorage = new NodeStorage();
-if (typeof globalThis.XMLHttpRequest === 'undefined') globalThis.XMLHttpRequest = NodeXMLHttpRequest;
-if (typeof globalThis.btoa === 'undefined') globalThis.btoa = (s) => Buffer.from(s, 'binary').toString('base64');
-if (typeof globalThis.atob === 'undefined') globalThis.atob = (s) => Buffer.from(s, 'base64').toString('binary');
+const REQUEST_TIMEOUT_MS = 30000;
 
 // ========== 工具函数 ==========
 
 function todayStr() {
+  // 北京时间
   const bj = new Date(Date.now() + 8 * 3600000);
   return bj.toISOString().slice(0, 10);
+}
+
+function httpPost(urlString, data) {
+  return new Promise(function (resolve, reject) {
+    var parsed = new URL(urlString);
+    var body = JSON.stringify(data);
+
+    var opts = {
+      hostname: parsed.hostname,
+      port: parsed.port || 443,
+      path: parsed.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body, 'utf-8')
+      },
+      timeout: REQUEST_TIMEOUT_MS
+    };
+
+    var req = https.request(opts, function (res) {
+      var chunks = [];
+      res.on('data', function (chunk) { chunks.push(chunk); });
+      res.on('end', function () {
+        var raw = Buffer.concat(chunks).toString('utf-8');
+        var status = res.statusCode;
+
+        if (status >= 200 && status < 300) {
+          try {
+            var wrapper = JSON.parse(raw);
+            // CloudBase HTTP 访问服务包装格式: { statusCode, headers, body: "JSON字符串" }
+            if (wrapper && typeof wrapper.body === 'string') {
+              resolve(JSON.parse(wrapper.body));
+            } else {
+              resolve(wrapper);
+            }
+          } catch (e) {
+            reject(new Error('JSON 解析失败 (HTTP ' + status + '): ' + raw.slice(0, 200)));
+          }
+        } else {
+          reject(new Error('HTTP ' + status + ': ' + raw.slice(0, 300)));
+        }
+      });
+    });
+
+    req.on('error', function (e) { reject(e); });
+    req.on('timeout', function () {
+      req.destroy();
+      reject(new Error('请求超时 (' + (REQUEST_TIMEOUT_MS / 1000) + 's)'));
+    });
+
+    req.write(body);
+    req.end();
+  });
 }
 
 // ========== 主流程 ==========
 
 async function main() {
-  console.log('🌸 春晓画室 - 数据自动备份');
+  console.log('🌸 春晓画室 - 数据自动备份 (dbProxy/backupAll)');
   console.log('================================');
   console.log('');
+  console.log('📡 调用 dbProxy 云函数 (backupAll)...');
 
-  // 1. 初始化 CloudBase SDK
-  console.log('🔌 初始化 CloudBase SDK...');
-  const cloudbase = require('@cloudbase/js-sdk');
-
-  const app = cloudbase.init({ env: ENV_ID });
-  const db = app.database();
-  const auth = app.auth({ persistence: 'local' });
-
-  // 2. 匿名登录
-  console.log('🔑 匿名登录...');
+  var result;
   try {
-    const loginState = await auth.getLoginState();
-    if (!loginState) {
-      await auth.signInAnonymously();
-      console.log('   ✅ 匿名登录成功');
-    } else {
-      console.log('   ✅ 已有登录态');
-    }
+    result = await httpPost(DB_PROXY_URL, { action: 'backupAll' });
   } catch (e) {
-    console.error('   ❌ 登录失败:', e.message);
+    console.error('   ❌ 调用失败: ' + e.message);
     process.exit(1);
   }
-  console.log('');
 
-  // 3. 拉取全部集合
-  const backup = {
-    version: '2.0',
-    exportedAt: new Date().toISOString(),
-    exportedBy: 'GitHub Actions 自动备份',
-    collections: {}
-  };
+  if (!result) {
+    console.error('   ❌ 云函数无响应');
+    process.exit(1);
+  }
 
-  let totalItems = 0;
-  const failedCollections = [];
-
-  for (let i = 0; i < COLLECTIONS.length; i++) {
-    const col = COLLECTIONS[i];
-    try {
-      process.stdout.write('📥 拉取 ' + col.key + '... ');
-      const res = await db.collection(col.col).where({ _type: '_sync' }).get();
-
-      if (res.data && res.data.length > 0 && res.data[0].items) {
-        const items = res.data[0].items;
-        backup.collections[col.key] = items;
-        totalItems += items.length;
-        console.log('✅ ' + items.length + ' 条');
-      } else {
-        backup.collections[col.key] = [];
-        console.log('⚠️ 无数据');
-      }
-    } catch (e) {
-      // 集合不存在 → 视为空（CloudBase 懒创建，首次写入才建表）
-      if (e.message && e.message.indexOf('not exist') >= 0) {
-        backup.collections[col.key] = [];
-        console.log('⚠️ 集合未创建（视为空）');
-      } else {
-        console.error('❌ 失败: ' + e.message);
-        backup.collections[col.key] = [];
-        failedCollections.push(col.key);
-      }
+  // 报告部分失败（但不影响已拉取数据的保存）
+  var partial = false;
+  if (!result.success) {
+    partial = true;
+    console.log('   ⚠️ 部分集合拉取失败，将保存已获取的数据');
+    if (result.failed && result.failed.length > 0) {
+      result.failed.forEach(function (f) {
+        console.error('      ❌ ' + f.collection + ': ' + f.error);
+      });
     }
   }
 
-  console.log('');
-  console.log('📊 总计: ' + totalItems + ' 条记录');
-  if (failedCollections.length > 0) {
-    console.log('⚠️  失败集合: ' + failedCollections.join(', '));
-  }
+  console.log('   📊 ' + result.totalItems + ' 条记录 / ' + result.totalCollections + ' 个集合');
   console.log('');
 
-  // 4. 写入备份文件
+  // 防御：确保 backup 对象存在
+  if (!result.backup || typeof result.backup !== 'object') {
+    console.error('   ❌ 云函数返回数据格式异常，缺少 backup 字段');
+    process.exit(1);
+  }
+
+  // 标记部分备份
+  if (partial) {
+    result.backup.partialBackup = true;
+    result.backup.failedCollections = result.failed || [];
+  }
+
+  // 写入备份文件
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
 
-  const date = todayStr();
-  const backupFile = path.join(BACKUP_DIR, 'data-' + date + '.json');
-  const latestFile = path.join(BACKUP_DIR, 'latest.json');
+  var date = todayStr();
+  var backupFile = path.join(BACKUP_DIR, 'data-' + date + '.json');
+  var latestFile = path.join(BACKUP_DIR, 'latest.json');
 
-  const json = JSON.stringify(backup, null, 2);
+  var json = JSON.stringify(result.backup, null, 2);
   fs.writeFileSync(backupFile, json, 'utf-8');
   fs.writeFileSync(latestFile, json, 'utf-8');
 
-  const sizeKB = (Buffer.byteLength(json, 'utf-8') / 1024).toFixed(1);
+  var sizeKB = (Buffer.byteLength(json, 'utf-8') / 1024).toFixed(1);
   console.log('💾 备份已保存: backups/data-' + date + '.json (' + sizeKB + ' KB)');
   console.log('💾 最新备份: backups/latest.json');
   console.log('');
 
-  // 5. 清理旧备份
-  let files;
+  if (partial) {
+    console.log('⚠️ 部分备份（已保存已获取的数据），将以失败退出触发告警');
+  }
+
+  // 清理旧备份（>30天）
+  var files;
   try {
-    files = fs.readdirSync(BACKUP_DIR).filter(function(f) { return f.startsWith('data-') && f.endsWith('.json'); });
+    files = fs.readdirSync(BACKUP_DIR).filter(function (f) {
+      return f.startsWith('data-') && f.endsWith('.json');
+    });
   } catch (e) { files = []; }
 
-  const cutoff = Date.now() - MAX_BACKUP_AGE_DAYS * 86400000;
-  let cleaned = 0;
+  var cutoff = Date.now() - MAX_BACKUP_AGE_DAYS * 86400000;
+  var cleaned = 0;
 
-  for (let i = 0; i < files.length; i++) {
-    const fp = path.join(BACKUP_DIR, files[i]);
-    let stat;
+  for (var i = 0; i < files.length; i++) {
+    var fp = path.join(BACKUP_DIR, files[i]);
+    var stat;
     try { stat = fs.statSync(fp); } catch (e) { continue; }
     if (stat.mtimeMs < cutoff) {
       fs.unlinkSync(fp);
@@ -214,20 +174,16 @@ async function main() {
     console.log('🧹 清理了 ' + cleaned + ' 个过期备份（>' + MAX_BACKUP_AGE_DAYS + '天）');
   }
 
-  // 6. 登出
-  try { await auth.signOut(); } catch (e) { /* ignore */ }
-
   console.log('');
-  if (failedCollections.length > 0) {
-    console.error('❌ 部分集合备份失败');
+  if (partial) {
+    console.log('⚠️ 部分备份完成（退出码 1）');
     process.exit(1);
-  } else {
-    console.log('✅ 备份完成');
   }
+  console.log('✅ 备份完成');
 }
 
-main().catch(function(e) {
-  console.error('❌ 备份脚本异常:', e.message);
+main().catch(function (e) {
+  console.error('❌ 备份脚本异常: ' + e.message);
   console.error(e.stack);
   process.exit(1);
 });
