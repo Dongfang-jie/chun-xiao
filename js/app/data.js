@@ -272,6 +272,7 @@ var DataStore = {
       if (typeof SyncBubble !== 'undefined') SyncBubble.pushOk(collection, list.length);
       return true;
     } catch (e) {
+      DataStore._lastPushError = e.message || '';
       console.warn('⚠️ 直接数据库推送失败 (' + collection + '):', e.message);
       return false;
     }
@@ -291,11 +292,13 @@ var DataStore = {
         if (typeof SyncBubble !== 'undefined') SyncBubble.pushOk(collection, list.length);
         return true;
       } else {
+        DataStore._lastPushError = result ? result.message : '无响应';
         console.warn('❌ dbProxy 推送失败:', collection, result ? result.message : '无响应');
         if (typeof SyncBubble !== 'undefined') SyncBubble.pushFail(collection, result ? result.message : '无响应');
         return false;
       }
     } catch (e) {
+      DataStore._lastPushError = e.message || '';
       console.warn('❌ dbProxy 推送异常:', collection, e.message);
       return false;
     }
@@ -310,6 +313,18 @@ var DataStore = {
     var ok = await DataStore._pushToCloudDirect(collection, key, rawData);
     if (!ok) {
       ok = await DataStore._pushToCloudViaFn(collection, key, rawData);
+    }
+    // 如果集合不存在，跳过重试（避免无效请求和噪音日志）
+    if (!ok) {
+      var lastErr = (DataStore._lastPushError || '').toLowerCase();
+      var isNotExist = lastErr.indexOf('not exist') >= 0 ||
+                       lastErr.indexOf('not found') >= 0 ||
+                       lastErr.indexOf('does not exist') >= 0 ||
+                       lastErr.indexOf('resourcenotfound') >= 0;
+      if (isNotExist) {
+        console.warn('📭 集合不存在，跳过同步: ' + collection + '（请在 CloudBase 控制台创建该集合）');
+        return;
+      }
     }
     if (!ok && attempt < 2) {
       console.warn('🔄 推送失败，3秒后重试 (' + (attempt + 1) + '/2):', collection);
