@@ -366,22 +366,18 @@
                 </select>
               </div>
               <div>
-                <label class="dash-label-sm">📖 续费课程</label>
-                <select id="renewal-course" class="dash-input-lg" style="min-width:180px; font-size:0.95em;">
-                  <option value="">先选学员</option>
-                </select>
-              </div>
-              <div>
-                <label class="dash-label-sm">🔢 续费课次</label>
-                <input type="number" id="renewal-lessons" placeholder="如：20" min="1" class="dash-input-lg" style="width:100px; text-align:center; font-size:1em;">
-              </div>
-              <div>
                 <label class="dash-label-sm">📅 日期</label>
                 <input type="date" id="renewal-date" class="dash-input-lg" style="font-size:0.95em;">
               </div>
               <div>
                 <label class="dash-label-sm">📝 备注（可选）</label>
-                <input type="text" id="renewal-note" placeholder="如：续费半年40节" class="dash-input-lg" style="min-width:200px;">
+                <input type="text" id="renewal-note" placeholder="如：续费半年" class="dash-input-lg" style="min-width:200px;">
+              </div>
+            </div>
+            <div id="renewal-courses-section" style="margin-top:12px;">
+              <label class="dash-label-sm">📖 续费课程与课次 <span style="font-weight:normal;color:#999;font-size:0.85em;">（填写需要续费的课程和对应课次，可同时续多门）</span></label>
+              <div id="renewal-courses-list" style="margin-top:6px; color:#999;">
+                先选学员
               </div>
             </div>
             <div class="mt-md">
@@ -632,7 +628,7 @@
   <script src="js/dashboard/announcements.js?v=3"></script>
   <script src="js/dashboard/inquiries.js?v=3"></script>
   <script src="js/dashboard/courses.js?v=3"></script>
-  <script src="js/dashboard/renewals.js?v=3"></script>
+  <script src="js/dashboard/renewals.js?v=4"></script>
   <script src="js/dashboard/data-mgmt.js?v=3"></script>
 
 </body>
