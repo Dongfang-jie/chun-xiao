@@ -42,7 +42,7 @@
 - 公开页: 首页/画廊/课程/联系预约(ServerChan微信通知)
 - 登录: 邮箱密码 + 邮箱验证码注册(5字段) + 忘记密码 + 记住我(sessionStorage)
 - 家长端7模块: 总览/我的课程(周课表)/上课记录(考勤统计)/课次明细(消课日志)/孩子作品/画室通知/个人信息+改密码
-- 教师端: 总览/学生管理(学员/班级/课表/点名/上课记录/续费)/课消日志/作品管理(完整CRUD+云存储+筛选+批量+导出)/预约查询/发布通知/课程管理
+- 教师端: 总览/学生管理(学员/班级/课表/点名/上课记录/续费-多课程同时续费+全课程可选)/课消日志/作品管理(完整CRUD+云存储+筛选+批量+导出)/预约查询/发布通知/课程管理
 - 全局: 深色模式/图片灯箱/回到顶部/响应式/同步状态气泡
 - 云存储: CloudBase Storage `app.storage.from().upload()` / `app.getTempFileURL()` / `remove()`，图片存 cloud:// fileID，渲染时异步解析临时URL
 
@@ -95,3 +95,13 @@ connect-src 'self' https://*.tcloudbase.com https://*.app.tcloudbase.com https:/
 - 作品 `type` 可选值: 美术 / 书法 / 课堂剪影 / 家长端
 - 数据模型: `id/title/student/studentId/type/image/addedAt/addedBy/lastModifiedAt/lastModifiedBy`
 - 家长端匹配: 优先 `studentId` 关联 students 表，fallback `student === childName`
+
+## 续费模块要点
+
+- 续费表单: 选学员后自动展示**全部课程**（getCourses），已报名标注课次信息，未报名标注红色「未报名」
+- 多课程同时续费: 为每门课输入课次，课次 > 0 的课程各生成一条续费记录，用 `batchId` 关联
+- 续费记录数据模型: `id/batchId/studentId/studentName/course/addedLessons/date/operator/note/createdAt`
+- 保存时自动为未报名课程创建 enrollment 记录
+- 续费历史按 `batchId` 分组展示，多课程批次用 `└` 缩进显示子行
+- 删除按**批次**操作，一键撤销该批次所有课程的课次增加
+- 旧数据兼容: 无 `batchId` 的记录 fallback 用 `id` 作为分组键
