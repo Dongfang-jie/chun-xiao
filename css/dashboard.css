@@ -2626,3 +2626,9 @@ body.dark-mode .renewal-course-row .rc-input {
 body.dark-mode .renewal-course-row .rc-input:focus {
   border-color: #8a6a4a; box-shadow: 0 0 0 3px rgba(180,140,100,0.2);
 }
+.renewal-course-row .rc-unenrolled {
+  font-size: 0.78em; color: #c55; margin-left: 4px; font-weight: normal;
+}
+body.dark-mode .renewal-course-row .rc-unenrolled {
+  color: #ef9a9a;
+}

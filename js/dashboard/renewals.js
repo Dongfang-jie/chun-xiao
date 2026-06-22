@@ -60,7 +60,7 @@ function refreshRenewalStudentSelects() {
   refreshRenewalCourseInputs();
 }
 
-// 刷新续费表单中的课程输入区域（根据选中学员显示所有报名课程）
+// 刷新续费表单中的课程输入区域（显示所有课程，选中学员时标注报名状态）
 function refreshRenewalCourseInputs() {
   var studentId = parseInt(document.getElementById('renewal-student').value);
   var listEl = document.getElementById('renewal-courses-list');
@@ -73,19 +73,39 @@ function refreshRenewalCourseInputs() {
 
   var students = getStudents();
   var s = students.find(function(x) { return x.id === studentId; });
-  if (!s || !s.enrollments || !s.enrollments.length) {
-    listEl.innerHTML = '<span style="color:#e88;">该学员暂无报名课程，请先在学生管理中设置课程</span>';
+  if (!s) {
+    listEl.innerHTML = '<span style="color:#e88;">学员不存在</span>';
+    return;
+  }
+  normalizeStudentEnrollments(s);
+
+  // 获取所有课程
+  var allCourses = typeof getCourses === 'function' ? getCourses() : [];
+  if (!allCourses.length) {
+    listEl.innerHTML = '<span style="color:#e88;">暂无可用课程，请先在课程管理中设置课程</span>';
     return;
   }
 
-  normalizeStudentEnrollments(s);
+  // 建立报名映射：courseName → enrollment
+  var enrollmentMap = {};
+  (s.enrollments || []).forEach(function(e) {
+    enrollmentMap[e.course] = e;
+  });
 
   var html = '';
-  s.enrollments.forEach(function(e, i) {
-    var eRemaining = (e.totalLessons || 0) - (e.consumedLessons || 0);
+  allCourses.forEach(function(c) {
+    var courseName = c.name || c;
+    var enr = enrollmentMap[courseName];
+    var infoHtml = '';
+    if (enr) {
+      var eRemaining = (enr.totalLessons || 0) - (enr.consumedLessons || 0);
+      infoHtml = '<span class="rc-info">（总' + enr.totalLessons + ' · 已消' + (enr.consumedLessons || 0) + ' · 剩' + eRemaining + '节）</span>';
+    } else {
+      infoHtml = '<span class="rc-unenrolled">（未报名）</span>';
+    }
     html += '<div class="renewal-course-row">';
-    html += '<span class="rc-label">' + escapeHtml(e.course) + '<span class="rc-info">（总' + e.totalLessons + ' · 已消' + (e.consumedLessons || 0) + ' · 剩' + eRemaining + '节）</span></span>';
-    html += '<input type="number" class="rc-input renewal-lessons-input" data-course="' + escapeHtml(e.course) + '" placeholder="课次" min="0" value="" style="width:100px;">';
+    html += '<span class="rc-label">' + escapeHtml(courseName) + infoHtml + '</span>';
+    html += '<input type="number" class="rc-input renewal-lessons-input" data-course="' + escapeHtml(courseName) + '" placeholder="课次" min="0" value="" style="width:100px;">';
     html += '</div>';
   });
 
